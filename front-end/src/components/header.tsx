@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiEye, FiMenu, FiBell, FiUser } from 'react-icons/fi'; 
+import { FiEye, FiMenu, FiBell, FiUser } from 'react-icons/fi';
 
 const Header: React.FC = () => {
   return (

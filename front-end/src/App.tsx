@@ -1,11 +1,12 @@
 import React from 'react';
 import './index.css';
-import Home from './pages/home';
+import Positions from './pages/positions';
+
 
 const App: React.FC = () => {
   return (
     <div className="App">
-      <Home />
+      <Positions/>
     </div>
   );
 };

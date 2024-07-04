@@ -4,7 +4,7 @@ import ButtonCard from '../components/buttonCard'
 import { FaComments, FaUserAlt, FaTags, FaChartBar, FaMobileAlt } from 'react-icons/fa';
 
 const Home: React.FC = () => {
-    return(
+    return (
         <div>
             <Header />
             <div className="bg-pink-100 min-h-screen flex flex-col justify-center items-center">
