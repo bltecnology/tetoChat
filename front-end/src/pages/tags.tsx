@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import Header from '../components/header';
 import Background from '../components/background';
-import { GrAdd, GrFilter, GrRefresh, GrMoreVertical } from 'react-icons/gr';
+import { GrAdd, GrMoreVertical } from 'react-icons/gr';
 import MainContainer from '../components/mainContainer';
-import Modal from '../components/modalPositions';
+import ModalTags from '../components/modalTags';
 
 interface Line {
     text: string;
     icon: React.ReactNode;
 }
 
-const Positions: React.FC = () => {
+const Tags: React.FC = () => {
     const [lines, setLines] = useState<Line[]>([
-        { text: 'Administrador', icon: <GrMoreVertical /> }
+        { text: 'Orçamentos', icon: <GrMoreVertical /> }
     ]);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -20,20 +20,17 @@ const Positions: React.FC = () => {
         setLines([...lines, { text, icon: <GrMoreVertical /> }]);
         setIsModalOpen(false);
     };
-
-    return (
+    return(
         <div>
             <Header />
-            <Background 
-                text='Cargos'
+            <Background
+                text="Tags"
                 btn1={<GrAdd onClick={() => setIsModalOpen(true)} />}
-                btn2={<GrFilter />}
-                btn3={<GrRefresh />}
             >
-                <MainContainer 
-                    p1='Nome'
-                    p6='Ações'
-                    content={
+                <MainContainer
+                    p1="Nome"
+                    p6="Ações"
+                    content = {
                         <div>
                             {lines.map((line, index) => (
                                 <div key={index} className="flex justify-between items-center border-b py-2">
@@ -45,13 +42,13 @@ const Positions: React.FC = () => {
                     }
                 />
             </Background>
-            <Modal 
+            <ModalTags 
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSave={addLine}
             />
         </div>
-    );
+    )
 }
 
-export default Positions;
+export default Tags;

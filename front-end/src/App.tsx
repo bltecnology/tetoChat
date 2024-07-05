@@ -1,12 +1,12 @@
 import React from 'react';
 import './index.css';
-import Positions from './pages/positions';
+import ConnectedDevices from './pages/connectedDevices';
 
 
 const App: React.FC = () => {
   return (
     <div className="App">
-      <Positions/>
+      <ConnectedDevices/>
     </div>
   );
 };

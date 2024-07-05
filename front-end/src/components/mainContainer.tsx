@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ReactNode } from "react";
 
 interface ContainerProps {
     p1: string;
@@ -7,9 +7,10 @@ interface ContainerProps {
     p4?: string;
     p5?: string;
     p6?: string;
+    content: ReactNode;
 }
 
-const MainContainer: React.FC<ContainerProps> = ({ p1, p2, p3, p4, p5, p6 }) => {
+const MainContainer: React.FC<ContainerProps> = ({ p1, p2, p3, p4, p5, p6, content }) => {
     return (
         <div className="flex flex-col justify-center items-center">
             <div className="bg-white w-11/12 min-h-screen">
@@ -24,7 +25,7 @@ const MainContainer: React.FC<ContainerProps> = ({ p1, p2, p3, p4, p5, p6 }) => 
 
                 </div>
                 <div className="p-4">
-                    {/* Adicione o conteúdo adicional aqui */}
+                    {content}
                 </div>
             </div>
         </div>

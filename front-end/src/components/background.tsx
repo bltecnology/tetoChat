@@ -2,8 +2,8 @@ import React, { ReactNode } from "react";
 
 interface BackgroundProps {
     btn1: ReactNode;
-    btn2: ReactNode;
-    btn3: ReactNode;
+    btn2?: ReactNode;
+    btn3?: ReactNode;
     text: string;
     children: ReactNode;  
 }
