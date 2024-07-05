@@ -1,12 +1,12 @@
+// src/App.tsx
 import React from 'react';
 import './index.css';
-import ConnectedDevices from './pages/connectedDevices';
-
+import AppRoutes from './routes';
 
 const App: React.FC = () => {
   return (
     <div className="App">
-      <ConnectedDevices/>
+      <AppRoutes />
     </div>
   );
 };

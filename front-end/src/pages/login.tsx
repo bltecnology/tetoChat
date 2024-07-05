@@ -1,6 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const LoginPage: React.FC = () => {
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  const handleLogin = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    try {
+      const response = await fetch('http://localhost:3001/users');
+      const users = await response.json();
+
+      const user = users.find((user: { email: string; senha: string | number }) => user.email === email && user.senha === senha);
+
+      if (user) {
+        // Login bem-sucedido, redireciona para a página Home
+        navigate('/home');
+      } else {
+        // Credenciais inválidas
+        setError('Email ou senha inválidos.');
+      }
+    } catch (error) {
+      console.error('Erro ao tentar fazer login:', error);
+      setError('Ocorreu um erro ao tentar fazer login. Tente novamente mais tarde.');
+    }
+  };
+
   return (
     <div
       className="flex h-screen"
@@ -9,7 +37,8 @@ const LoginPage: React.FC = () => {
       <div className="flex justify-center items-center flex-1">
         <div className="bg-white rounded-lg p-8 w-96" style={{ boxShadow: '10px 10px 20px rgba(0, 0, 0, 0.25), 0 10px 20px rgba(0, 0, 0, 0.25)' }}>
           <h2 className="text-center text-2xl font-semibold text-red-700 mb-6">Login</h2>
-          <form>
+          <form onSubmit={handleLogin}>
+            {error && <p className="text-red-500 text-center mb-4">{error}</p>}
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
               </label>
@@ -18,17 +47,21 @@ const LoginPage: React.FC = () => {
                 id="email"
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="mb-6">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
+              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="senha">
               </label>
               <div className="relative">
                 <input
                   type="password"
-                  id="password"
+                  id="senha"
                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
                   placeholder="Senha"
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
                 />
                 <button
                   type="button"
