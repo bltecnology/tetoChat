@@ -13,6 +13,11 @@
   },
   "dependencies": {
     "@types/react-router-dom": "^5.3.3",
+    "axios": "^1.7.2",
+    "body-parser": "^1.20.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "infobip-rtc": "^2.3.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^5.2.1",
@@ -20,6 +25,7 @@
     "typeface-poppins": "^1.1.13"
   },
   "devDependencies": {
+    "@types/node": "^20.14.9",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^7.13.1",

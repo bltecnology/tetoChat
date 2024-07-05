@@ -1,4 +1,6 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+
 import { FiEye, FiMenu, FiBell, FiUser } from 'react-icons/fi';
 
 const Header: React.FC = () => {
@@ -18,7 +20,9 @@ const Header: React.FC = () => {
           <FiBell size={24} />
         </div>
         <div className="mr-8">
-          <FiUser size={24} />
+          <Link to="/account">
+            <FiUser size={24} />
+          </Link>
         </div>
       </div>
     </div>

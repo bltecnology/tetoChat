@@ -11,7 +11,9 @@ const Home: React.FC = () => {
             <div className="bg-pink-100 min-h-screen flex flex-col justify-center items-center">
                 <div className="grid grid-cols-3 gap-6">
                     <div className="flex justify-between gap-24 col-span-3 w-full max-w-md">
-                        <ButtonCard icon={<FaComments />} text="Conversas" />
+                        <Link to="/chat">
+                            <ButtonCard icon={<FaComments />} text="Conversas" />
+                        </Link>
                         <Link to="/contacts">
                             <ButtonCard icon={<FaUserAlt />} text="Contatos" />
                         </Link>
