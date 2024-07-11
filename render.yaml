@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: tetoChat-backend
+    env: node
+    plan: free
+    buildCommand: "cd back-end && npm install"
+    startCommand: "cd back-end && npm start"
+    rootDir: back-end
