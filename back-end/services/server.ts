@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import sendMessage from './services/sendMessage';
+import sendMessage from './sendMessage';
 
 const app = express();
 const port = process.env.PORT || 3005;
