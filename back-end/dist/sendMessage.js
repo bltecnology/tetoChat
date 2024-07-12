@@ -14,8 +14,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
 const sendMessage = (phone, message) => __awaiter(void 0, void 0, void 0, function* () {
-    const url = `https://graph.facebook.com/v14.0/351880008013177/messages`; // Substitua 'YOUR_PHONE_NUMBER_ID'
-    const token = 'EAAXfbaD8KnoBO3uulFxWlDPpLEEppHOewRFlQzZBka696ZBMIUplW86YPhC7NuaoHPe1f79ak6dIGyGZBZCZAl9u6sfFKcZBVt0De6duDGo6uZC7lDlNZCKwtl4VdVju3WEMV2WLwyDQ60A7kmoMNmCehIDhRmwmjLuApLEV22xYinkIOrMRqeieQlzXG1oE9cpUFvzXvh0cMAWrueTZA2S0ZD'; // Substitua 'YOUR_ACCESS_TOKEN' pelo token temporário
+    const url = `https://graph.facebook.com/v14.0/368232926373701/messages`; // Substitua 'YOUR_PHONE_NUMBER_ID'
+    const token = 'EAAXfbaD8KnoBO6vlPawvlbLFbFu9iZAdKahEfhhegdzwdcxuXUtvScNgBWxFMR8DZCHdfNQ0RvMsMP2bfCFKwl7ApRrVUIZBEai87ncNLgZAmgXBng99MRgQkMhgaD8Q4x1ZBVl9sp0ulFInsacyIy5a5EvgZB7bdmaZASYlZCZAWyN0pxm8hOPG81GOPqra0xHT6BYVKSK78QImxK16O0atS'; // Substitua 'YOUR_ACCESS_TOKEN' pelo token temporário
     try {
         const response = yield axios_1.default.post(url, {
             messaging_product: 'whatsapp',
