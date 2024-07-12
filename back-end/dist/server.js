@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const cors_1 = __importDefault(require("cors"));
-const sendMessage_1 = __importDefault(require("./services/sendMessage"));
+const sendMessage_1 = __importDefault(require("./sendMessage"));
 const app = (0, express_1.default)();
 const port = process.env.PORT || 3005;
 app.use((0, cors_1.default)());
