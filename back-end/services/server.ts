@@ -68,7 +68,7 @@ app.get('/messages', (req: Request, res: Response) => {
 });
 
 const sendMessage = async (phone: string, text: string) => {
-  const url = `https://graph.facebook.com/v13.0/370805929450440/messages`;
+  const url = `https://graph.facebook.com/v13.0/408476129004761/messages`;
   const token = 'EAAXfbaD8KnoBOZCiT0KSQnOEVsrZBdW7z7gEPMUpTylIBkwJjnHecs2lJV2LxtG5TACSj1hgMLhzVlLW80KuZBpD3tBdzBAGUpJghhrDXNeVWEWBxtGpNa0Hbi0UOJnR4fnZCEMDg2sRxQQs01QHoKdZCpzvHnXfwgqif5GfjGdY4X6lUJ93I4GvK8sNih4G7LYO0shJn0uxxCpeNN0mq';
 
   const payload = {
