@@ -6,7 +6,7 @@ interface ModalProps {
     onSave: (text: string) => void;
 }
 
-const ModalTags: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) => {
+const ModalDepartamentos: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) => {
     const [text, setText] = React.useState('');
 
     if (!isOpen) return null;
@@ -14,11 +14,11 @@ const ModalTags: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) => {
     return (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
             <div className="bg-white p-4 rounded shadow-lg">
-                <h2 className="text-xl mb-2">Nova Tag</h2>
+                <h2 className="text-xl mb-2">Novo Departamento</h2>
                 <input
                     type="text"
                     className="border p-2 mb-4 w-full"
-                    placeholder="Digite o nome da tag"
+                    placeholder="Digite o nome do departamento"
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                 />
@@ -44,4 +44,4 @@ const ModalTags: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) => {
     );
 };
 
-export default ModalTags;
+export default ModalDepartamentos;

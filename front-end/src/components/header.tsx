@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-
 import { FiEye, FiMenu, FiBell, FiUser } from 'react-icons/fi';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@radix-ui/react-dropdown-menu';
 
 const Header: React.FC = () => {
   return (
@@ -13,8 +13,28 @@ const Header: React.FC = () => {
         <div className="mr-8">
           <FiEye size={24} />
         </div>
-        <div className="mr-8">
-          <FiMenu size={24} />
+        <div className="relative mr-8">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="focus:outline-none hover:bg-gray-700 p-2 rounded">
+                <FiMenu size={24} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-white text-black mt-2 w-48">
+              <DropdownMenuItem className="hover:bg-gray-200 text-center">
+                <Link to="/users">Usuários</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="hover:bg-gray-200 text-center">
+                <Link to="/positions">Cargos</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="hover:bg-gray-200 text-center">
+                <Link to="/robots">Robôs</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="hover:bg-gray-200 text-center">
+                <Link to="/quickResponses">Respostas Rápidas</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div className="mr-8">
           <FiBell size={24} />

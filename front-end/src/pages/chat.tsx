@@ -4,21 +4,13 @@ import Header from '../components/header';
 
 interface Message {
     from: string;
-    content: {
-        text: string;
-        templateName?: string;
-        templateData?: {
-            body: {
-                placeholders: string[];
-            };
-        };
-    };
+    content: string;
 }
 
 const Chat: React.FC = () => {
     const [messages, setMessages] = useState<Message[]>([]);
-    const [newMessage, setNewMessage] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
+    const [newMessage, setNewMessage] = useState("");
+    const [recipient, setRecipient] = useState("");
 
     useEffect(() => {
         const fetchMessages = async () => {
@@ -30,54 +22,56 @@ const Chat: React.FC = () => {
             }
         };
 
-        const intervalId = setInterval(fetchMessages, 5000); // Busque mensagens a cada 5 segundos
-
-        return () => clearInterval(intervalId);
+        fetchMessages();
     }, []);
 
     const handleSendMessage = async () => {
-        try {
-            await axios.post('http://localhost:3005/send', {
-                phone: phoneNumber,
-                message: newMessage,
-            });
-            setNewMessage('');
-        } catch (error) {
-            console.error('Erro ao enviar mensagem:', error);
+        if (newMessage.trim() && recipient.trim()) {
+            try {
+                const response = await axios.post('http://localhost:3005/send', {
+                    phone: recipient,
+                    message: newMessage
+                });
+                console.log('Mensagem enviada com sucesso:', response.data);
+
+                // Atualiza o estado messages com a nova mensagem
+                setMessages(prevMessages => [
+                    ...prevMessages,
+                    { from: recipient, content: newMessage }
+                ]);
+
+                setNewMessage("");
+                setRecipient("");
+            } catch (error) {
+                console.error('Erro ao enviar mensagem:', error);
+            }
         }
     };
 
     return (
         <div>
             <Header />
-            <div className="bg-black min-h-screen w-1/3 flex flex-col justify-center items-center">
-                <div className="bg-pink-100 min-h-screen h-80 w-full flex flex-col justify-center items-center">
-                    {messages.map((message, index) => (
-                        <div key={index} className="bg-white p-2 m-2 rounded shadow">
-                            <p><strong>{message.from}:</strong> {message.content.text || message.content.templateName}</p>
-                            {message.content.templateData && (
-                                <p>Placeholder: {message.content.templateData.body.placeholders.join(', ')}</p>
-                            )}
-                        </div>
-                    ))}
-                    <input
-                        type="text"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        placeholder="Digite o número de telefone"
-                        className="p-2 border rounded mt-2"
-                    />
-                    <input
-                        type="text"
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder="Digite sua mensagem"
-                        className="p-2 border rounded mt-2"
-                    />
-                    <button onClick={handleSendMessage} className="p-2 bg-blue-500 text-white rounded mt-2">
-                        Enviar
-                    </button>
-                </div>
+            <div>
+                {messages.map((message, index) => (
+                    <div key={index}>
+                        <p>{message.content}</p>
+                    </div>
+                ))}
+            </div>
+            <div>
+                <input
+                    type="text"
+                    placeholder="Número do destinatário"
+                    value={recipient}
+                    onChange={(e) => setRecipient(e.target.value)}
+                />
+                <input
+                    type="text"
+                    placeholder="Digite sua mensagem"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                />
+                <button onClick={handleSendMessage}>Enviar Mensagem</button>
             </div>
         </div>
     );

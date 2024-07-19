@@ -19,8 +19,8 @@ const Home: React.FC = () => {
                         </Link>
                     </div>
                     <div className="col-span-3 flex justify-center my-6">
-                        <Link to="/tags">
-                            <ButtonCard icon={<FaTags />} text="Tags" />
+                        <Link to="/departamentos">
+                            <ButtonCard icon={<FaTags />} text="Departamentos" />
                         </Link>
                     </div>
                     <div className="flex justify-between gap-24 col-span-3 w-full max-w-md">

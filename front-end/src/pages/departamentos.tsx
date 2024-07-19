@@ -3,14 +3,14 @@ import Header from '../components/header';
 import Background from '../components/background';
 import { GrAdd, GrMoreVertical } from 'react-icons/gr';
 import MainContainer from '../components/mainContainer';
-import ModalTags from '../components/modalTags';
+import ModalDepartamentos from '../components/modalDepartamentos';
 
 interface Line {
     text: string;
     icon: React.ReactNode;
 }
 
-const Tags: React.FC = () => {
+const Departamentos: React.FC = () => {
     const [lines, setLines] = useState<Line[]>([
         { text: 'Orçamentos', icon: <GrMoreVertical /> }
     ]);
@@ -24,7 +24,7 @@ const Tags: React.FC = () => {
         <div>
             <Header />
             <Background
-                text="Tags"
+                text="Departamentos"
                 btn1={<GrAdd onClick={() => setIsModalOpen(true)} />}
             >
                 <MainContainer
@@ -42,7 +42,7 @@ const Tags: React.FC = () => {
                     }
                 />
             </Background>
-            <ModalTags 
+            <ModalDepartamentos 
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSave={addLine}
@@ -51,4 +51,4 @@ const Tags: React.FC = () => {
     )
 }
 
-export default Tags;
+export default Departamentos;
