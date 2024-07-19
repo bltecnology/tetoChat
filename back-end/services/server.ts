@@ -6,6 +6,7 @@ import axios from 'axios';
 const app = express();
 app.use(bodyParser.json());
 
+// Configuração de CORS
 const corsOptions = {
   origin: 'http://localhost:5173',
   optionsSuccessStatus: 200
@@ -16,6 +17,7 @@ app.use(cors(corsOptions));
 const VERIFY_TOKEN = 'blchat';
 let messages: any[] = [];
 
+// Rota para verificar o webhook
 app.get('/webhook', (req: Request, res: Response) => {
     const mode = req.query['hub.mode'];
     const token = req.query['hub.verify_token'];
@@ -33,6 +35,7 @@ app.get('/webhook', (req: Request, res: Response) => {
     }
 });
 
+// Rota para receber mensagens do webhook
 app.post('/webhook', (req: Request, res: Response) => {
     const body = req.body;
 
@@ -58,23 +61,22 @@ app.post('/webhook', (req: Request, res: Response) => {
     }
 });
 
+// Rota para obter todas as mensagens
 app.get('/messages', (req: Request, res: Response) => {
     res.json(messages);
 });
 
-const sendMessage = async (phone: string) => {
-    const url = `https://graph.facebook.com/v13.0/370805929450440/messages`;
-    const token = 'EAAXfbaD8KnoBO6uWywegWKGg8QrYq7s600lsYbOa04w9Y6tuIqowUza0dV81ZBOpDe035JVpnBUJdVRZBZCZCGZAElzbL7qPWHzvHYvgaMYp1ZA2m3QN7da00vCuGp9fkBIie0UbfddNnF2smQxZCZB6tMPZCw3GOOMkap5HZCJRLcrMCYi1MDJg6cZCLtpINRO6jHZAumyPGfuDhBmaZBdw02WYZD';
+// Função para enviar mensagens utilizando a API do WhatsApp
+const sendMessage = async (phone: string, text: string) => {
+    const url = `https://graph.facebook.com/v19.0/370805929450440/messages`;
+    const token = 'EAAXfbaD8KnoBO4gkr1oA8LtIFn9Nfm76JIOkUcOxQxAm1hse4ZAZBvsUD06zuZCZBIZBxxkE7pAhqCsXEuHiaUZBbmzv831gS5ddpku2IcoI4TEUNwCHhVORTD2LZCIk6ipOareg5vokh3xW2y40iCIffFDnshCJQWuVk3OTv9kfAxG2P8sjP5wA17dbI4jZB7bk4TkDPvDLbKPvsPA0dsMZD';
 
     const payload = {
         messaging_product: 'whatsapp',
         to: phone,
-        type: 'template',
-        template: {
-            name: 'hello_world',
-            language: {
-                code: 'en_US'
-            }
+        type: 'text',
+        text: {
+            body: text
         }
     };
 
@@ -96,10 +98,11 @@ const sendMessage = async (phone: string) => {
     }
 };
 
+// Rota para enviar mensagens
 app.post('/send', async (req: Request, res: Response) => {
-    const { phone } = req.body;
+    const { phone, message } = req.body;
     try {
-        await sendMessage(phone);
+        await sendMessage(phone, message);
         res.status(200).send('Mensagem enviada com sucesso');
     } catch (error) {
         if (axios.isAxiosError(error)) {
