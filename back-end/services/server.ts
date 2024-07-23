@@ -6,6 +6,7 @@ import pool from './database';
 import dotenv from 'dotenv';
 
 dotenv.config();
+console.log('DB_HOST:', process.env.DB_HOST);
 
 const app = express();
 app.use(bodyParser.json());

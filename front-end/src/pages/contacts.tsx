@@ -12,6 +12,10 @@ interface Contact {
   number: string;
   tags: string;
   profilePic: string;
+  observation: string;
+  cpf: string;
+  rg: string;
+  email: string;
 }
 
 const Contacts: React.FC = () => {
@@ -29,6 +33,8 @@ const Contacts: React.FC = () => {
         profilePic: profilePictureUrl || 'URL_DA_IMAGEM_PADRÃO'
       };
 
+      await axios.post('/contacts', newContact); // Salvar no backend
+
       setContacts([...contacts, newContact]);
       setIsModalOpen(false);
     } catch (error) {
@@ -38,6 +44,8 @@ const Contacts: React.FC = () => {
         id: Date.now(),
         profilePic: 'URL_DA_IMAGEM_PADRÃO'
       };
+
+      await axios.post('/contacts', newContact); // Salvar no backend
 
       setContacts([...contacts, newContact]);
       setIsModalOpen(false);
