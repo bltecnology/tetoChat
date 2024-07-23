@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import axios, { AxiosError } from 'axios';
-import connectDB from './database';
+import pool from './database';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -10,7 +10,6 @@ dotenv.config();
 const app = express();
 app.use(bodyParser.json());
 
-// Configuração de CORS
 const corsOptions = {
   origin: 'http://localhost:5173',
   optionsSuccessStatus: 200
@@ -19,26 +18,15 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 const VERIFY_TOKEN = 'blchat';
-let messages: any[] = []; // Armazena as mensagens recebidas
+let messages: any[] = [];
 
-// Função para salvar um contato no banco de dados
-const saveContact = async (name: string, phone: string, tag: string, note: string, cpf: string, rg: string, email: string) => {
-  const connection = await connectDB();
-  try {
-    const [result]: any = await connection.execute(
-      'INSERT INTO contacts (name, phone, tag, note, cpf, rg, email) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [name, phone, tag, note, cpf, rg, email]
-    );
-    return result.insertId;
-  } finally {
-    connection.release();
-  }
-};
-
-// Função para obter a imagem de perfil de um contato
 const getProfilePicture = async (phoneNumber: string): Promise<string | null> => {
-  const token = process.env.WHATSAPP_ACCESS_TOKEN; // Substitua pelo seu token de acesso
-  const whatsappBusinessAccountId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID; // Substitua pelo seu WhatsApp Business Account ID
+  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+  const whatsappBusinessAccountId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
+
+  if (!token || !whatsappBusinessAccountId) {
+    throw new Error("As variáveis de ambiente WHATSAPP_ACCESS_TOKEN e WHATSAPP_BUSINESS_ACCOUNT_ID são necessárias.");
+  }
 
   try {
     const response = await axios.get(`https://graph.facebook.com/v13.0/${whatsappBusinessAccountId}/contacts`, {
@@ -53,7 +41,7 @@ const getProfilePicture = async (phoneNumber: string): Promise<string | null> =>
     const profilePictureUrl = response.data.data[0]?.profile_picture_url || null;
     return profilePictureUrl;
   } catch (error) {
-    if (error instanceof AxiosError) {
+    if (axios.isAxiosError(error)) {
       console.error('Erro ao obter a imagem do perfil:', error.response ? error.response.data : error.message);
     } else {
       console.error('Erro desconhecido ao obter a imagem do perfil:', error);
@@ -62,7 +50,6 @@ const getProfilePicture = async (phoneNumber: string): Promise<string | null> =>
   }
 };
 
-// Rota para verificar o webhook
 app.get('/webhook', (req: Request, res: Response) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -80,18 +67,17 @@ app.get('/webhook', (req: Request, res: Response) => {
   }
 });
 
-// Rota para receber mensagens do webhook
 app.post('/webhook', (req: Request, res: Response) => {
   const body = req.body;
 
-  console.log('Recebido webhook:', JSON.stringify(body, null, 2)); // Log para verificar a estrutura do webhook recebido
+  console.log('Recebido webhook:', JSON.stringify(body, null, 2));
 
   if (body.object === 'whatsapp_business_account') {
     body.entry.forEach((entry: any) => {
       entry.changes.forEach((change: any) => {
         if (change.value.messages) {
           change.value.messages.forEach((message: any) => {
-            console.log('Mensagem recebida:', message); // Log para cada mensagem recebida
+            console.log('Mensagem recebida:', message);
             messages.push({
               from: message.from,
               content: message.text ? message.text.body : message,
@@ -106,12 +92,10 @@ app.post('/webhook', (req: Request, res: Response) => {
   }
 });
 
-// Rota para obter todas as mensagens
 app.get('/messages', (req: Request, res: Response) => {
   res.json(messages);
 });
 
-// Rota para obter a imagem de perfil de um contato
 app.get('/profile-picture', async (req: Request, res: Response) => {
   const { phone } = req.query;
 
@@ -127,13 +111,19 @@ app.get('/profile-picture', async (req: Request, res: Response) => {
   }
 });
 
-// Rota para salvar um contato
 app.post('/contacts', async (req: Request, res: Response) => {
   const { name, phone, tag, note, cpf, rg, email } = req.body;
 
+  if (!name || !phone) {
+    return res.status(400).send('Nome e telefone são obrigatórios');
+  }
+
   try {
-    const insertId = await saveContact(name, phone, tag, note, cpf, rg, email);
-    res.status(201).json({ id: insertId });
+    const connection = await pool.getConnection();
+    const [result] = await connection.execute('INSERT INTO contacts (name, phone, tag, note, cpf, rg, email) VALUES (?, ?, ?, ?, ?, ?, ?)', [name, phone, tag, note, cpf, rg, email]);
+    connection.release();
+    const insertId = (result as any).insertId;
+    res.status(201).send(`Contato adicionado com sucesso. ID: ${insertId}`);
   } catch (error) {
     console.error('Erro ao salvar contato:', error);
     res.status(500).send('Erro ao salvar contato');
