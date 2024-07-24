@@ -9,47 +9,35 @@ import ModalContacts from '../components/modalContacts';
 interface Contact {
   id: number;
   name: string;
-  number: string;
+  phone: string; // Ajuste aqui
   tags: string;
   profilePic: string;
-  observation: string;
-  cpf: string;
-  rg: string;
-  email: string;
+  observation: string; // Adicionei aqui para refletir o banco de dados
+  cpf: string; // Adicionei aqui para refletir o banco de dados
+  rg: string; // Adicionei aqui para refletir o banco de dados
+  email: string; // Adicionei aqui para refletir o banco de dados
 }
 
 const Contacts: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleAddContact = async (contact: Contact) => {
+  const fetchContacts = async () => {
     try {
-      const response = await axios.get(`/profile-picture?phone=${contact.number}`);
-      const profilePictureUrl = response.data.profilePictureUrl;
-
-      const newContact = {
-        ...contact,
-        id: Date.now(),
-        profilePic: profilePictureUrl || 'URL_DA_IMAGEM_PADRÃO'
-      };
-
-      await axios.post('/contacts', newContact); // Salvar no backend
-
-      setContacts([...contacts, newContact]);
-      setIsModalOpen(false);
+      const response = await axios.get('http://localhost:3005/contacts');
+      setContacts(response.data);
     } catch (error) {
-      console.error('Erro ao obter a imagem do perfil:', error);
-      const newContact = {
-        ...contact,
-        id: Date.now(),
-        profilePic: 'URL_DA_IMAGEM_PADRÃO'
-      };
-
-      await axios.post('/contacts', newContact); // Salvar no backend
-
-      setContacts([...contacts, newContact]);
-      setIsModalOpen(false);
+      console.error('Erro ao buscar contatos:', error);
     }
+  };
+
+  useEffect(() => {
+    fetchContacts();
+  }, []);
+
+  const handleAddContact = () => {
+    fetchContacts();
+    setIsModalOpen(false);
   };
 
   return (
@@ -71,7 +59,7 @@ const Contacts: React.FC = () => {
                   <img src={contact.profilePic} alt={contact.name} className="w-10 h-10 rounded-full mr-2" />
                   <div>{contact.name}</div>
                 </div>
-                <div className="flex-1">{contact.number}</div>
+                <div className="flex-1">{contact.phone}</div>
                 <div>{contact.tags}</div>
                 <div className="flex">
                   {/* Adicione botões de ação aqui */}
@@ -84,10 +72,10 @@ const Contacts: React.FC = () => {
       <ModalContacts
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSave={handleAddContact}
+        onSave={handleAddContact} // Atualiza a lista de contatos ao salvar
       />
     </div>
   );
-}
+};
 
 export default Contacts;

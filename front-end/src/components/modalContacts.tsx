@@ -1,45 +1,39 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (contact: Contact) => void;
-}
-
-interface Contact {
-  id: number;
-  name: string;
-  number: string;
-  tags: string;
-  profilePic: string;
-  observation: string;
-  cpf: string;
-  rg: string;
-  email: string;
+  onSave: () => void;
 }
 
 const ModalContacts: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) => {
   const [name, setName] = useState('');
-  const [number, setNumber] = useState('');
+  const [phone, setPhone] = useState('');
   const [tags, setTags] = useState('');
   const [observation, setObservation] = useState('');
   const [cpf, setCpf] = useState('');
   const [rg, setRg] = useState('');
   const [email, setEmail] = useState('');
 
-  const handleSave = () => {
-    const newContact: Contact = {
-      id: 0,
+  const handleSave = async () => {
+    const newContact = {
       name,
-      number,
-      tags,
-      profilePic: '',
-      observation,
+      phone,
+      tag: tags,
+      note: observation,
       cpf,
       rg,
       email
     };
-    onSave(newContact);
+
+    try {
+      await axios.post('http://localhost:3005/contacts', newContact);
+      onSave(); // Atualizar a lista de contatos no componente pai
+      onClose();
+    } catch (error) {
+      console.error('Erro ao salvar contato:', error);
+    }
   };
 
   if (!isOpen) return null;
@@ -54,7 +48,7 @@ const ModalContacts: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) => {
         </div>
         <div className="mb-2">
           <label className="block mb-1">Número</label>
-          <input type="text" value={number} onChange={(e) => setNumber(e.target.value)} className="w-full p-2 border rounded" />
+          <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full p-2 border rounded" />
         </div>
         <div className="mb-2">
           <label className="block mb-1">Tags</label>
@@ -83,6 +77,6 @@ const ModalContacts: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) => {
       </div>
     </div>
   );
-}
+};
 
 export default ModalContacts;
