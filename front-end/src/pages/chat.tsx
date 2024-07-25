@@ -4,8 +4,10 @@ import Header from '../components/header';
 
 interface Message {
   id: number;
-  text: string;
-  sender: 'user' | 'bot';
+  content: string;
+  from_phone: string;
+  to_phone: string;
+  timestamp: string;
 }
 
 interface Contact {
@@ -13,7 +15,6 @@ interface Contact {
   name: string;
   profilePic: string;
   lastMessage: string;
-  phone: string; // Adicionei o campo phone aqui
 }
 
 const Chat: React.FC = () => {
@@ -56,12 +57,16 @@ const Chat: React.FC = () => {
 
         const sentMessage: Message = {
           id: Date.now(),
-          text: newMessage,
-          sender: 'user'
+          content: newMessage,
+          from_phone: 'me',
+          to_phone: recipient,
+          timestamp: new Date().toISOString()
         };
 
         setMessages([...messages, sentMessage]);
         setNewMessage('');
+        setRecipient('');
+
         console.log('Mensagem enviada com sucesso:', response.data);
       } catch (error) {
         if (axios.isAxiosError(error)) {
@@ -71,11 +76,6 @@ const Chat: React.FC = () => {
         }
       }
     }
-  };
-
-  const handleContactClick = (contact: Contact) => {
-    setSelectedContact(contact);
-    setRecipient(contact.phone); // Definindo o recipient quando o contato é selecionado
   };
 
   return (
@@ -94,7 +94,7 @@ const Chat: React.FC = () => {
                 <li
                   key={contact.id}
                   className="flex items-center p-2 cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleContactClick(contact)}
+                  onClick={() => setSelectedContact(contact)}
                 >
                   <img src={contact.profilePic} alt={contact.name} className="w-10 h-10 rounded-full mr-2" />
                   <div>
@@ -110,11 +110,13 @@ const Chat: React.FC = () => {
           {selectedContact ? (
             <>
               <div className="flex-grow bg-cover bg-center p-4 overflow-y-auto" style={{ backgroundImage: 'url(/path/to/background-image.png)' }}>
-                {messages.map((message) => (
-                  <div key={message.id} className={`max-w-xs p-3 my-2 rounded-lg ${message.sender === 'user' ? 'ml-auto bg-green-200' : 'mr-auto bg-white'}`}>
-                    {message.text}
-                  </div>
-                ))}
+                {messages
+                  .filter((message) => message.from_phone === selectedContact.id.toString() || message.to_phone === selectedContact.id.toString())
+                  .map((message) => (
+                    <div key={message.id} className={`max-w-xs p-3 my-2 rounded-lg ${message.from_phone === 'me' ? 'ml-auto bg-green-200' : 'mr-auto bg-white'}`}>
+                      {message.content}
+                    </div>
+                  ))}
               </div>
               <div className="flex p-4 bg-white border-t border-gray-200">
                 <input
