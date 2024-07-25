@@ -17,7 +17,6 @@ const body_parser_1 = __importDefault(require("body-parser"));
 const cors_1 = __importDefault(require("cors"));
 const axios_1 = __importDefault(require("axios"));
 const database_1 = __importDefault(require("./database"));
-const sendMessage_1 = __importDefault(require("./sendMessage")); // Importe a função sendMessage
 const app = (0, express_1.default)();
 app.use(body_parser_1.default.json());
 const corsOptions = {
@@ -73,32 +72,46 @@ app.get('/webhook', (req, res) => {
         res.status(400).send('Bad Request');
     }
 });
-app.post('/webhook', (req, res) => {
+app.post('/webhook', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const body = req.body;
     console.log('Recebido webhook:', JSON.stringify(body, null, 2));
     if (body.object === 'whatsapp_business_account') {
-        body.entry.forEach((entry) => {
-            entry.changes.forEach((change) => {
+        body.entry.forEach((entry) => __awaiter(void 0, void 0, void 0, function* () {
+            entry.changes.forEach((change) => __awaiter(void 0, void 0, void 0, function* () {
                 if (change.value.messages) {
-                    change.value.messages.forEach((message) => {
+                    for (const message of change.value.messages) {
                         console.log('Mensagem recebida:', message);
+                        try {
+                            const [result] = yield database_1.default.execute('INSERT INTO messages (from, content) VALUES (?, ?)', [message.from, message.text ? message.text.body : '']);
+                            console.log(`Mensagem salva no banco de dados. ID: ${result.insertId}`);
+                        }
+                        catch (error) {
+                            console.error('Erro ao salvar mensagem no banco de dados:', error);
+                        }
                         messages.push({
                             from: message.from,
                             content: message.text ? message.text.body : message,
                         });
-                    });
+                    }
                 }
-            });
-        });
+            }));
+        }));
         res.status(200).send('EVENT_RECEIVED');
     }
     else {
         res.sendStatus(404);
     }
-});
-app.get('/messages', (req, res) => {
-    res.json(messages);
-});
+}));
+app.get('/messages', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const [rows] = yield database_1.default.execute('SELECT * FROM messages');
+        res.json(rows);
+    }
+    catch (error) {
+        console.error('Erro ao buscar mensagens:', error);
+        res.status(500).send('Erro ao buscar mensagens');
+    }
+}));
 app.get('/profile-picture', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { phone } = req.query;
     if (!phone) {
@@ -127,6 +140,7 @@ app.post('/contacts', (req, res) => __awaiter(void 0, void 0, void 0, function* 
         res.status(500).send('Erro ao salvar contato');
     }
 }));
+// Nova rota para buscar todos os contatos
 app.get('/contacts', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const [rows] = yield database_1.default.execute('SELECT * FROM contacts');
@@ -135,16 +149,6 @@ app.get('/contacts', (req, res) => __awaiter(void 0, void 0, void 0, function* (
     catch (error) {
         console.error('Erro ao buscar contatos:', error);
         res.status(500).send('Erro ao buscar contatos');
-    }
-}));
-app.post('/send', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { phone, message } = req.body;
-    try {
-        yield (0, sendMessage_1.default)(phone, message);
-        res.status(200).send('Mensagem enviada com sucesso');
-    }
-    catch (error) {
-        res.status(500).send('Erro ao enviar mensagem');
     }
 }));
 const PORT = process.env.PORT || 3005;

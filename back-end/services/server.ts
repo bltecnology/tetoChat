@@ -17,38 +17,6 @@ app.use(cors(corsOptions));
 const VERIFY_TOKEN = 'blchat';
 let messages: any[] = [];
 
-// Função para enviar mensagens
-const sendMessage = async (phone: string, message: string) => {
-  const url = `https://graph.facebook.com/v14.0/408476129004761/messages`; // Substitua 'YOUR_PHONE_NUMBER_ID'
-  const token = process.env.WHATSAPP_ACCESS_TOKEN;
-
-  try {
-    const response = await axios.post(
-      url,
-      {
-        messaging_product: 'whatsapp',
-        to: phone,
-        type: 'text',
-        text: { body: message },
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-    console.log('Mensagem enviada:', response.data);
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error('Erro ao enviar mensagem:', error.response?.data);
-    } else {
-      console.error('Erro ao enviar mensagem:', error);
-    }
-  }
-};
-
-// Função para obter a imagem de perfil
 const getProfilePicture = async (phoneNumber: string): Promise<string | null> => {
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const whatsappBusinessAccountId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
@@ -96,29 +64,33 @@ app.get('/webhook', (req: Request, res: Response) => {
   }
 });
 
-app.post('/webhook', (req: Request, res: Response) => {
+app.post('/webhook', async (req: Request, res: Response) => {
   const body = req.body;
 
   console.log('Recebido webhook:', JSON.stringify(body, null, 2));
 
   if (body.object === 'whatsapp_business_account') {
-    body.entry.forEach((entry: any) => {
-      entry.changes.forEach((change: any) => {
+    body.entry.forEach(async (entry: any) => {
+      entry.changes.forEach(async (change: any) => {
         if (change.value.messages) {
-          change.value.messages.forEach(async (message: any) => {
+          for (const message of change.value.messages) {
             console.log('Mensagem recebida:', message);
+
+            try {
+              const [result] = await pool.execute(
+                'INSERT INTO messages (from, content) VALUES (?, ?)', 
+                [message.from, message.text ? message.text.body : '']
+              );
+              console.log(`Mensagem salva no banco de dados. ID: ${(result as any).insertId}`);
+            } catch (error) {
+              console.error('Erro ao salvar mensagem no banco de dados:', error);
+            }
+
             messages.push({
               from: message.from,
               content: message.text ? message.text.body : message,
             });
-
-            // Salvar mensagem no banco de dados
-            try {
-              await pool.execute('INSERT INTO messages (from, content) VALUES (?, ?)', [message.from, message.text ? message.text.body : message]);
-            } catch (error) {
-              console.error('Erro ao salvar mensagem no banco de dados:', error);
-            }
-          });
+          }
         }
       });
     });
@@ -170,6 +142,7 @@ app.post('/contacts', async (req: Request, res: Response) => {
   }
 });
 
+// Nova rota para buscar todos os contatos
 app.get('/contacts', async (req: Request, res: Response) => {
   try {
     const [rows] = await pool.execute('SELECT * FROM contacts');
