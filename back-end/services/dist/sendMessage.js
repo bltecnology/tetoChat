@@ -14,8 +14,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
 const sendMessage = (phone, message) => __awaiter(void 0, void 0, void 0, function* () {
-    const url = `https://graph.facebook.com/v14.0/368232926373701/messages`; // Substitua 'YOUR_PHONE_NUMBER_ID'
-    const token = 'EAAXfbaD8KnoBO6vlPawvlbLFbFu9iZAdKahEfhhegdzwdcxuXUtvScNgBWxFMR8DZCHdfNQ0RvMsMP2bfCFKwl7ApRrVUIZBEai87ncNLgZAmgXBng99MRgQkMhgaD8Q4x1ZBVl9sp0ulFInsacyIy5a5EvgZB7bdmaZASYlZCZAWyN0pxm8hOPG81GOPqra0xHT6BYVKSK78QImxK16O0atS'; // Substitua 'YOUR_ACCESS_TOKEN' pelo token temporário
+    var _a;
+    const url = `https://graph.facebook.com/v14.0/408476129004761/messages`; // Substitua 'YOUR_PHONE_NUMBER_ID'
+    const token = process.env.WHATSAPP_ACCESS_TOKEN; // Use a variável de ambiente
     try {
         const response = yield axios_1.default.post(url, {
             messaging_product: 'whatsapp',
@@ -31,8 +32,8 @@ const sendMessage = (phone, message) => __awaiter(void 0, void 0, void 0, functi
         console.log('Mensagem enviada:', response.data);
     }
     catch (error) {
-        if (error instanceof Error) {
-            console.error('Erro ao enviar mensagem:', error.message);
+        if (axios_1.default.isAxiosError(error)) {
+            console.error('Erro ao enviar mensagem:', (_a = error.response) === null || _a === void 0 ? void 0 : _a.data);
         }
         else {
             console.error('Erro ao enviar mensagem:', error);

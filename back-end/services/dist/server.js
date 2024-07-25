@@ -17,9 +17,7 @@ const body_parser_1 = __importDefault(require("body-parser"));
 const cors_1 = __importDefault(require("cors"));
 const axios_1 = __importDefault(require("axios"));
 const database_1 = __importDefault(require("./database"));
-const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config();
-console.log('DB_HOST:', process.env.DB_HOST);
+const sendMessage_1 = __importDefault(require("./sendMessage")); // Importe a função sendMessage
 const app = (0, express_1.default)();
 app.use(body_parser_1.default.json());
 const corsOptions = {
@@ -120,15 +118,33 @@ app.post('/contacts', (req, res) => __awaiter(void 0, void 0, void 0, function* 
         return res.status(400).send('Nome e telefone são obrigatórios');
     }
     try {
-        const connection = yield database_1.default.getConnection();
-        const [result] = yield connection.execute('INSERT INTO contacts (name, phone, tag, note, cpf, rg, email) VALUES (?, ?, ?, ?, ?, ?, ?)', [name, phone, tag, note, cpf, rg, email]);
-        connection.release();
+        const [result] = yield database_1.default.execute('INSERT INTO contacts (name, phone, tag, note, cpf, rg, email) VALUES (?, ?, ?, ?, ?, ?, ?)', [name, phone, tag, note, cpf, rg, email]);
         const insertId = result.insertId;
         res.status(201).send(`Contato adicionado com sucesso. ID: ${insertId}`);
     }
     catch (error) {
         console.error('Erro ao salvar contato:', error);
         res.status(500).send('Erro ao salvar contato');
+    }
+}));
+app.get('/contacts', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const [rows] = yield database_1.default.execute('SELECT * FROM contacts');
+        res.json(rows);
+    }
+    catch (error) {
+        console.error('Erro ao buscar contatos:', error);
+        res.status(500).send('Erro ao buscar contatos');
+    }
+}));
+app.post('/send', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { phone, message } = req.body;
+    try {
+        yield (0, sendMessage_1.default)(phone, message);
+        res.status(200).send('Mensagem enviada com sucesso');
+    }
+    catch (error) {
+        res.status(500).send('Erro ao enviar mensagem');
     }
 }));
 const PORT = process.env.PORT || 3005;

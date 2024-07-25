@@ -13,6 +13,7 @@ interface Contact {
   name: string;
   profilePic: string;
   lastMessage: string;
+  phone: string; // Adicionei o campo phone aqui
 }
 
 const Chat: React.FC = () => {
@@ -61,8 +62,6 @@ const Chat: React.FC = () => {
 
         setMessages([...messages, sentMessage]);
         setNewMessage('');
-        setRecipient('');
-
         console.log('Mensagem enviada com sucesso:', response.data);
       } catch (error) {
         if (axios.isAxiosError(error)) {
@@ -72,6 +71,11 @@ const Chat: React.FC = () => {
         }
       }
     }
+  };
+
+  const handleContactClick = (contact: Contact) => {
+    setSelectedContact(contact);
+    setRecipient(contact.phone); // Definindo o recipient quando o contato é selecionado
   };
 
   return (
@@ -90,7 +94,7 @@ const Chat: React.FC = () => {
                 <li
                   key={contact.id}
                   className="flex items-center p-2 cursor-pointer hover:bg-gray-100"
-                  onClick={() => setSelectedContact(contact)}
+                  onClick={() => handleContactClick(contact)}
                 >
                   <img src={contact.profilePic} alt={contact.name} className="w-10 h-10 rounded-full mr-2" />
                   <div>

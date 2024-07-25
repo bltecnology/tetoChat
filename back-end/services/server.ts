@@ -3,10 +3,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import axios, { AxiosError } from 'axios';
 import pool from './database';
-import dotenv from 'dotenv';
-
-dotenv.config();
-console.log('DB_HOST:', process.env.DB_HOST);
+import sendMessage from './sendMessage'; // Importe a função sendMessage
 
 const app = express();
 app.use(bodyParser.json());
@@ -120,14 +117,33 @@ app.post('/contacts', async (req: Request, res: Response) => {
   }
 
   try {
-    const connection = await pool.getConnection();
-    const [result] = await connection.execute('INSERT INTO contacts (name, phone, tag, note, cpf, rg, email) VALUES (?, ?, ?, ?, ?, ?, ?)', [name, phone, tag, note, cpf, rg, email]);
-    connection.release();
+    const [result] = await pool.execute('INSERT INTO contacts (name, phone, tag, note, cpf, rg, email) VALUES (?, ?, ?, ?, ?, ?, ?)', [name, phone, tag, note, cpf, rg, email]);
     const insertId = (result as any).insertId;
     res.status(201).send(`Contato adicionado com sucesso. ID: ${insertId}`);
   } catch (error) {
     console.error('Erro ao salvar contato:', error);
     res.status(500).send('Erro ao salvar contato');
+  }
+});
+
+app.get('/contacts', async (req: Request, res: Response) => {
+  try {
+    const [rows] = await pool.execute('SELECT * FROM contacts');
+    res.json(rows);
+  } catch (error) {
+    console.error('Erro ao buscar contatos:', error);
+    res.status(500).send('Erro ao buscar contatos');
+  }
+});
+
+app.post('/send', async (req: Request, res: Response) => {
+  const { phone, message } = req.body;
+
+  try {
+    await sendMessage(phone, message);
+    res.status(200).send('Mensagem enviada com sucesso');
+  } catch (error) {
+    res.status(500).send('Erro ao enviar mensagem');
   }
 });
 

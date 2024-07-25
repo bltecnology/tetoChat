@@ -5,17 +5,18 @@ import Background from '../components/background';
 import { GrAdd, GrLinkTop } from 'react-icons/gr';
 import MainContainer from '../components/mainContainer';
 import ModalContacts from '../components/modalContacts';
+import { FiMoreVertical } from 'react-icons/fi'; // Ícone de três pontinhos
 
 interface Contact {
   id: number;
   name: string;
-  phone: string; // Ajuste aqui
+  phone: string;
   tags: string;
   profilePic: string;
-  observation: string; // Adicionei aqui para refletir o banco de dados
-  cpf: string; // Adicionei aqui para refletir o banco de dados
-  rg: string; // Adicionei aqui para refletir o banco de dados
-  email: string; // Adicionei aqui para refletir o banco de dados
+  observation: string;
+  cpf: string;
+  rg: string;
+  email: string;
 }
 
 const Contacts: React.FC = () => {
@@ -44,25 +45,29 @@ const Contacts: React.FC = () => {
     <div>
       <Header />
       <Background
-        text='Contatos'
+        text="Contatos"
         btn1={<GrAdd onClick={() => setIsModalOpen(true)} />}
         btn2={<GrLinkTop />}
       >
         <MainContainer
-          p1={'Nome'}
-          p3={'Número'}
-          p6={'Ações'}
+          p1="Nome"
+          p3="Número"
+          p6="Ações"
           content={
             contacts.map((contact) => (
-              <div key={contact.id} className="flex items-center p-2 border-b">
-                <div className="flex items-center">
-                  <img src={contact.profilePic} alt={contact.name} className="w-10 h-10 rounded-full mr-2" />
+              <div key={contact.id} className="flex items-center p-2 border-b space-x-40">
+                <div className="flex items-center space-x-2 w-1/4">
+                  <img
+                    src={contact.profilePic}
+                    alt={contact.name}
+                    className="w-10 h-10 rounded-full mr-3"
+                  />
                   <div>{contact.name}</div>
                 </div>
-                <div className="flex-1">{contact.phone}</div>
-                <div>{contact.tags}</div>
-                <div className="flex">
-                  {/* Adicione botões de ação aqui */}
+                <div className="flex-1 w-1/4">{contact.phone}</div>
+                <div className="flex-1 w-1/4">{contact.tags}</div>
+                <div className="flex w-1/4 justify-end">
+                  <FiMoreVertical className="cursor-pointer" />
                 </div>
               </div>
             ))
@@ -72,7 +77,7 @@ const Contacts: React.FC = () => {
       <ModalContacts
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSave={handleAddContact} // Atualiza a lista de contatos ao salvar
+        onSave={handleAddContact}
       />
     </div>
   );
