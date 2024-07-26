@@ -3,7 +3,7 @@ import Header from '../components/header';
 import Background from '../components/background';
 import { GrAdd, GrMoreVertical } from 'react-icons/gr';
 import MainContainer from '../components/mainContainer';
-import ModalDepartamentos from '../components/modalDepartamentos';
+import ModalDepartments from "../components/modalDepartments";
 
 interface Line {
     text: string;
@@ -42,7 +42,7 @@ const Departamentos: React.FC = () => {
                     }
                 />
             </Background>
-            <ModalDepartamentos 
+            <ModalDepartments
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSave={addLine}
