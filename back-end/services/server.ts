@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import { addUser } from './newUser';
 import { authenticateUser, authenticateJWT } from './auth';
 import { RowDataPacket } from 'mysql2';
+import sendMessage from './sendMessage'; // Importando o sendMessage
 
 // Carregar variáveis de ambiente
 dotenv.config();
@@ -167,35 +168,11 @@ app.post('/send', async (req: Request, res: Response) => {
   }
 
   try {
-    const url = `https://graph.facebook.com/v14.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
-    const token = process.env.WHATSAPP_ACCESS_TOKEN;
-
-    const response = await axios.post(
-      url,
-      {
-        messaging_product: 'whatsapp',
-        to: phone,
-        type: 'text',
-        text: { body: message },
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    console.log('Mensagem enviada:', response.data);
+    await sendMessage(phone, message);
     res.status(200).send('Mensagem enviada com sucesso');
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error('Erro ao enviar mensagem:', error.response?.data);
-      res.status(500).send(error.response?.data);
-    } else {
-      console.error('Erro ao enviar mensagem:', error);
-      res.status(500).send('Erro ao enviar mensagem');
-    }
+    console.error('Erro ao enviar mensagem:', error);
+    res.status(500).send('Erro ao enviar mensagem');
   }
 });
 

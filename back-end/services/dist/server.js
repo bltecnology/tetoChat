@@ -20,6 +20,7 @@ const database_1 = __importDefault(require("./database"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const newUser_1 = require("./newUser");
 const auth_1 = require("./auth");
+const sendMessage_1 = __importDefault(require("./sendMessage")); // Importando o sendMessage
 // Carregar variáveis de ambiente
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -154,37 +155,17 @@ app.get('/contacts', (req, res) => __awaiter(void 0, void 0, void 0, function* (
 }));
 // Rota para enviar mensagens
 app.post('/send', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
     const { phone, message } = req.body;
     if (!phone || !message) {
         return res.status(400).send('Número de telefone e mensagem são obrigatórios');
     }
     try {
-        const url = `https://graph.facebook.com/v14.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
-        const token = process.env.WHATSAPP_ACCESS_TOKEN;
-        const response = yield axios_1.default.post(url, {
-            messaging_product: 'whatsapp',
-            to: phone,
-            type: 'text',
-            text: { body: message },
-        }, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-        });
-        console.log('Mensagem enviada:', response.data);
+        yield (0, sendMessage_1.default)(phone, message);
         res.status(200).send('Mensagem enviada com sucesso');
     }
     catch (error) {
-        if (axios_1.default.isAxiosError(error)) {
-            console.error('Erro ao enviar mensagem:', (_a = error.response) === null || _a === void 0 ? void 0 : _a.data);
-            res.status(500).send((_b = error.response) === null || _b === void 0 ? void 0 : _b.data);
-        }
-        else {
-            console.error('Erro ao enviar mensagem:', error);
-            res.status(500).send('Erro ao enviar mensagem');
-        }
+        console.error('Erro ao enviar mensagem:', error);
+        res.status(500).send('Erro ao enviar mensagem');
     }
 }));
 // Rota para buscar usuários
