@@ -1,8 +1,15 @@
 import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import pool from './database';
+import dotenv from 'dotenv';
+import { addUser } from './newUser';
+import { authenticateUser, authenticateJWT } from './auth';
+import { RowDataPacket } from 'mysql2';
+
+// Carregar variáveis de ambiente
+dotenv.config();
 
 const app = express();
 app.use(bodyParser.json());
@@ -15,13 +22,13 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 const VERIFY_TOKEN = 'blchat';
-let messages: any[] = [];
 
 const getProfilePicture = async (phoneNumber: string): Promise<string | null> => {
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const whatsappBusinessAccountId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
 
   if (!token || !whatsappBusinessAccountId) {
+    console.error("As variáveis de ambiente WHATSAPP_ACCESS_TOKEN e WHATSAPP_BUSINESS_ACCOUNT_ID são necessárias.");
     throw new Error("As variáveis de ambiente WHATSAPP_ACCESS_TOKEN e WHATSAPP_BUSINESS_ACCOUNT_ID são necessárias.");
   }
 
@@ -64,33 +71,29 @@ app.get('/webhook', (req: Request, res: Response) => {
   }
 });
 
-app.post('/webhook', async (req: Request, res: Response) => {
+app.post('/webhook', (req: Request, res: Response) => {
   const body = req.body;
 
   console.log('Recebido webhook:', JSON.stringify(body, null, 2));
 
   if (body.object === 'whatsapp_business_account') {
-    body.entry.forEach(async (entry: any) => {
+    body.entry.forEach((entry: any) => {
       entry.changes.forEach(async (change: any) => {
         if (change.value.messages) {
-          for (const message of change.value.messages) {
+          change.value.messages.forEach(async (message: any) => {
             console.log('Mensagem recebida:', message);
 
+            // Salvar a mensagem no banco de dados
             try {
-              const [result] = await pool.execute(
-                'INSERT INTO messages (from, content) VALUES (?, ?)', 
-                [message.from, message.text ? message.text.body : '']
+              await pool.execute(
+                'INSERT INTO messages (content, from_phone, to_phone, timestamp) VALUES (?, ?, ?, ?)',
+                [message.text.body, message.from, message.to, new Date().toISOString()]
               );
-              console.log(`Mensagem salva no banco de dados. ID: ${(result as any).insertId}`);
+              console.log('Mensagem salva no banco de dados.');
             } catch (error) {
               console.error('Erro ao salvar mensagem no banco de dados:', error);
             }
-
-            messages.push({
-              from: message.from,
-              content: message.text ? message.text.body : message,
-            });
-          }
+          });
         }
       });
     });
@@ -102,7 +105,7 @@ app.post('/webhook', async (req: Request, res: Response) => {
 
 app.get('/messages', async (req: Request, res: Response) => {
   try {
-    const [rows] = await pool.execute('SELECT * FROM messages');
+    const [rows] = await pool.execute<RowDataPacket[]>('SELECT * FROM messages');
     res.json(rows);
   } catch (error) {
     console.error('Erro ao buscar mensagens:', error);
@@ -133,7 +136,10 @@ app.post('/contacts', async (req: Request, res: Response) => {
   }
 
   try {
-    const [result] = await pool.execute('INSERT INTO contacts (name, phone, tag, note, cpf, rg, email) VALUES (?, ?, ?, ?, ?, ?, ?)', [name, phone, tag, note, cpf, rg, email]);
+    const [result] = await pool.execute(
+      'INSERT INTO contacts (name, phone, tag, note, cpf, rg, email) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [name, phone, tag, note, cpf, rg, email]
+    );
     const insertId = (result as any).insertId;
     res.status(201).send(`Contato adicionado com sucesso. ID: ${insertId}`);
   } catch (error) {
@@ -142,14 +148,88 @@ app.post('/contacts', async (req: Request, res: Response) => {
   }
 });
 
-// Nova rota para buscar todos os contatos
 app.get('/contacts', async (req: Request, res: Response) => {
   try {
-    const [rows] = await pool.execute('SELECT * FROM contacts');
+    const [rows] = await pool.execute<RowDataPacket[]>('SELECT * FROM contacts');
     res.json(rows);
   } catch (error) {
     console.error('Erro ao buscar contatos:', error);
     res.status(500).send('Erro ao buscar contatos');
+  }
+});
+
+// Rota para enviar mensagens
+app.post('/send', async (req: Request, res: Response) => {
+  const { phone, message } = req.body;
+
+  if (!phone || !message) {
+    return res.status(400).send('Número de telefone e mensagem são obrigatórios');
+  }
+
+  try {
+    const url = `https://graph.facebook.com/v14.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+    const token = process.env.WHATSAPP_ACCESS_TOKEN;
+
+    const response = await axios.post(
+      url,
+      {
+        messaging_product: 'whatsapp',
+        to: phone,
+        type: 'text',
+        text: { body: message },
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    console.log('Mensagem enviada:', response.data);
+    res.status(200).send('Mensagem enviada com sucesso');
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error('Erro ao enviar mensagem:', error.response?.data);
+      res.status(500).send(error.response?.data);
+    } else {
+      console.error('Erro ao enviar mensagem:', error);
+      res.status(500).send('Erro ao enviar mensagem');
+    }
+  }
+});
+
+// Rota para buscar usuários
+app.get('/users', async (req: Request, res: Response) => {
+  try {
+    const [rows] = await pool.execute<RowDataPacket[]>('SELECT * FROM users');
+    res.json(rows);
+  } catch (error) {
+    console.error('Erro ao buscar usuários:', error);
+    res.status(500).send('Erro ao buscar usuários');
+  }
+});
+
+app.post('/users', addUser);
+
+// Rota para autenticar usuário
+app.post('/login', authenticateUser);
+
+// Rota para buscar dados do usuário autenticado
+app.get('/me', authenticateJWT, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const [rows] = await pool.execute<RowDataPacket[]>('SELECT id, name, email, position, department FROM users WHERE id = ?', [userId]);
+    const user = rows[0];
+
+    if (!user) {
+      return res.status(404).send('Usuário não encontrado');
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Erro ao buscar dados do usuário:', error);
+    res.status(500).send('Erro ao buscar dados do usuário');
   }
 });
 

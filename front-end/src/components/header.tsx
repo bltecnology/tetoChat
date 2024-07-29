@@ -7,7 +7,9 @@ const Header: React.FC = () => {
   return (
     <div className="flex items-center justify-between p-1 bg-red-700 text-white">
       <div className="flex items-center">
-        <div className="text-lg font-regular ml-8">TettoChat</div>
+        <Link to="/home"> {/* Corrigido: usar Link com letra maiúscula */}
+          <div className="text-lg font-regular ml-8">TettoChat</div>
+        </Link>
       </div>
       <div className="flex items-center">
         <div className="mr-8">

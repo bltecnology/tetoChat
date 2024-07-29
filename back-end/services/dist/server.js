@@ -17,6 +17,11 @@ const body_parser_1 = __importDefault(require("body-parser"));
 const cors_1 = __importDefault(require("cors"));
 const axios_1 = __importDefault(require("axios"));
 const database_1 = __importDefault(require("./database"));
+const dotenv_1 = __importDefault(require("dotenv"));
+const newUser_1 = require("./newUser");
+const auth_1 = require("./auth");
+// Carregar variáveis de ambiente
+dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use(body_parser_1.default.json());
 const corsOptions = {
@@ -25,12 +30,12 @@ const corsOptions = {
 };
 app.use((0, cors_1.default)(corsOptions));
 const VERIFY_TOKEN = 'blchat';
-let messages = [];
 const getProfilePicture = (phoneNumber) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const token = process.env.WHATSAPP_ACCESS_TOKEN;
     const whatsappBusinessAccountId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
     if (!token || !whatsappBusinessAccountId) {
+        console.error("As variáveis de ambiente WHATSAPP_ACCESS_TOKEN e WHATSAPP_BUSINESS_ACCOUNT_ID são necessárias.");
         throw new Error("As variáveis de ambiente WHATSAPP_ACCESS_TOKEN e WHATSAPP_BUSINESS_ACCOUNT_ID são necessárias.");
     }
     try {
@@ -72,36 +77,33 @@ app.get('/webhook', (req, res) => {
         res.status(400).send('Bad Request');
     }
 });
-app.post('/webhook', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post('/webhook', (req, res) => {
     const body = req.body;
     console.log('Recebido webhook:', JSON.stringify(body, null, 2));
     if (body.object === 'whatsapp_business_account') {
-        body.entry.forEach((entry) => __awaiter(void 0, void 0, void 0, function* () {
+        body.entry.forEach((entry) => {
             entry.changes.forEach((change) => __awaiter(void 0, void 0, void 0, function* () {
                 if (change.value.messages) {
-                    for (const message of change.value.messages) {
+                    change.value.messages.forEach((message) => __awaiter(void 0, void 0, void 0, function* () {
                         console.log('Mensagem recebida:', message);
+                        // Salvar a mensagem no banco de dados
                         try {
-                            const [result] = yield database_1.default.execute('INSERT INTO messages (from, content) VALUES (?, ?)', [message.from, message.text ? message.text.body : '']);
-                            console.log(`Mensagem salva no banco de dados. ID: ${result.insertId}`);
+                            yield database_1.default.execute('INSERT INTO messages (content, from_phone, to_phone, timestamp) VALUES (?, ?, ?, ?)', [message.text.body, message.from, message.to, new Date().toISOString()]);
+                            console.log('Mensagem salva no banco de dados.');
                         }
                         catch (error) {
                             console.error('Erro ao salvar mensagem no banco de dados:', error);
                         }
-                        messages.push({
-                            from: message.from,
-                            content: message.text ? message.text.body : message,
-                        });
-                    }
+                    }));
                 }
             }));
-        }));
+        });
         res.status(200).send('EVENT_RECEIVED');
     }
     else {
         res.sendStatus(404);
     }
-}));
+});
 app.get('/messages', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const [rows] = yield database_1.default.execute('SELECT * FROM messages');
@@ -140,7 +142,6 @@ app.post('/contacts', (req, res) => __awaiter(void 0, void 0, void 0, function* 
         res.status(500).send('Erro ao salvar contato');
     }
 }));
-// Nova rota para buscar todos os contatos
 app.get('/contacts', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const [rows] = yield database_1.default.execute('SELECT * FROM contacts');
@@ -149,6 +150,71 @@ app.get('/contacts', (req, res) => __awaiter(void 0, void 0, void 0, function* (
     catch (error) {
         console.error('Erro ao buscar contatos:', error);
         res.status(500).send('Erro ao buscar contatos');
+    }
+}));
+// Rota para enviar mensagens
+app.post('/send', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    const { phone, message } = req.body;
+    if (!phone || !message) {
+        return res.status(400).send('Número de telefone e mensagem são obrigatórios');
+    }
+    try {
+        const url = `https://graph.facebook.com/v14.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+        const token = process.env.WHATSAPP_ACCESS_TOKEN;
+        const response = yield axios_1.default.post(url, {
+            messaging_product: 'whatsapp',
+            to: phone,
+            type: 'text',
+            text: { body: message },
+        }, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+        console.log('Mensagem enviada:', response.data);
+        res.status(200).send('Mensagem enviada com sucesso');
+    }
+    catch (error) {
+        if (axios_1.default.isAxiosError(error)) {
+            console.error('Erro ao enviar mensagem:', (_a = error.response) === null || _a === void 0 ? void 0 : _a.data);
+            res.status(500).send((_b = error.response) === null || _b === void 0 ? void 0 : _b.data);
+        }
+        else {
+            console.error('Erro ao enviar mensagem:', error);
+            res.status(500).send('Erro ao enviar mensagem');
+        }
+    }
+}));
+// Rota para buscar usuários
+app.get('/users', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const [rows] = yield database_1.default.execute('SELECT * FROM users');
+        res.json(rows);
+    }
+    catch (error) {
+        console.error('Erro ao buscar usuários:', error);
+        res.status(500).send('Erro ao buscar usuários');
+    }
+}));
+app.post('/users', newUser_1.addUser);
+// Rota para autenticar usuário
+app.post('/login', auth_1.authenticateUser);
+// Rota para buscar dados do usuário autenticado
+app.get('/me', auth_1.authenticateJWT, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const userId = req.user.id;
+        const [rows] = yield database_1.default.execute('SELECT id, name, email, position, department FROM users WHERE id = ?', [userId]);
+        const user = rows[0];
+        if (!user) {
+            return res.status(404).send('Usuário não encontrado');
+        }
+        res.json(user);
+    }
+    catch (error) {
+        console.error('Erro ao buscar dados do usuário:', error);
+        res.status(500).send('Erro ao buscar dados do usuário');
     }
 }));
 const PORT = process.env.PORT || 3005;

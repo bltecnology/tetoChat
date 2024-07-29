@@ -10,6 +10,7 @@ import Chat from './pages/chat';
 import Users from './pages/users';
 import Departments from './pages/departments';
 import Positions from './pages/positions';
+import QuickResponses from './pages/quickResponses'
 
 
 const AppRoutes: React.FC = () => {
@@ -26,6 +27,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/chat" element={<Chat />} />
         <Route path="/users" element={<Users />} />
         <Route path="/positions" element={<Positions />} />
+        <Route path="/quickResponses" element={<QuickResponses />} />
       </Routes>
     </Router>
   );

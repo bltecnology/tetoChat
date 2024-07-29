@@ -20,7 +20,6 @@ interface Contact {
 const Chat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [recipient, setRecipient] = useState('');
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
 
@@ -48,10 +47,10 @@ const Chat: React.FC = () => {
   }, []);
 
   const handleSendMessage = async () => {
-    if (newMessage.trim() && recipient.trim()) {
+    if (newMessage.trim() && selectedContact) {
       try {
         const response = await axios.post('http://localhost:3005/send', {
-          phone: recipient,
+          phone: selectedContact.id.toString(), // Use o ID do contato selecionado
           message: newMessage
         });
 
@@ -59,13 +58,12 @@ const Chat: React.FC = () => {
           id: Date.now(),
           content: newMessage,
           from_phone: 'me',
-          to_phone: recipient,
+          to_phone: selectedContact.id.toString(),
           timestamp: new Date().toISOString()
         };
 
         setMessages([...messages, sentMessage]);
         setNewMessage('');
-        setRecipient('');
 
         console.log('Mensagem enviada com sucesso:', response.data);
       } catch (error) {
@@ -111,7 +109,10 @@ const Chat: React.FC = () => {
             <>
               <div className="flex-grow bg-cover bg-center p-4 overflow-y-auto" style={{ backgroundImage: 'url(/path/to/background-image.png)' }}>
                 {messages
-                  .filter((message) => message.from_phone === selectedContact.id.toString() || message.to_phone === selectedContact.id.toString())
+                  .filter((message) => 
+                    message.from_phone === selectedContact.id.toString() || 
+                    message.to_phone === selectedContact.id.toString()
+                  )
                   .map((message) => (
                     <div key={message.id} className={`max-w-xs p-3 my-2 rounded-lg ${message.from_phone === 'me' ? 'ml-auto bg-green-200' : 'mr-auto bg-white'}`}>
                       {message.content}
