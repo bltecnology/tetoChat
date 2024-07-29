@@ -1,15 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (text: string) => void;
+    onSave: (name: string) => void;
 }
 
-const ModalDepartamentos: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) => {
-    const [text, setText] = React.useState('');
+const ModalDepartments: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) => {
+    const [name, setName] = useState('');
 
     if (!isOpen) return null;
+
+    const handleSave = () => {
+        onSave(name);
+        setName('');
+    };
 
     return (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
@@ -19,8 +24,8 @@ const ModalDepartamentos: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) =
                     type="text"
                     className="border p-2 mb-4 w-full"
                     placeholder="Digite o nome do departamento"
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                 />
                 <div className="flex justify-end">
                     <button
@@ -31,10 +36,7 @@ const ModalDepartamentos: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) =
                     </button>
                     <button
                         className="bg-blue-500 text-white px-4 py-2 mr-3"
-                        onClick={() => {
-                            onSave(text);
-                            setText('');
-                        }}
+                        onClick={handleSave}
                     >
                         Salvar
                     </button>
@@ -44,4 +46,4 @@ const ModalDepartamentos: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) =
     );
 };
 
-export default ModalDepartamentos;
+export default ModalDepartments;

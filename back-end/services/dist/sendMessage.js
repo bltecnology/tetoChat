@@ -13,19 +13,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
-const sendMessage = (phone, message) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    const url = `https://graph.facebook.com/v14.0/408476129004761/messages`; // Substitua 'YOUR_PHONE_NUMBER_ID'
-    const token = process.env.WHATSAPP_ACCESS_TOKEN; // Use a variável de ambiente
+const sendMessage = (phone, messageType, content) => __awaiter(void 0, void 0, void 0, function* () {
+    const token = process.env.WHATSAPP_ACCESS_TOKEN;
+    const phoneNumberId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
+    if (!phoneNumberId) {
+        throw new Error('WHATSAPP_BUSINESS_ACCOUNT_ID não está definido.');
+    }
+    const url = `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`;
+    const payload = {
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: phone,
+        type: messageType,
+        [messageType]: content
+    };
     try {
-        const response = yield axios_1.default.post(url, {
-            messaging_product: 'whatsapp',
-            to: phone,
-            type: 'text',
-            text: { body: message },
-        }, {
+        const response = yield axios_1.default.post(url, payload, {
             headers: {
-                'Authorization': `Bearer ${token}`,
+                Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json',
             },
         });
@@ -33,10 +38,10 @@ const sendMessage = (phone, message) => __awaiter(void 0, void 0, void 0, functi
     }
     catch (error) {
         if (axios_1.default.isAxiosError(error)) {
-            console.error('Erro ao enviar mensagem:', (_a = error.response) === null || _a === void 0 ? void 0 : _a.data);
+            console.error('Erro ao enviar mensagem:', error.response ? error.response.data : error.message);
         }
         else {
-            console.error('Erro ao enviar mensagem:', error);
+            console.error('Erro desconhecido:', error);
         }
     }
 });

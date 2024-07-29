@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { FiSend, FiMic, FiPaperclip } from 'react-icons/fi';
 import Header from '../components/header';
 
 interface Message {
@@ -8,6 +9,7 @@ interface Message {
   from_phone: string;
   to_phone: string;
   timestamp: string;
+  type: string;
 }
 
 interface Contact {
@@ -22,6 +24,9 @@ const Chat: React.FC = () => {
   const [newMessage, setNewMessage] = useState('');
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -46,24 +51,27 @@ const Chat: React.FC = () => {
     fetchContacts();
   }, []);
 
-  const handleSendMessage = async () => {
-    if (newMessage.trim() && selectedContact) {
+  const handleSendMessage = async (messageType: string, content: any) => {
+    if (selectedContact) {
       try {
-        const response = await axios.post('http://localhost:3005/send', {
-          phone: selectedContact.id.toString(), // Use o ID do contato selecionado
-          message: newMessage
+        const response = await axios.post('http://localhost:3005/send-message', {
+          phone: selectedContact.id.toString(),
+          messageType,
+          content,
         });
 
         const sentMessage: Message = {
           id: Date.now(),
-          content: newMessage,
+          content: content.body || content.link || content.fileName,
           from_phone: 'me',
           to_phone: selectedContact.id.toString(),
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          type: messageType,
         };
 
-        setMessages([...messages, sentMessage]);
+        setMessages((prevMessages) => [...prevMessages, sentMessage]);
         setNewMessage('');
+        setAudioBlob(null);
 
         console.log('Mensagem enviada com sucesso:', response.data);
       } catch (error) {
@@ -74,6 +82,67 @@ const Chat: React.FC = () => {
         }
       }
     }
+  };
+
+  const handleSendTextMessage = () => {
+    if (newMessage.trim() !== '') {
+      handleSendMessage('text', { body: newMessage });
+    }
+  };
+
+  const handleSendAudioMessage = async () => {
+    if (audioBlob) {
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'audioMessage.ogg');
+      
+      try {
+        const response = await axios.post('http://localhost:3005/upload', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        const { fileUrl } = response.data;
+        handleSendMessage('audio', { link: fileUrl });
+      } catch (error) {
+        console.error('Erro ao enviar áudio:', error);
+      }
+    }
+  };
+
+  const handleSendDocumentMessage = async (documentFile: File) => {
+    const formData = new FormData();
+    formData.append('file', documentFile);
+    
+    try {
+      const response = await axios.post('http://localhost:3005/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      const { fileUrl } = response.data;
+      handleSendMessage('document', { link: fileUrl, fileName: documentFile.name });
+    } catch (error) {
+      console.error('Erro ao enviar documento:', error);
+    }
+  };
+
+  const startRecording = () => {
+    setIsRecording(true);
+    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (event) => {
+        setAudioBlob(event.data);
+      };
+
+      mediaRecorder.start();
+    });
+  };
+
+  const stopRecording = () => {
+    setIsRecording(false);
+    mediaRecorderRef.current?.stop();
   };
 
   return (
@@ -119,7 +188,7 @@ const Chat: React.FC = () => {
                     </div>
                   ))}
               </div>
-              <div className="flex p-4 bg-white border-t border-gray-200">
+              <div className="flex items-center p-4 bg-white border-t border-gray-200">
                 <input
                   type="text"
                   value={newMessage}
@@ -128,11 +197,36 @@ const Chat: React.FC = () => {
                   className="flex-grow p-2 mr-2 border rounded"
                 />
                 <button
-                  onClick={handleSendMessage}
-                  className="p-2 bg-blue-500 text-white rounded"
+                  onClick={handleSendTextMessage}
+                  className="p-2 bg-blue-500 text-white rounded mr-2"
                 >
-                  Enviar
+                  <FiSend />
                 </button>
+                <button
+                  onMouseDown={startRecording}
+                  onMouseUp={stopRecording}
+                  className={`p-2 rounded ${isRecording ? 'bg-red-500' : 'bg-gray-200'} mr-2`}
+                >
+                  <FiMic />
+                </button>
+                {isRecording && (
+                  <button
+                    onClick={handleSendAudioMessage}
+                    className="p-2 bg-green-500 text-white rounded mr-2"
+                  >
+                    Enviar Áudio
+                  </button>
+                )}
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx"
+                  onChange={(e) => e.target.files && handleSendDocumentMessage(e.target.files[0])}
+                  className="hidden"
+                  id="document-upload"
+                />
+                <label htmlFor="document-upload" className="p-2 bg-gray-200 rounded cursor-pointer">
+                  <FiPaperclip />
+                </label>
               </div>
             </>
           ) : (

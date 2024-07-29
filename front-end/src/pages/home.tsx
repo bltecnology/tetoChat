@@ -19,7 +19,7 @@ const Home: React.FC = () => {
                         </Link>
                     </div>
                     <div className="col-span-3 flex justify-center my-6">
-                        <Link to="/departamentos">
+                        <Link to="/departments  ">
                             <ButtonCard icon={<FaTags />} text="Departamentos" />
                         </Link>
                     </div>

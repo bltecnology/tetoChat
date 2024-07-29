@@ -2,12 +2,14 @@ import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import axios from 'axios';
+import multer from 'multer';
+import path from 'path';
 import pool from './database';
 import dotenv from 'dotenv';
 import { addUser } from './newUser';
 import { authenticateUser, authenticateJWT } from './auth';
+import sendMessage from './sendMessage';
 import { RowDataPacket } from 'mysql2';
-import sendMessage from './sendMessage'; // Importando o sendMessage
 
 // Carregar variáveis de ambiente
 dotenv.config();
@@ -23,6 +25,17 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 const VERIFY_TOKEN = 'blchat';
+
+// Configuração do Multer para uploads de arquivos
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+const upload = multer({ storage });
 
 const getProfilePicture = async (phoneNumber: string): Promise<string | null> => {
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
@@ -160,21 +173,34 @@ app.get('/contacts', async (req: Request, res: Response) => {
 });
 
 // Rota para enviar mensagens
-app.post('/send', async (req: Request, res: Response) => {
-  const { phone, message } = req.body;
-
-  if (!phone || !message) {
-    return res.status(400).send('Número de telefone e mensagem são obrigatórios');
-  }
+app.post('/send-message', async (req, res) => {
+  const { phone, messageType, content } = req.body;
 
   try {
-    await sendMessage(phone, message);
-    res.status(200).send('Mensagem enviada com sucesso');
+    await sendMessage(phone, messageType, content);
+    res.status(200).send('Mensagem enviada com sucesso!');
   } catch (error) {
-    console.error('Erro ao enviar mensagem:', error);
-    res.status(500).send('Erro ao enviar mensagem');
+    if (axios.isAxiosError(error)) {
+      console.error('Erro ao enviar mensagem:', error.response ? error.response.data : error.message);
+      res.status(500).send('Erro ao enviar mensagem');
+    } else {
+      console.error('Erro desconhecido:', error);
+      res.status(500).send('Erro desconhecido');
+    }
   }
 });
+
+// Rota para fazer upload de arquivos
+app.post('/upload', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
+
+  const fileUrl = `http://localhost:${PORT}/uploads/${req.file.filename}`;
+  res.send({ fileUrl });
+});
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Rota para buscar usuários
 app.get('/users', async (req: Request, res: Response) => {

@@ -1,26 +1,44 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import Header from '../components/header';
 import Background from '../components/background';
 import { GrAdd, GrMoreVertical } from 'react-icons/gr';
 import MainContainer from '../components/mainContainer';
 import ModalDepartments from "../components/modalDepartments";
 
-interface Line {
-    text: string;
-    icon: React.ReactNode;
+interface Department {
+    id: number;
+    name: string;
 }
 
-const Departamentos: React.FC = () => {
-    const [lines, setLines] = useState<Line[]>([
-        { text: 'Orçamentos', icon: <GrMoreVertical /> }
-    ]);
+const Departments: React.FC = () => {
+    const [departments, setDepartments] = useState<Department[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const addLine = (text: string) => {
-        setLines([...lines, { text, icon: <GrMoreVertical /> }]);
-        setIsModalOpen(false);
+    useEffect(() => {
+        const fetchDepartments = async () => {
+            try {
+                const response = await axios.get('http://localhost:3005/departments');
+                setDepartments(response.data);
+            } catch (error) {
+                console.error('Erro ao buscar departamentos:', error);
+            }
+        };
+
+        fetchDepartments();
+    }, []);
+
+    const addDepartment = async (name: string) => {
+        try {
+            const response = await axios.post('http://localhost:3005/departments', { name });
+            setDepartments([...departments, response.data]);
+            setIsModalOpen(false);
+        } catch (error) {
+            console.error('Erro ao salvar departamento:', error);
+        }
     };
-    return(
+
+    return (
         <div>
             <Header />
             <Background
@@ -30,12 +48,12 @@ const Departamentos: React.FC = () => {
                 <MainContainer
                     p1="Nome"
                     p6="Ações"
-                    content = {
+                    content={
                         <div>
-                            {lines.map((line, index) => (
-                                <div key={index} className="flex justify-between items-center border-b py-2">
-                                    <div>{line.text}</div>
-                                    <div>{line.icon}</div>
+                            {departments.map((department) => (
+                                <div key={department.id} className="flex justify-between items-center border-b py-2">
+                                    <div>{department.name}</div>
+                                    <div><GrMoreVertical /></div>
                                 </div>
                             ))}
                         </div>
@@ -45,10 +63,10 @@ const Departamentos: React.FC = () => {
             <ModalDepartments
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onSave={addLine}
+                onSave={addDepartment}
             />
         </div>
-    )
+    );
 }
 
-export default Departamentos;
+export default Departments;

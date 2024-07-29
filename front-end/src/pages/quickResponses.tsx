@@ -1,41 +1,60 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import Header from '../components/header';
 import Background from '../components/background';
 import { GrAdd, GrMoreVertical } from 'react-icons/gr';
 import MainContainer from '../components/mainContainer';
 import ModalQuickResponses from "../components/modalQuickResponses";
 
-interface Line {
+interface QuickResponse {
+    id: number;
     text: string;
-    icon: React.ReactNode;
+    department: string;
 }
 
 const QuickResponses: React.FC = () => {
-    const [lines, setLines] = useState<Line[]>([
-        { text: 'Orçamentos', icon: <GrMoreVertical /> }
-    ]);
+    const [quickResponses, setQuickResponses] = useState<QuickResponse[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const addLine = (text: string) => {
-        setLines([...lines, { text, icon: <GrMoreVertical /> }]);
-        setIsModalOpen(false);
+    useEffect(() => {
+        const fetchQuickResponses = async () => {
+            try {
+                const response = await axios.get('http://localhost:3005/quickResponses');
+                setQuickResponses(response.data);
+            } catch (error) {
+                console.error('Erro ao buscar respostas rápidas:', error);
+            }
+        };
+
+        fetchQuickResponses();
+    }, []);
+
+    const addQuickResponse = async (text: string, department: string) => {
+        try {
+            const response = await axios.post('http://localhost:3005/quickResponses', { text, department });
+            setQuickResponses([...quickResponses, response.data]);
+            setIsModalOpen(false);
+        } catch (error) {
+            console.error('Erro ao salvar resposta rápida:', error);
+        }
     };
-    return(
+
+    return (
         <div>
             <Header />
             <Background
-             text="Respostas Rápidas"
-             btn1={<GrAdd onClick={() => setIsModalOpen(true)} />}
+                text="Respostas Rápidas"
+                btn1={<GrAdd onClick={() => setIsModalOpen(true)} />}
             >
-            <MainContainer
+                <MainContainer
                     p1="Mensagem"
                     p6="Ações"
-                    content = {
+                    content={
                         <div>
-                            {lines.map((line, index) => (
-                                <div key={index} className="flex justify-between items-center border-b py-2">
-                                    <div>{line.text}</div>
-                                    <div>{line.icon}</div>
+                            {quickResponses.map((response) => (
+                                <div key={response.id} className="flex justify-between items-center border-b py-2">
+                                    <div>{response.text} ({response.department})</div>
+                                    <div><GrMoreVertical /></div>
                                 </div>
                             ))}
                         </div>
@@ -45,7 +64,7 @@ const QuickResponses: React.FC = () => {
             <ModalQuickResponses
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onSave={addLine}
+                onSave={addQuickResponse}
             />
         </div>
     )

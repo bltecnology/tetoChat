@@ -20,7 +20,7 @@ const database_1 = __importDefault(require("./database"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const newUser_1 = require("./newUser");
 const auth_1 = require("./auth");
-const sendMessage_1 = __importDefault(require("./sendMessage")); // Importando o sendMessage
+const sendMessage_1 = __importDefault(require("./sendMessage"));
 // Carregar variáveis de ambiente
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -154,18 +154,21 @@ app.get('/contacts', (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 }));
 // Rota para enviar mensagens
-app.post('/send', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { phone, message } = req.body;
-    if (!phone || !message) {
-        return res.status(400).send('Número de telefone e mensagem são obrigatórios');
-    }
+app.post('/send-message', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { phone, messageType, content } = req.body;
     try {
-        yield (0, sendMessage_1.default)(phone, message);
-        res.status(200).send('Mensagem enviada com sucesso');
+        yield (0, sendMessage_1.default)(phone, messageType, content);
+        res.status(200).send('Mensagem enviada com sucesso!');
     }
     catch (error) {
-        console.error('Erro ao enviar mensagem:', error);
-        res.status(500).send('Erro ao enviar mensagem');
+        if (axios_1.default.isAxiosError(error)) {
+            console.error('Erro ao enviar mensagem:', error.response ? error.response.data : error.message);
+            res.status(500).send('Erro ao enviar mensagem');
+        }
+        else {
+            console.error('Erro desconhecido:', error);
+            res.status(500).send('Erro desconhecido');
+        }
     }
 }));
 // Rota para buscar usuários
