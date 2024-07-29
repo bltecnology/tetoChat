@@ -12,6 +12,6 @@
     "@types/node": "^20.14.11"
   },
   "scripts": {
-    "start": "cd services && tsc && node dist/server.js"
+    "start": "cd services && npm install & tsc && node dist/server.js"
   }
 }
