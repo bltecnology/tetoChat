@@ -18,7 +18,7 @@ app.use(bodyParser.json());
 
 const corsOptions = {
   origin: 'http://localhost:5173',
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));
@@ -32,7 +32,7 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
-  }
+  },
 });
 const upload = multer({ storage });
 
@@ -48,11 +48,11 @@ const getProfilePicture = async (phoneNumber: string): Promise<string | null> =>
   try {
     const response = await axios.get(`https://graph.facebook.com/v13.0/${whatsappBusinessAccountId}/contacts`, {
       params: {
-        phone_number: phoneNumber
+        phone_number: phoneNumber,
       },
       headers: {
-        'Authorization': `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
 
     const profilePictureUrl = response.data.data[0]?.profile_picture_url || null;
@@ -84,36 +84,25 @@ app.get('/webhook', (req: Request, res: Response) => {
   }
 });
 
-app.post('/webhook', async (req: Request, res: Response) => {
+app.post('/webhook', (req: Request, res: Response) => {
   const body = req.body;
 
   console.log('Recebido webhook:', JSON.stringify(body, null, 2));
 
-  if (body.object === 'whatsapp_business_account') {
-    body.entry.forEach((entry: any) => {
-      entry.changes.forEach(async (change: any) => {
-        if (change.value.messages) {
-          change.value.messages.forEach(async (message: any) => {
-            console.log('Mensagem recebida:', message);
+  if (body.field === 'messages' && body.value) {
+    body.value.messages.forEach(async (message: any) => {
+      console.log('Mensagem recebida:', message);
 
-            // Verifique se a mensagem é de texto
-            const content = message.text?.body || '';
-            const fromPhone = message.from || '';
-            const toPhone = message.to || '';
-
-            // Salvar a mensagem no banco de dados
-            try {
-              await pool.execute(
-                'INSERT INTO messages (content, from_phone, to_phone, timestamp) VALUES (?, ?, ?, ?)',
-                [content, fromPhone, toPhone, new Date().toISOString()]
-              );
-              console.log('Mensagem salva no banco de dados.');
-            } catch (error) {
-              console.error('Erro ao salvar mensagem no banco de dados:', error);
-            }
-          });
-        }
-      });
+      // Salvar a mensagem no banco de dados
+      try {
+        await pool.execute(
+          'INSERT INTO messages (content, from_phone, to_phone, timestamp) VALUES (?, ?, ?, ?)',
+          [message.text.body, message.from, body.value.metadata.display_phone_number, new Date(message.timestamp * 1000).toISOString()]
+        );
+        console.log('Mensagem salva no banco de dados.');
+      } catch (error) {
+        console.error('Erro ao salvar mensagem no banco de dados:', error);
+      }
     });
     res.status(200).send('EVENT_RECEIVED');
   } else {
@@ -122,14 +111,14 @@ app.post('/webhook', async (req: Request, res: Response) => {
 });
 
 app.get('/messages', async (req: Request, res: Response) => {
-  const { contact } = req.query;
+  const { phone } = req.query;
 
-  if (!contact) {
-    return res.status(400).send('Número de telefone do contato é obrigatório');
+  if (!phone) {
+    return res.status(400).send('Número de telefone é obrigatório');
   }
 
   try {
-    const [rows] = await pool.execute<RowDataPacket[]>('SELECT * FROM messages WHERE from_phone = ? OR to_phone = ?', [contact, contact]);
+    const [rows] = await pool.execute<RowDataPacket[]>('SELECT * FROM messages WHERE from_phone = ? OR to_phone = ?', [phone, phone]);
     res.json(rows);
   } catch (error) {
     console.error('Erro ao buscar mensagens:', error);

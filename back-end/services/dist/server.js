@@ -89,38 +89,27 @@ app.get('/webhook', (req, res) => {
         res.status(400).send('Bad Request');
     }
 });
-app.post('/webhook', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post('/webhook', (req, res) => {
     const body = req.body;
     console.log('Recebido webhook:', JSON.stringify(body, null, 2));
-    if (body.object === 'whatsapp_business_account') {
-        body.entry.forEach((entry) => {
-            entry.changes.forEach((change) => __awaiter(void 0, void 0, void 0, function* () {
-                if (change.value.messages) {
-                    change.value.messages.forEach((message) => __awaiter(void 0, void 0, void 0, function* () {
-                        var _a;
-                        console.log('Mensagem recebida:', message);
-                        // Verifique se a mensagem é de texto
-                        const content = ((_a = message.text) === null || _a === void 0 ? void 0 : _a.body) || '';
-                        const fromPhone = message.from || '';
-                        const toPhone = message.to || '';
-                        // Salvar a mensagem no banco de dados
-                        try {
-                            yield database_1.default.execute('INSERT INTO messages (content, from_phone, to_phone, timestamp) VALUES (?, ?, ?, ?)', [content, fromPhone, toPhone, new Date().toISOString()]);
-                            console.log('Mensagem salva no banco de dados.');
-                        }
-                        catch (error) {
-                            console.error('Erro ao salvar mensagem no banco de dados:', error);
-                        }
-                    }));
-                }
-            }));
-        });
+    if (body.field === 'messages' && body.value) {
+        body.value.messages.forEach((message) => __awaiter(void 0, void 0, void 0, function* () {
+            console.log('Mensagem recebida:', message);
+            // Salvar a mensagem no banco de dados
+            try {
+                yield database_1.default.execute('INSERT INTO messages (content, from_phone, to_phone, timestamp) VALUES (?, ?, ?, ?)', [message.text.body, message.from, body.value.metadata.display_phone_number, new Date(message.timestamp * 1000).toISOString()]);
+                console.log('Mensagem salva no banco de dados.');
+            }
+            catch (error) {
+                console.error('Erro ao salvar mensagem no banco de dados:', error);
+            }
+        }));
         res.status(200).send('EVENT_RECEIVED');
     }
     else {
         res.sendStatus(404);
     }
-}));
+});
 app.get('/messages', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { contact } = req.query;
     if (!contact) {
