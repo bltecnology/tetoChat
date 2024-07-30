@@ -13,22 +13,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
-const sendMessage = (phone, messageType, content) => __awaiter(void 0, void 0, void 0, function* () {
+const sendMessage = (phone, message) => __awaiter(void 0, void 0, void 0, function* () {
     const token = process.env.WHATSAPP_ACCESS_TOKEN;
     const phoneNumberId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
-    if (!phoneNumberId) {
-        throw new Error('WHATSAPP_BUSINESS_ACCOUNT_ID não está definido.');
+    if (!phoneNumberId || !token) {
+        throw new Error('WHATSAPP_BUSINESS_ACCOUNT_ID ou WHATSAPP_ACCESS_TOKEN não estão definidos.');
     }
     const url = `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`;
-    const payload = {
+    const data = {
         messaging_product: 'whatsapp',
-        recipient_type: 'individual',
         to: phone,
-        type: messageType,
-        [messageType]: content
+        type: 'text',
+        text: {
+            preview_url: false,
+            body: message,
+        },
     };
     try {
-        const response = yield axios_1.default.post(url, payload, {
+        const response = yield axios_1.default.post(url, data, {
             headers: {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json',

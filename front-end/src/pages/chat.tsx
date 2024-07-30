@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FiSend, FiMic, FiPaperclip } from 'react-icons/fi';
+import { FiSend } from 'react-icons/fi';
 import Header from '../components/header';
 
 interface Message {
@@ -15,6 +15,7 @@ interface Message {
 interface Contact {
   id: number;
   name: string;
+  phone: string;
   profilePic: string;
   lastMessage: string;
 }
@@ -24,20 +25,8 @@ const Chat: React.FC = () => {
   const [newMessage, setNewMessage] = useState('');
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
   useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const response = await axios.get('http://localhost:3005/messages');
-        setMessages(response.data);
-      } catch (error) {
-        console.error('Erro ao buscar mensagens:', error);
-      }
-    };
-
     const fetchContacts = async () => {
       try {
         const response = await axios.get('http://localhost:3005/contacts');
@@ -47,33 +36,45 @@ const Chat: React.FC = () => {
       }
     };
 
-    fetchMessages();
     fetchContacts();
   }, []);
 
-  const handleSendMessage = async (messageType: string, content: any) => {
+  useEffect(() => {
+    if (selectedContact) {
+      const fetchMessages = async () => {
+        try {
+          const response = await axios.get(`http://localhost:3005/messages?contact=${selectedContact.phone}`);
+          setMessages(response.data);
+        } catch (error) {
+          console.error('Erro ao buscar mensagens:', error);
+        }
+      };
+
+      fetchMessages();
+    }
+  }, [selectedContact]);
+
+  const handleSendMessage = async () => {
     if (selectedContact) {
       try {
-        const response = await axios.post('http://localhost:3005/send-message', {
-          phone: selectedContact.id.toString(),
-          messageType,
-          content,
+        await axios.post('http://localhost:3005/send', {
+          phone: selectedContact.phone,
+          message: newMessage,
         });
 
         const sentMessage: Message = {
           id: Date.now(),
-          content: content.body || content.link || content.fileName,
+          content: newMessage,
           from_phone: 'me',
-          to_phone: selectedContact.id.toString(),
+          to_phone: selectedContact.phone,
           timestamp: new Date().toISOString(),
-          type: messageType,
+          type: 'text',
         };
 
         setMessages((prevMessages) => [...prevMessages, sentMessage]);
         setNewMessage('');
-        setAudioBlob(null);
 
-        console.log('Mensagem enviada com sucesso:', response.data);
+        console.log('Mensagem enviada com sucesso');
       } catch (error) {
         if (axios.isAxiosError(error)) {
           console.error('Erro ao enviar mensagem:', error.response?.data);
@@ -82,67 +83,6 @@ const Chat: React.FC = () => {
         }
       }
     }
-  };
-
-  const handleSendTextMessage = () => {
-    if (newMessage.trim() !== '') {
-      handleSendMessage('text', { body: newMessage });
-    }
-  };
-
-  const handleSendAudioMessage = async () => {
-    if (audioBlob) {
-      const formData = new FormData();
-      formData.append('file', audioBlob, 'audioMessage.ogg');
-      
-      try {
-        const response = await axios.post('http://localhost:3005/upload', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-        const { fileUrl } = response.data;
-        handleSendMessage('audio', { link: fileUrl });
-      } catch (error) {
-        console.error('Erro ao enviar áudio:', error);
-      }
-    }
-  };
-
-  const handleSendDocumentMessage = async (documentFile: File) => {
-    const formData = new FormData();
-    formData.append('file', documentFile);
-    
-    try {
-      const response = await axios.post('http://localhost:3005/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      const { fileUrl } = response.data;
-      handleSendMessage('document', { link: fileUrl, fileName: documentFile.name });
-    } catch (error) {
-      console.error('Erro ao enviar documento:', error);
-    }
-  };
-
-  const startRecording = () => {
-    setIsRecording(true);
-    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-
-      mediaRecorder.ondataavailable = (event) => {
-        setAudioBlob(event.data);
-      };
-
-      mediaRecorder.start();
-    });
-  };
-
-  const stopRecording = () => {
-    setIsRecording(false);
-    mediaRecorderRef.current?.stop();
   };
 
   return (
@@ -179,8 +119,8 @@ const Chat: React.FC = () => {
               <div className="flex-grow bg-cover bg-center p-4 overflow-y-auto" style={{ backgroundImage: 'url(/path/to/background-image.png)' }}>
                 {messages
                   .filter((message) => 
-                    message.from_phone === selectedContact.id.toString() || 
-                    message.to_phone === selectedContact.id.toString()
+                    message.from_phone === selectedContact.phone || 
+                    message.to_phone === selectedContact.phone
                   )
                   .map((message) => (
                     <div key={message.id} className={`max-w-xs p-3 my-2 rounded-lg ${message.from_phone === 'me' ? 'ml-auto bg-green-200' : 'mr-auto bg-white'}`}>
@@ -197,36 +137,11 @@ const Chat: React.FC = () => {
                   className="flex-grow p-2 mr-2 border rounded"
                 />
                 <button
-                  onClick={handleSendTextMessage}
+                  onClick={handleSendMessage}
                   className="p-2 bg-blue-500 text-white rounded mr-2"
                 >
                   <FiSend />
                 </button>
-                <button
-                  onMouseDown={startRecording}
-                  onMouseUp={stopRecording}
-                  className={`p-2 rounded ${isRecording ? 'bg-red-500' : 'bg-gray-200'} mr-2`}
-                >
-                  <FiMic />
-                </button>
-                {isRecording && (
-                  <button
-                    onClick={handleSendAudioMessage}
-                    className="p-2 bg-green-500 text-white rounded mr-2"
-                  >
-                    Enviar Áudio
-                  </button>
-                )}
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx,.xls,.xlsx"
-                  onChange={(e) => e.target.files && handleSendDocumentMessage(e.target.files[0])}
-                  className="hidden"
-                  id="document-upload"
-                />
-                <label htmlFor="document-upload" className="p-2 bg-gray-200 rounded cursor-pointer">
-                  <FiPaperclip />
-                </label>
               </div>
             </>
           ) : (

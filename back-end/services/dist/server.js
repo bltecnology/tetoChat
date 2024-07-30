@@ -16,11 +16,12 @@ const express_1 = __importDefault(require("express"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const cors_1 = __importDefault(require("cors"));
 const axios_1 = __importDefault(require("axios"));
+const multer_1 = __importDefault(require("multer"));
+const path_1 = __importDefault(require("path"));
 const database_1 = __importDefault(require("./database"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const newUser_1 = require("./newUser");
 const auth_1 = require("./auth");
-const sendMessage_1 = __importDefault(require("./sendMessage"));
 // Carregar variáveis de ambiente
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -31,6 +32,16 @@ const corsOptions = {
 };
 app.use((0, cors_1.default)(corsOptions));
 const VERIFY_TOKEN = 'blchat';
+// Configuração do Multer para uploads de arquivos
+const storage = multer_1.default.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/');
+    },
+    filename: (req, file, cb) => {
+        cb(null, `${Date.now()}-${file.originalname}`);
+    }
+});
+const upload = (0, multer_1.default)({ storage });
 const getProfilePicture = (phoneNumber) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const token = process.env.WHATSAPP_ACCESS_TOKEN;
@@ -78,7 +89,7 @@ app.get('/webhook', (req, res) => {
         res.status(400).send('Bad Request');
     }
 });
-app.post('/webhook', (req, res) => {
+app.post('/webhook', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const body = req.body;
     console.log('Recebido webhook:', JSON.stringify(body, null, 2));
     if (body.object === 'whatsapp_business_account') {
@@ -86,10 +97,15 @@ app.post('/webhook', (req, res) => {
             entry.changes.forEach((change) => __awaiter(void 0, void 0, void 0, function* () {
                 if (change.value.messages) {
                     change.value.messages.forEach((message) => __awaiter(void 0, void 0, void 0, function* () {
+                        var _a;
                         console.log('Mensagem recebida:', message);
+                        // Verifique se a mensagem é de texto
+                        const content = ((_a = message.text) === null || _a === void 0 ? void 0 : _a.body) || '';
+                        const fromPhone = message.from || '';
+                        const toPhone = message.to || '';
                         // Salvar a mensagem no banco de dados
                         try {
-                            yield database_1.default.execute('INSERT INTO messages (content, from_phone, to_phone, timestamp) VALUES (?, ?, ?, ?)', [message.text.body, message.from, message.to, new Date().toISOString()]);
+                            yield database_1.default.execute('INSERT INTO messages (content, from_phone, to_phone, timestamp) VALUES (?, ?, ?, ?)', [content, fromPhone, toPhone, new Date().toISOString()]);
                             console.log('Mensagem salva no banco de dados.');
                         }
                         catch (error) {
@@ -104,10 +120,14 @@ app.post('/webhook', (req, res) => {
     else {
         res.sendStatus(404);
     }
-});
+}));
 app.get('/messages', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { contact } = req.query;
+    if (!contact) {
+        return res.status(400).send('Número de telefone do contato é obrigatório');
+    }
     try {
-        const [rows] = yield database_1.default.execute('SELECT * FROM messages');
+        const [rows] = yield database_1.default.execute('SELECT * FROM messages WHERE from_phone = ? OR to_phone = ?', [contact, contact]);
         res.json(rows);
     }
     catch (error) {
@@ -154,23 +174,53 @@ app.get('/contacts', (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 }));
 // Rota para enviar mensagens
-app.post('/send-message', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { phone, messageType, content } = req.body;
+app.post('/send', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const { phone, message } = req.body;
+    if (!phone || !message) {
+        return res.status(400).send('Número de telefone e mensagem são obrigatórios');
+    }
     try {
-        yield (0, sendMessage_1.default)(phone, messageType, content);
-        res.status(200).send('Mensagem enviada com sucesso!');
+        const url = `https://graph.facebook.com/v20.0/${process.env.WHATSAPP_BUSINESS_ACCOUNT_ID}/messages`;
+        const token = process.env.WHATSAPP_ACCESS_TOKEN;
+        const data = {
+            messaging_product: 'whatsapp',
+            to: phone,
+            type: 'text',
+            text: {
+                preview_url: false,
+                body: message,
+            },
+        };
+        const response = yield axios_1.default.post(url, data, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+        console.log('Mensagem enviada:', response.data);
+        res.status(200).send('Mensagem enviada com sucesso');
     }
     catch (error) {
         if (axios_1.default.isAxiosError(error)) {
-            console.error('Erro ao enviar mensagem:', error.response ? error.response.data : error.message);
+            console.error('Erro ao enviar mensagem:', (_a = error.response) === null || _a === void 0 ? void 0 : _a.data);
             res.status(500).send('Erro ao enviar mensagem');
         }
         else {
-            console.error('Erro desconhecido:', error);
-            res.status(500).send('Erro desconhecido');
+            console.error('Erro ao enviar mensagem:', error);
+            res.status(500).send('Erro ao enviar mensagem');
         }
     }
 }));
+// Rota para fazer upload de arquivos
+app.post('/upload', upload.single('file'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).send('No file uploaded.');
+    }
+    const fileUrl = `http://localhost:${PORT}/uploads/${req.file.filename}`;
+    res.send({ fileUrl });
+});
+app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, 'uploads')));
 // Rota para buscar usuários
 app.get('/users', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {

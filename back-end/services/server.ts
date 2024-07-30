@@ -8,7 +8,6 @@ import pool from './database';
 import dotenv from 'dotenv';
 import { addUser } from './newUser';
 import { authenticateUser, authenticateJWT } from './auth';
-import sendMessage from './sendMessage';
 import { RowDataPacket } from 'mysql2';
 
 // Carregar variáveis de ambiente
@@ -85,7 +84,7 @@ app.get('/webhook', (req: Request, res: Response) => {
   }
 });
 
-app.post('/webhook', (req: Request, res: Response) => {
+app.post('/webhook', async (req: Request, res: Response) => {
   const body = req.body;
 
   console.log('Recebido webhook:', JSON.stringify(body, null, 2));
@@ -97,11 +96,16 @@ app.post('/webhook', (req: Request, res: Response) => {
           change.value.messages.forEach(async (message: any) => {
             console.log('Mensagem recebida:', message);
 
+            // Verifique se a mensagem é de texto
+            const content = message.text?.body || '';
+            const fromPhone = message.from || '';
+            const toPhone = message.to || '';
+
             // Salvar a mensagem no banco de dados
             try {
               await pool.execute(
                 'INSERT INTO messages (content, from_phone, to_phone, timestamp) VALUES (?, ?, ?, ?)',
-                [message.text.body, message.from, message.to, new Date().toISOString()]
+                [content, fromPhone, toPhone, new Date().toISOString()]
               );
               console.log('Mensagem salva no banco de dados.');
             } catch (error) {
@@ -118,8 +122,14 @@ app.post('/webhook', (req: Request, res: Response) => {
 });
 
 app.get('/messages', async (req: Request, res: Response) => {
+  const { contact } = req.query;
+
+  if (!contact) {
+    return res.status(400).send('Número de telefone do contato é obrigatório');
+  }
+
   try {
-    const [rows] = await pool.execute<RowDataPacket[]>('SELECT * FROM messages');
+    const [rows] = await pool.execute<RowDataPacket[]>('SELECT * FROM messages WHERE from_phone = ? OR to_phone = ?', [contact, contact]);
     res.json(rows);
   } catch (error) {
     console.error('Erro ao buscar mensagens:', error);
@@ -173,19 +183,43 @@ app.get('/contacts', async (req: Request, res: Response) => {
 });
 
 // Rota para enviar mensagens
-app.post('/send-message', async (req, res) => {
-  const { phone, messageType, content } = req.body;
+app.post('/send', async (req: Request, res: Response) => {
+  const { phone, message } = req.body;
+
+  if (!phone || !message) {
+    return res.status(400).send('Número de telefone e mensagem são obrigatórios');
+  }
 
   try {
-    await sendMessage(phone, messageType, content);
-    res.status(200).send('Mensagem enviada com sucesso!');
+    const url = `https://graph.facebook.com/v20.0/${process.env.WHATSAPP_BUSINESS_ACCOUNT_ID}/messages`;
+    const token = process.env.WHATSAPP_ACCESS_TOKEN;
+
+    const data = {
+      messaging_product: 'whatsapp',
+      to: phone,
+      type: 'text',
+      text: {
+        preview_url: false,
+        body: message,
+      },
+    };
+
+    const response = await axios.post(url, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    console.log('Mensagem enviada:', response.data);
+    res.status(200).send('Mensagem enviada com sucesso');
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error('Erro ao enviar mensagem:', error.response ? error.response.data : error.message);
+      console.error('Erro ao enviar mensagem:', error.response?.data);
       res.status(500).send('Erro ao enviar mensagem');
     } else {
-      console.error('Erro desconhecido:', error);
-      res.status(500).send('Erro desconhecido');
+      console.error('Erro ao enviar mensagem:', error);
+      res.status(500).send('Erro ao enviar mensagem');
     }
   }
 });
