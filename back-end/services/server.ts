@@ -9,6 +9,7 @@ import dotenv from 'dotenv';
 import { addUser } from './newUser';
 import { authenticateUser, authenticateJWT } from './auth';
 import { RowDataPacket } from 'mysql2';
+import moment from 'moment';  // Adicione esta linha para importar o moment
 
 // Carregar variáveis de ambiente
 dotenv.config();
@@ -65,11 +66,14 @@ app.post('/webhook', async (req: Request, res: Response) => {
           for (const message of change.value.messages) {
             console.log('Mensagem recebida:', message);
 
+            // Converta o timestamp para o formato MySQL
+            const mysqlTimestamp = moment.unix(message.timestamp).format('YYYY-MM-DD HH:mm:ss');
+
             // Salvar a mensagem no banco de dados
             try {
               await pool.execute(
                 'INSERT INTO messages (content, from_phone, to_phone, timestamp) VALUES (?, ?, ?, ?)',
-                [message.text.body, message.from, change.value.metadata.phone_number_id, new Date().toISOString()]
+                [message.text.body, message.from, change.value.metadata.phone_number_id, mysqlTimestamp]
               );
               console.log('Mensagem salva no banco de dados.');
             } catch (error) {
