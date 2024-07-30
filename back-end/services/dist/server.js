@@ -28,7 +28,7 @@ const app = (0, express_1.default)();
 app.use(body_parser_1.default.json());
 const corsOptions = {
     origin: 'http://localhost:5173',
-    optionsSuccessStatus: 200
+    optionsSuccessStatus: 200,
 };
 app.use((0, cors_1.default)(corsOptions));
 const VERIFY_TOKEN = 'blchat';
@@ -39,7 +39,7 @@ const storage = multer_1.default.diskStorage({
     },
     filename: (req, file, cb) => {
         cb(null, `${Date.now()}-${file.originalname}`);
-    }
+    },
 });
 const upload = (0, multer_1.default)({ storage });
 const getProfilePicture = (phoneNumber) => __awaiter(void 0, void 0, void 0, function* () {
@@ -53,11 +53,11 @@ const getProfilePicture = (phoneNumber) => __awaiter(void 0, void 0, void 0, fun
     try {
         const response = yield axios_1.default.get(`https://graph.facebook.com/v13.0/${whatsappBusinessAccountId}/contacts`, {
             params: {
-                phone_number: phoneNumber
+                phone_number: phoneNumber,
             },
             headers: {
-                'Authorization': `Bearer ${token}`
-            }
+                Authorization: `Bearer ${token}`,
+            },
         });
         const profilePictureUrl = ((_a = response.data.data[0]) === null || _a === void 0 ? void 0 : _a.profile_picture_url) || null;
         return profilePictureUrl;
@@ -111,12 +111,12 @@ app.post('/webhook', (req, res) => {
     }
 });
 app.get('/messages', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { contact } = req.query;
-    if (!contact) {
-        return res.status(400).send('Número de telefone do contato é obrigatório');
+    const { phone } = req.query;
+    if (!phone) {
+        return res.status(400).send('Número de telefone é obrigatório');
     }
     try {
-        const [rows] = yield database_1.default.execute('SELECT * FROM messages WHERE from_phone = ? OR to_phone = ?', [contact, contact]);
+        const [rows] = yield database_1.default.execute('SELECT * FROM messages WHERE from_phone = ? OR to_phone = ?', [phone, phone]);
         res.json(rows);
     }
     catch (error) {
