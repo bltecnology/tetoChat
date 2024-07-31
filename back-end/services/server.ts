@@ -101,14 +101,14 @@ app.get("/webhook", (req: Request, res: Response) => {
 app.post("/webhook", (req: Request, res: Response) => {
   const body = req.body;
 
-  console.log("Recebido webhook:", JSON.stringify(body, null, 2));
+  // console.log("Recebido webhook:", JSON.stringify(body, null, 2));
 
   if (body.object === "whatsapp_business_account") {
     body.entry.forEach((entry: any) => {
       entry.changes.forEach(async (change: any) => {
         if (change.value.messages) {
           change.value.messages.forEach(async (message: any) => {
-            console.log("Mensagem recebida:", message);
+            // console.log("Mensagem recebida:", message);
             // Salvar a mensagem no banco de dados
             try {
               const timestamp = moment
@@ -121,7 +121,7 @@ app.post("/webhook", (req: Request, res: Response) => {
               console.log("Mensagem salva no banco de dados.");
               res.status(200).send("top");
             } catch (error) {
-              console.log("Erro ao salvar mensagem no banco de dados:", error);
+              console.log("Erro ao salvar mensagem no banco de dados:");
               res.status(404).send("paia");
             }
           });
