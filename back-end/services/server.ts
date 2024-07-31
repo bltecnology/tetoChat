@@ -121,22 +121,19 @@ app.post("/webhook", (req: Request, res: Response) => {
               console.log("Mensagem salva no banco de dados.");
               res.status(200).send("top");
             } catch (error) {
-              console.error(
-                "Erro ao salvar mensagem no banco de dados:",
-                error
-              );
+              console.log("Erro ao salvar mensagem no banco de dados:", error);
               res.status(404).send("paia");
-
             }
           });
         }
       });
     });
     res.status(200).send("EVENT_RECEIVED");
+    console.log("Erro ao salvar mensagem no banco de dados:");
   } else {
     res.sendStatus(404);
     res.status(404).send("paia");
-
+    console.log("Erro ao salvar mensagem no banco de dados:");
   }
 });
 
