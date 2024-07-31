@@ -22,6 +22,7 @@ const database_1 = __importDefault(require("./database"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const newUser_1 = require("./newUser");
 const auth_1 = require("./auth");
+const moment_1 = __importDefault(require("moment")); // Adicione esta linha para importar o moment
 // Carregar variáveis de ambiente
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -68,9 +69,11 @@ app.post('/webhook', (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 if (change.value.messages) {
                     for (const message of change.value.messages) {
                         console.log('Mensagem recebida:', message);
+                        // Converta o timestamp para o formato MySQL
+                        const mysqlTimestamp = moment_1.default.unix(message.timestamp).format('YYYY-MM-DD HH:mm:ss');
                         // Salvar a mensagem no banco de dados
                         try {
-                            yield database_1.default.execute('INSERT INTO messages (content, from_phone, to_phone, timestamp) VALUES (?, ?, ?, ?)', [message.text.body, message.from, change.value.metadata.phone_number_id, new Date().toISOString()]);
+                            yield database_1.default.execute('INSERT INTO messages (content, from_phone, to_phone, timestamp) VALUES (?, ?, ?, ?)', [message.text.body, message.from, change.value.metadata.phone_number_id, mysqlTimestamp]);
                             console.log('Mensagem salva no banco de dados.');
                         }
                         catch (error) {
