@@ -9,7 +9,7 @@ import dotenv from 'dotenv';
 import { addUser } from './newUser';
 import { authenticateUser, authenticateJWT } from './auth';
 import { RowDataPacket } from 'mysql2';
-import moment from 'moment';  // Adicione esta linha para importar o moment
+import moment from 'moment';
 
 // Carregar variáveis de ambiente
 dotenv.config();
@@ -37,6 +37,37 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+const getProfilePicture = async (phoneNumber: string): Promise<string | null> => {
+  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+  const whatsappBusinessAccountId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
+
+  if (!token || !whatsappBusinessAccountId) {
+    console.error("As variáveis de ambiente WHATSAPP_ACCESS_TOKEN e WHATSAPP_BUSINESS_ACCOUNT_ID são necessárias.");
+    throw new Error("As variáveis de ambiente WHATSAPP_ACCESS_TOKEN e WHATSAPP_BUSINESS_ACCOUNT_ID são necessárias.");
+  }
+
+  try {
+    const response = await axios.get(`https://graph.facebook.com/v13.0/${whatsappBusinessAccountId}/contacts`, {
+      params: {
+        phone_number: phoneNumber
+      },
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    const profilePictureUrl = response.data.data[0]?.profile_picture_url || null;
+    return profilePictureUrl;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error('Erro ao obter a imagem do perfil:', error.response ? error.response.data : error.message);
+    } else {
+      console.error('Erro desconhecido ao obter a imagem do perfil:', error);
+    }
+    throw error;
+  }
+};
+
 app.get('/webhook', (req: Request, res: Response) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -54,35 +85,33 @@ app.get('/webhook', (req: Request, res: Response) => {
   }
 });
 
-app.post('/webhook', async (req: Request, res: Response) => {
+app.post('/webhook', (req: Request, res: Response) => {
   const body = req.body;
 
   console.log('Recebido webhook:', JSON.stringify(body, null, 2));
 
   if (body.object === 'whatsapp_business_account') {
-    for (const entry of body.entry) {
-      for (const change of entry.changes) {
+    body.entry.forEach((entry: any) => {
+      entry.changes.forEach(async (change: any) => {
         if (change.value.messages) {
-          for (const message of change.value.messages) {
+          change.value.messages.forEach(async (message: any) => {
             console.log('Mensagem recebida:', message);
-
-            // Converta o timestamp para o formato MySQL
-            const mysqlTimestamp = moment.unix(message.timestamp).format('YYYY-MM-DD HH:mm:ss');
 
             // Salvar a mensagem no banco de dados
             try {
+              const timestamp = moment.unix(message.timestamp).format('YYYY-MM-DD HH:mm:ss');
               await pool.execute(
                 'INSERT INTO messages (content, from_phone, to_phone, timestamp) VALUES (?, ?, ?, ?)',
-                [message.text.body, message.from, change.value.metadata.phone_number_id, mysqlTimestamp]
+                [message.text.body, message.from, entry.id, timestamp]
               );
               console.log('Mensagem salva no banco de dados.');
             } catch (error) {
               console.error('Erro ao salvar mensagem no banco de dados:', error);
             }
-          }
+          });
         }
-      }
-    }
+      });
+    });
     res.status(200).send('EVENT_RECEIVED');
   } else {
     res.sendStatus(404);
@@ -99,7 +128,20 @@ app.get('/messages', async (req: Request, res: Response) => {
   }
 });
 
+app.get('/profile-picture', async (req: Request, res: Response) => {
+  const { phone } = req.query;
 
+  if (!phone) {
+    return res.status(400).send('Número de telefone é obrigatório');
+  }
+
+  try {
+    const profilePictureUrl = await getProfilePicture(phone as string);
+    res.json({ profilePictureUrl });
+  } catch (error) {
+    res.status(500).send('Erro ao obter a imagem do perfil');
+  }
+});
 
 app.post('/contacts', async (req: Request, res: Response) => {
   const { name, phone, tag, note, cpf, rg, email } = req.body;

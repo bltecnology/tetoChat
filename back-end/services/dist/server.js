@@ -22,7 +22,7 @@ const database_1 = __importDefault(require("./database"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const newUser_1 = require("./newUser");
 const auth_1 = require("./auth");
-const moment_1 = __importDefault(require("moment")); // Adicione esta linha para importar o moment
+const moment_1 = __importDefault(require("moment"));
 // Carregar variáveis de ambiente
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -43,6 +43,36 @@ const storage = multer_1.default.diskStorage({
     }
 });
 const upload = (0, multer_1.default)({ storage });
+const getProfilePicture = (phoneNumber) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const token = process.env.WHATSAPP_ACCESS_TOKEN;
+    const whatsappBusinessAccountId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
+    if (!token || !whatsappBusinessAccountId) {
+        console.error("As variáveis de ambiente WHATSAPP_ACCESS_TOKEN e WHATSAPP_BUSINESS_ACCOUNT_ID são necessárias.");
+        throw new Error("As variáveis de ambiente WHATSAPP_ACCESS_TOKEN e WHATSAPP_BUSINESS_ACCOUNT_ID são necessárias.");
+    }
+    try {
+        const response = yield axios_1.default.get(`https://graph.facebook.com/v13.0/${whatsappBusinessAccountId}/contacts`, {
+            params: {
+                phone_number: phoneNumber
+            },
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        const profilePictureUrl = ((_a = response.data.data[0]) === null || _a === void 0 ? void 0 : _a.profile_picture_url) || null;
+        return profilePictureUrl;
+    }
+    catch (error) {
+        if (axios_1.default.isAxiosError(error)) {
+            console.error('Erro ao obter a imagem do perfil:', error.response ? error.response.data : error.message);
+        }
+        else {
+            console.error('Erro desconhecido ao obter a imagem do perfil:', error);
+        }
+        throw error;
+    }
+});
 app.get('/webhook', (req, res) => {
     const mode = req.query['hub.mode'];
     const token = req.query['hub.verify_token'];
@@ -60,35 +90,34 @@ app.get('/webhook', (req, res) => {
         res.status(400).send('Bad Request');
     }
 });
-app.post('/webhook', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post('/webhook', (req, res) => {
     const body = req.body;
     console.log('Recebido webhook:', JSON.stringify(body, null, 2));
     if (body.object === 'whatsapp_business_account') {
-        for (const entry of body.entry) {
-            for (const change of entry.changes) {
+        body.entry.forEach((entry) => {
+            entry.changes.forEach((change) => __awaiter(void 0, void 0, void 0, function* () {
                 if (change.value.messages) {
-                    for (const message of change.value.messages) {
+                    change.value.messages.forEach((message) => __awaiter(void 0, void 0, void 0, function* () {
                         console.log('Mensagem recebida:', message);
-                        // Converta o timestamp para o formato MySQL
-                        const mysqlTimestamp = moment_1.default.unix(message.timestamp).format('YYYY-MM-DD HH:mm:ss');
                         // Salvar a mensagem no banco de dados
                         try {
-                            yield database_1.default.execute('INSERT INTO messages (content, from_phone, to_phone, timestamp) VALUES (?, ?, ?, ?)', [message.text.body, message.from, change.value.metadata.phone_number_id, mysqlTimestamp]);
+                            const timestamp = moment_1.default.unix(message.timestamp).format('YYYY-MM-DD HH:mm:ss');
+                            yield database_1.default.execute('INSERT INTO messages (content, from_phone, to_phone, timestamp) VALUES (?, ?, ?, ?)', [message.text.body, message.from, entry.id, timestamp]);
                             console.log('Mensagem salva no banco de dados.');
                         }
                         catch (error) {
                             console.error('Erro ao salvar mensagem no banco de dados:', error);
                         }
-                    }
+                    }));
                 }
-            }
-        }
+            }));
+        });
         res.status(200).send('EVENT_RECEIVED');
     }
     else {
         res.sendStatus(404);
     }
-}));
+});
 app.get('/messages', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const [rows] = yield database_1.default.execute('SELECT * FROM messages');
@@ -97,6 +126,19 @@ app.get('/messages', (req, res) => __awaiter(void 0, void 0, void 0, function* (
     catch (error) {
         console.error('Erro ao buscar mensagens:', error);
         res.status(500).send('Erro ao buscar mensagens');
+    }
+}));
+app.get('/profile-picture', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { phone } = req.query;
+    if (!phone) {
+        return res.status(400).send('Número de telefone é obrigatório');
+    }
+    try {
+        const profilePictureUrl = yield getProfilePicture(phone);
+        res.json({ profilePictureUrl });
+    }
+    catch (error) {
+        res.status(500).send('Erro ao obter a imagem do perfil');
     }
 }));
 app.post('/contacts', (req, res) => __awaiter(void 0, void 0, void 0, function* () {

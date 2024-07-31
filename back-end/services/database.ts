@@ -1,18 +1,42 @@
-import { createPool, Pool } from 'mysql2/promise';
+import { createPool } from 'mysql2/promise';
+import fs from 'fs';
+import path from 'path';
 import dotenv from 'dotenv';
 
-// Carregar variáveis de ambiente do arquivo .env
 dotenv.config();
-console.log('DB_HOST:', process.env.DB_HOST);
-// Criar um pool de conexões com o banco de dados
-const pool: Pool = createPool({
+
+const pool = createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
+  port: 8006,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+});
+
+const executeSQLFile = async (filePath: string) => {
+  const sql = fs.readFileSync(filePath, 'utf-8');
+  const statements = sql.split(';').filter(statement => statement.trim() !== '');
+  
+  for (const statement of statements) {
+    try {
+      await pool.execute(statement);
+    } catch (error) {
+      console.error('Erro ao executar statement:', statement, error);
+    }
+  }
+};
+
+const initDB = async () => {
+  const schemaPath = path.join(__dirname, '..', 'schemas.sql');
+  await executeSQLFile(schemaPath);
+  console.log('Tabelas criadas ou já existentes.');
+};
+
+initDB().catch(error => {
+  console.error('Erro ao inicializar o banco de dados:', error);
 });
 
 export default pool;
