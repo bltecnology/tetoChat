@@ -1,7 +1,6 @@
 import { createPool } from 'mysql2/promise';
-import fs from 'fs';
-import path from 'path';
 import dotenv from 'dotenv';
+import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
@@ -12,7 +11,7 @@ dotenv.config();
 const pool = createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
-  port:8006,
+  port: process.env.DB_PORT || 3306,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   waitForConnections: true,
@@ -20,27 +19,13 @@ const pool = createPool({
   queueLimit: 0,
 });
 
-const executeSQLFile = async (filePath) => {
-  const sql = fs.readFileSync(filePath, 'utf-8');
-  const statements = sql.split(';').filter(statement => statement.trim() !== '');
-  
-  for (const statement of statements) {
-    try {
-      await pool.execute(statement);
-    } catch (error) {
-      console.error('Erro ao executar statement:', statement, error);
-    }
-  }
-};
-
-const initDB = async () => {
-  const schemaPath = path.join('.', 'schemas.sql');
-  await executeSQLFile(schemaPath);
-  console.log('Tabelas criadas ou já existentes.');
-};
-
-initDB().catch(error => {
-  console.error('Erro ao inicializar o banco de dados:', error);
-});
+pool.getConnection()
+  .then(conn => {
+    console.log('Conexão ao banco de dados bem-sucedida');
+    conn.release();
+  })
+  .catch(err => {
+    console.error('Erro ao conectar ao banco de dados:', err);
+  });
 
 export default pool;

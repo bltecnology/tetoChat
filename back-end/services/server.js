@@ -283,6 +283,6 @@ app.get("/me", authenticateJWT, async (req, res) => {
     res.status(500).send("Erro ao buscar dados do usuário");
   }
 });
-app.listen(3005, () => {
-  console.log(`Servidor rodando na porta ${3005}`);
+app.listen(3006, () => {
+  console.log(`Servidor rodando na porta ${3006}`);
 });
