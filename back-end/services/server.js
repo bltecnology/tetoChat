@@ -29,7 +29,7 @@ const upload = multer({ storage });
 app.get('/webhook', function (req, res) {
   if (
       req.query['hub.mode'] == 'subscribe' &&
-      req.query['hub.verify_token'] == 'token'
+      req.query['hub.verify_token'] == process.env.WEBHOOK_VERIFY_TOKEN
   ) {
       res.send(req.query['hub.challenge']);
   } else {
