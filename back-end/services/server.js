@@ -161,4 +161,9 @@ app.get("/me", authenticateJWT, async (req, res) => {
   }
 });
 
+app.get('/test', (req, res) => {
+  res.json({ message: 'Hello World' });
+});
+
+
 app.listen(3005, () => console.log(`Servidor rodando na porta ${3005}`));
