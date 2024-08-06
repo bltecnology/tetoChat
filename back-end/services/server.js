@@ -28,25 +28,31 @@ const upload = multer({ storage });
 
 app.post("/webhook", async (req, res) => {
   const body = req.body;
-  if (body.object === "whatsapp_business_account") {
-    try {
-      for (const entry of body.entry) {
-        for (const change of entry.changes) {
-          if (change.value.messages) {
-            for (const message of change.value.messages) {
-              await handleIncomingMessage(message, entry.id);
-            }
-          }
-        }
-      }
-      res.status(200).send("Mensagens processadas com sucesso.");
-    } catch (error) {
-      console.error("Erro ao processar mensagens:", error);
-      res.status(500).send("Erro ao processar mensagens.");
-    }
-  } else {
-    res.status(400).send("Bad Request");
+  console.log(body)
+  if (body){
+    res.send().json(
+      body
+    )
   }
+  // if (body.object === "whatsapp_business_account") {
+  //   try {
+  //     for (const entry of body.entry) {
+  //       for (const change of entry.changes) {
+  //         if (change.value.messages) {
+  //           for (const message of change.value.messages) {
+  //             await handleIncomingMessage(message, entry.id);
+  //           }
+  //         }
+  //       }
+  //     }
+  //     res.status(200).send("Mensagens processadas com sucesso.");
+  //   } catch (error) {
+  //     console.error("Erro ao processar mensagens:", error);
+  //     res.status(500).send("Erro ao processar mensagens.");
+  //   }
+  // } else {
+  //   res.status(400).send("Bad Request");
+  // }
 });
 
 async function handleIncomingMessage(message, whatsappBusinessAccountId) {
