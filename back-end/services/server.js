@@ -59,33 +59,40 @@ app.post('/webhook', function (request, response) {
   const data = request.body.value;
 
   if (data && data.messages && data.messages.length > 0) {
-      const message = data.messages[0];
-      const contact = data.contacts[0];
+    const message = data.messages[0];
+    const contact = data.contacts[0];
 
-      const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
-      const values = [
-          data.metadata.phone_number_id,
-          data.metadata.display_phone_number,
-          contact.profile.name,
-          contact.wa_id,
-          message.id,
-          message.from,
-          message.timestamp,
-          message.type,
-          message.text.body
-      ];
-
-      connection.query(sql, values, (err, results) => {
-          if (err) {
-              console.error('Erro ao inserir dados no banco de dados:', err);
-              response.sendStatus(500);
-              return;
-          }
-          console.log('Dados inseridos com sucesso:', results);
-          response.sendStatus(200);
-      });
-  } else {
+    if (!contact || !contact.profile || !contact.wa_id || !message || !message.text || !message.text.body) {
+      console.error('Dados inválidos recebidos:', JSON.stringify(request.body));
       response.sendStatus(400);
+      return;
+    }
+
+    const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const values = [
+        data.metadata.phone_number_id,
+        data.metadata.display_phone_number,
+        contact.profile.name,
+        contact.wa_id,
+        message.id,
+        message.from,
+        message.timestamp,
+        message.type,
+        message.text.body
+    ];
+
+    connection.query(sql, values, (err, results) => {
+        if (err) {
+            console.error('Erro ao inserir dados no banco de dados:', err);
+            response.sendStatus(500);
+            return;
+        }
+        console.log('Dados inseridos com sucesso:', results);
+        response.sendStatus(200);
+    });
+  } else {
+    console.error('Estrutura do webhook não corresponde ao esperado:', JSON.stringify(request.body));
+    response.sendStatus(400);
   }
 });
 
@@ -198,6 +205,5 @@ app.get("/me", authenticateJWT, async (req, res) => {
 app.get('/test', (req, res) => {
   res.json({ message: 'Hello World' });
 });
-
 
 app.listen(3005, () => console.log(`Servidor rodando na porta ${3005}`));
