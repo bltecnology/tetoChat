@@ -11,6 +11,7 @@ import { authenticateUser, authenticateJWT } from "./auth.js";
 import moment from "moment";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+const mysql = require('mysql2');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
