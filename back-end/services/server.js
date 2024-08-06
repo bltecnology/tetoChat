@@ -30,7 +30,7 @@ app.post("/webhook", async (req, res) => {
   const body = req.body;
   console.log(body)
   if (body){
-    res.json({ message: body, message: "teste" });
+    res.json({ message: body});
   }
   // if (body.object === "whatsapp_business_account") {
   //   try {
