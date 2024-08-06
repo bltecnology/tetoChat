@@ -125,6 +125,8 @@ const Chat: React.FC = () => {
                   .map((message) => (
                     <div key={message.id} className={`max-w-xs p-3 my-2 rounded-lg ${message.from_phone === 'me' ? 'ml-auto bg-green-200' : 'mr-auto bg-white'}`}>
                       {message.content}
+                    
+                    
                     </div>
                   ))}
               </div>

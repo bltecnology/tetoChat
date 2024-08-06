@@ -1,10 +1,16 @@
-CREATE TABLE IF NOT EXISTS messages (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  content TEXT NOT NULL,
-  from_phone VARCHAR(20) NOT NULL,
-  to_phone VARCHAR(20) NOT NULL,
-  timestamp DATETIME NOT NULL
+CREATE TABLE whatsapp_messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    phone_number_id VARCHAR(50),
+    display_phone_number VARCHAR(20),
+    contact_name VARCHAR(100),
+    wa_id VARCHAR(20),
+    message_id VARCHAR(50),
+    message_from VARCHAR(20),
+    message_timestamp VARCHAR(20),
+    message_type VARCHAR(20),
+    message_body TEXT
 );
+
 
 CREATE TABLE IF NOT EXISTS contacts (
   id INT AUTO_INCREMENT PRIMARY KEY,

@@ -26,31 +26,51 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-app.post("/webhook", async (req, res) => {
-  const body = req.body;
-  console.log(body)
-  if (body){
-    res.json({ message: body});
+app.get('/webhook', function (req, res) {
+  if (
+      req.query['hub.mode'] == 'subscribe' &&
+      req.query['hub.verify_token'] == 'token'
+  ) {
+      res.send(req.query['hub.challenge']);
+  } else {
+      res.sendStatus(400);
   }
-  // if (body.object === "whatsapp_business_account") {
-  //   try {
-  //     for (const entry of body.entry) {
-  //       for (const change of entry.changes) {
-  //         if (change.value.messages) {
-  //           for (const message of change.value.messages) {
-  //             await handleIncomingMessage(message, entry.id);
-  //           }
-  //         }
-  //       }
-  //     }
-  //     res.status(200).send("Mensagens processadas com sucesso.");
-  //   } catch (error) {
-  //     console.error("Erro ao processar mensagens:", error);
-  //     res.status(500).send("Erro ao processar mensagens.");
-  //   }
-  // } else {
-  //   res.status(400).send("Bad Request");
-  // }
+});
+
+app.post('/webhook', function (request, response) {
+  console.log('Incoming webhook: ' + JSON.stringify(request.body));
+
+  const data = request.body.value;
+
+  if (data && data.messages && data.messages.length > 0) {
+      const message = data.messages[0];
+      const contact = data.contacts[0];
+
+      const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+      const values = [
+          data.metadata.phone_number_id,
+          data.metadata.display_phone_number,
+          contact.profile.name,
+          contact.wa_id,
+          message.id,
+          message.from,
+          message.timestamp,
+          message.type,
+          message.text.body
+      ];
+
+      connection.query(sql, values, (err, results) => {
+          if (err) {
+              console.error('Erro ao inserir dados no banco de dados:', err);
+              response.sendStatus(500);
+              return;
+          }
+          console.log('Dados inseridos com sucesso:', results);
+          response.sendStatus(200);
+      });
+  } else {
+      response.sendStatus(400);
+  }
 });
 
 async function handleIncomingMessage(message, whatsappBusinessAccountId) {
