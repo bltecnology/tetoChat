@@ -40,6 +40,30 @@ connection.connect((err) => {
       process.exit(1); // Sai do processo em caso de erro na conexão
   }
   console.log('Conectado ao banco de dados MySQL.');
+
+  // Remover coluna incorreta 'tags' e adicionar a coluna correta 'tag'
+  const dropColumnQuery = 'ALTER TABLE contacts DROP COLUMN IF EXISTS tags';
+  connection.query(dropColumnQuery, (err, results) => {
+      if (err) {
+          console.error('Erro ao remover a coluna "tags":', err);
+      } else {
+          console.log('Coluna "tags" removida com sucesso, se existia.');
+          
+          // Adicionar coluna 'tag' correta
+          const addColumnQuery = 'ALTER TABLE contacts ADD COLUMN tag VARCHAR(20)';
+          connection.query(addColumnQuery, (err, results) => {
+              if (err) {
+                  if (err.code === 'ER_DUP_FIELDNAME') {
+                      console.log('A coluna "tag" já existe.');
+                  } else {
+                      console.error('Erro ao adicionar a coluna "tag":', err);
+                  }
+              } else {
+                  console.log('Coluna "tag" adicionada com sucesso à tabela "contacts".');
+              }
+          });
+      }
+  });
 });
 
 app.get('/webhook', function (req, res) {
@@ -111,39 +135,21 @@ app.post('/webhook', function (request, response) {
   }
 });
 
-async function handleIncomingMessage(message, whatsappBusinessAccountId) {
-  const fromPhone = message.from;
-  const textBody = message.text.body;
+app.post('/send', async (req, res) => {
+  const { toPhone, text } = req.body;
 
-  // Verificar se é uma nova interação ou se está respondendo a opções
-  const currentState = await getCurrentState(fromPhone);
-
-  if (!currentState || textBody.match(/^\d+$/)) {
-    // Novo cliente ou respondendo com opção de setor
-    const sectorResponse = parseInt(textBody, 10);
-    await routeMessageBasedOnSector(fromPhone, sectorResponse, whatsappBusinessAccountId);
-  } else {
-    // Mensagem normal para ser encaminhada ao setor correspondente
-    await sendMessageToSectorEmployee(fromPhone, textBody, currentState);
+  if (!toPhone || !text) {
+    return res.status(400).send("toPhone e text são obrigatórios");
   }
-}
 
-async function getCurrentState(phone) {
-  // Implementar lógica para buscar o estado atual da conversa
-}
-
-async function updateCustomerSector(phone, sector) {
-  // Implementar lógica para atualizar o setor do cliente
-}
-
-async function routeMessageBasedOnSector(fromPhone, sectorResponse, whatsappBusinessAccountId) {
-  if (!sectorResponse) {
-    const initialMessage = "Olá! Selecione um setor:\n1 - Administrativo\n2 - Vendas";
-    await sendMessage(fromPhone, initialMessage, whatsappBusinessAccountId);
-  } else {
-    updateCustomerSector(fromPhone, sectorResponse);
+  try {
+    await sendMessage(toPhone, text, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
+    res.status(200).send("Mensagem enviada com sucesso");
+  } catch (error) {
+    console.error("Erro ao enviar mensagem:", error);
+    res.status(500).send("Erro ao enviar mensagem");
   }
-}
+});
 
 async function sendMessage(toPhone, text, whatsappBusinessAccountId) {
   const url = `https://graph.facebook.com/v20.0/${whatsappBusinessAccountId}/messages`;
