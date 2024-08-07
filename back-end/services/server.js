@@ -59,6 +59,8 @@ app.post('/webhook', function (request, response) {
   const entries = request.body.entry;
 
   if (entries && entries.length > 0) {
+    let allEntriesProcessed = true;
+
     entries.forEach(entry => {
       const changes = entry.changes;
       changes.forEach(change => {
@@ -69,7 +71,7 @@ app.post('/webhook', function (request, response) {
 
           if (!contact || !contact.profile || !contact.wa_id || !message || !message.text || !message.text.body) {
             console.error('Dados inválidos recebidos:', JSON.stringify(request.body));
-            response.sendStatus(400);
+            allEntriesProcessed = false;
             return;
           }
 
@@ -89,7 +91,7 @@ app.post('/webhook', function (request, response) {
           connection.query(sql, values, (err, results) => {
               if (err) {
                   console.error('Erro ao inserir dados no banco de dados:', err);
-                  response.sendStatus(500);
+                  allEntriesProcessed = false;
                   return;
               }
               console.log('Dados inseridos com sucesso:', results);
@@ -97,7 +99,12 @@ app.post('/webhook', function (request, response) {
         }
       });
     });
-    response.sendStatus(200);
+
+    if (allEntriesProcessed) {
+      response.sendStatus(200);
+    } else {
+      response.sendStatus(500);
+    }
   } else {
     console.error('Estrutura do webhook não corresponde ao esperado:', JSON.stringify(request.body));
     response.sendStatus(400);
