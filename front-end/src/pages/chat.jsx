@@ -56,14 +56,9 @@ const Chat = () => {
 
         setMessages((prevMessages) => [...prevMessages, sentMessage]);
         setNewMessage('');
-
         console.log('Mensagem enviada com sucesso');
       } catch (error) {
-        if (axios.isAxiosError(error)) {
-          console.error('Erro ao enviar mensagem:', error.response?.data);
-        } else {
-          console.error('Erro ao enviar mensagem:', error);
-        }
+        console.error('Erro ao enviar mensagem:', error);
       }
     }
   };
@@ -100,12 +95,11 @@ const Chat = () => {
           {selectedContact ? (
             <>
               <div className="flex-grow bg-cover bg-center p-4 overflow-y-auto" style={{ backgroundImage: 'url(/path/to/background-image.png)' }}>
-                {messages
-                  .map((message) => (
-                    <div key={message.id} className={`max-w-xs p-3 my-2 rounded-lg ${message.from_phone === 'me' ? 'ml-auto bg-green-200' : 'mr-auto bg-white'}`}>
-                      {message.content}
-                    </div>
-                  ))}
+                {messages.map((message) => (
+                  <div key={message.id} className={`max-w-xs p-3 my-2 rounded-lg ${message.from_phone === 'me' ? 'ml-auto bg-green-200' : 'mr-auto bg-white'}`}>
+                    {message.content}
+                  </div>
+                ))}
               </div>
               <div className="flex items-center p-4 bg-white border-t border-gray-200">
                 <input

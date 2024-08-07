@@ -170,7 +170,11 @@ app.post('/send', async (req, res) => {
     if (contactRows.length > 0) {
       contactId = contactRows[0].id;
     } else {
-      return res.status(400).send("Contato não encontrado");
+      const [result] = await pool.query(
+        "INSERT INTO contacts (name, phone) VALUES (?, ?)",
+        ['API', toPhone]
+      );
+      contactId = result.insertId;
     }
 
     // Armazenar a mensagem enviada no banco de dados
