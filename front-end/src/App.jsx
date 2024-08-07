@@ -1,10 +1,10 @@
-// src/App.tsx
+// src/App.jsx
 import React from 'react';
 
 import './index.css';
 import AppRoutes from './routes';
 
-const App: React.FC = () => {
+const App = () => {
   return (
     <div className="App">
       <AppRoutes />

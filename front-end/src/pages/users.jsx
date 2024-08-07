@@ -6,19 +6,11 @@ import { GrAdd, GrMoreVertical } from "react-icons/gr";
 import MainContainer from "../components/mainContainer";
 import ModalUsers from "../components/modalUsers"; // Certifique-se de que o caminho está correto
 
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  position: string;
-  department: string;
-}
-
-const Users: React.FC = () => {
+const Users = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState([]);
 
-  const handleSaveUser = (user: User) => {
+  const handleSaveUser = (user) => {
     setUsers([...users, user]);
     setIsModalOpen(false);
   };

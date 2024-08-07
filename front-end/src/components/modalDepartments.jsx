@@ -1,12 +1,6 @@
 import React, { useState } from 'react';
 
-interface ModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onSave: (name: string) => void;
-}
-
-const ModalDepartments: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) => {
+const ModalDepartments = ({ isOpen, onClose, onSave }) => {
     const [name, setName] = useState('');
 
     if (!isOpen) return null;

@@ -1,4 +1,4 @@
-// src/routes.tsx
+// src/routes.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/login';
@@ -12,8 +12,7 @@ import Departments from './pages/departments';
 import Positions from './pages/positions';
 import QuickResponses from './pages/quickResponses'
 
-
-const AppRoutes: React.FC = () => {
+const AppRoutes = () => {
   return (
     <Router>
       <Routes>

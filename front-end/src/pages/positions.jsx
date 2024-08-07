@@ -5,18 +5,13 @@ import { GrAdd, GrFilter, GrRefresh, GrMoreVertical } from 'react-icons/gr';
 import MainContainer from '../components/mainContainer';
 import Modal from '../components/modalPositions';
 
-interface Line {
-    text: string;
-    icon: React.ReactNode;
-}
-
-const Positions: React.FC = () => {
-    const [lines, setLines] = useState<Line[]>([
+const Positions = () => {
+    const [lines, setLines] = useState([
         { text: 'Administrador', icon: <GrMoreVertical /> }
     ]);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const addLine = (text: string) => {
+    const addLine = (text) => {
         setLines([...lines, { text, icon: <GrMoreVertical /> }]);
         setIsModalOpen(false);
     };

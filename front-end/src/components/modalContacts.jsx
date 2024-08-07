@@ -1,13 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: () => void;
-}
-
-const ModalContacts: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) => {
+const ModalContacts = ({ isOpen, onClose, onSave }) => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [tags, setTags] = useState('');

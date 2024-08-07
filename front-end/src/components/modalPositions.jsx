@@ -1,12 +1,6 @@
 import React, { useState } from 'react';
 
-interface ModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onSave: (role: any) => void;
-}
-
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) => {
+const Modal = ({ isOpen, onClose, onSave }) => {
     const [text, setText] = useState('');
     const [permissions, setPermissions] = useState({
         accessChat: false,
@@ -20,7 +14,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) => {
         accessQuickResponses: false
     });
 
-    const handlePermissionChange = (perm: keyof typeof permissions) => {
+    const handlePermissionChange = (perm) => {
         setPermissions(prev => ({ ...prev, [perm]: !prev[perm] }));
     };
 

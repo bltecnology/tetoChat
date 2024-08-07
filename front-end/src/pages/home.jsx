@@ -1,10 +1,10 @@
 import React from "react";
 import { Link } from 'react-router-dom';
 import Header from '../components/header';
-import ButtonCard from '../components/buttonCard'
+import ButtonCard from '../components/buttonCard';
 import { FaComments, FaUserAlt, FaTags, FaChartBar, FaMobileAlt } from 'react-icons/fa';
 
-const Home: React.FC = () => {
+const Home = () => {
     return (
         <div>
             <Header />
@@ -19,7 +19,7 @@ const Home: React.FC = () => {
                         </Link>
                     </div>
                     <div className="col-span-3 flex justify-center my-6">
-                        <Link to="/departments  ">
+                        <Link to="/departments">
                             <ButtonCard icon={<FaTags />} text="Departamentos" />
                         </Link>
                     </div>

@@ -1,13 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (user: any) => void;
-}
-
-const ModalUsers: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) => {
+const ModalUsers = ({ isOpen, onClose, onSave }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

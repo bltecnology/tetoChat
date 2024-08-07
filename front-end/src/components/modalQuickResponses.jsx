@@ -1,20 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-interface ModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onSave: (text: string, department: string) => void;
-}
-
-interface Department {
-    id: number;
-    name: string;
-}
-
-const ModalQuickResponses: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) => {
+const ModalQuickResponses = ({ isOpen, onClose, onSave }) => {
     const [text, setText] = useState('');
-    const [departments, setDepartments] = useState<Department[]>([]);
+    const [departments, setDepartments] = useState([]);
     const [selectedDepartment, setSelectedDepartment] = useState('');
 
     useEffect(() => {

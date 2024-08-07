@@ -6,13 +6,8 @@ import { GrAdd, GrMoreVertical } from 'react-icons/gr';
 import MainContainer from '../components/mainContainer';
 import ModalDepartments from "../components/modalDepartments";
 
-interface Department {
-    id: number;
-    name: string;
-}
-
-const Departments: React.FC = () => {
-    const [departments, setDepartments] = useState<Department[]>([]);
+const Departments = () => {
+    const [departments, setDepartments] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
@@ -28,7 +23,7 @@ const Departments: React.FC = () => {
         fetchDepartments();
     }, []);
 
-    const addDepartment = async (name: string) => {
+    const addDepartment = async (name) => {
         try {
             const response = await axios.post('http://localhost:3005/departments', { name });
             setDepartments([...departments, response.data]);

@@ -6,14 +6,8 @@ import { GrAdd, GrMoreVertical } from 'react-icons/gr';
 import MainContainer from '../components/mainContainer';
 import ModalQuickResponses from "../components/modalQuickResponses";
 
-interface QuickResponse {
-    id: number;
-    text: string;
-    department: string;
-}
-
-const QuickResponses: React.FC = () => {
-    const [quickResponses, setQuickResponses] = useState<QuickResponse[]>([]);
+const QuickResponses = () => {
+    const [quickResponses, setQuickResponses] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
@@ -29,7 +23,7 @@ const QuickResponses: React.FC = () => {
         fetchQuickResponses();
     }, []);
 
-    const addQuickResponse = async (text: string, department: string) => {
+    const addQuickResponse = async (text, department) => {
         try {
             const response = await axios.post('http://localhost:3005/quickResponses', { text, department });
             setQuickResponses([...quickResponses, response.data]);

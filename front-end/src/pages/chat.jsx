@@ -3,28 +3,11 @@ import axios from 'axios';
 import { FiSend } from 'react-icons/fi';
 import Header from '../components/header';
 
-interface Message {
-  id: number;
-  content: string;
-  from_phone: string;
-  to_phone: string;
-  timestamp: string;
-  type: string;
-}
-
-interface Contact {
-  id: number;
-  name: string;
-  phone: string;
-  profilePic: string;
-  lastMessage: string;
-}
-
-const Chat: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
+const Chat = () => {
+  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [contacts, setContacts] = useState([]);
+  const [selectedContact, setSelectedContact] = useState(null);
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -62,7 +45,7 @@ const Chat: React.FC = () => {
           text: newMessage,
         });
 
-        const sentMessage: Message = {
+        const sentMessage = {
           id: Date.now(),
           content: newMessage,
           from_phone: 'me',

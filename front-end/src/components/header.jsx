@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom';
 import { FiEye, FiMenu, FiBell, FiUser } from 'react-icons/fi';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@radix-ui/react-dropdown-menu';
 
-const Header: React.FC = () => {
+const Header = () => {
   return (
     <div className="flex items-center justify-between p-1 bg-red-700 text-white">
       <div className="flex items-center">
-        <Link to="/home"> {/* Corrigido: usar Link com letra maiúscula */}
+        <Link to="/home">
           <div className="text-lg font-regular ml-8">TetoChat</div>
         </Link>
       </div>

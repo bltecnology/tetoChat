@@ -4,7 +4,7 @@ import Header from '../components/header';
 import Background from '../components/background';
 import MainContainer from "../components/mainContainer";
 
-const Account: React.FC = () => {
+const Account = () => {
     const [user, setUser] = useState({ name: '', email: '' });
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -52,12 +52,12 @@ const Account: React.FC = () => {
         }
     };
 
-    return(
+    return (
         <div>
             <Header />
             <Background text="Conta">
                 <MainContainer
-                    content = {
+                    content={
                         <div>
                             <div>
                                 <label>Email</label>
@@ -98,7 +98,7 @@ const Account: React.FC = () => {
                             {message && <p>{message}</p>}
                         </div>
                     }
-                ></MainContainer>
+                />
             </Background>
         </div>
     )

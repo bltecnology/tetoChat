@@ -1,14 +1,6 @@
-import React, { ReactNode } from "react";
+import React from "react";
 
-interface BackgroundProps {
-    btn1?: ReactNode;
-    btn2?: ReactNode;
-    btn3?: ReactNode;
-    text: string;
-    children: ReactNode;  
-}
-
-const Background: React.FC<BackgroundProps> = ({ text, btn1, btn2, btn3, children }) => {
+const Background = ({ text, btn1, btn2, btn3, children }) => {
     return (
         <div className="bg-pink-100 min-h-screen">
             <div className="flex justify-between items-center p-4">

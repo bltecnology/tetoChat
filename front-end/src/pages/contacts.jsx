@@ -7,20 +7,8 @@ import MainContainer from '../components/mainContainer';
 import ModalContacts from '../components/modalContacts';
 import { FiMoreVertical } from 'react-icons/fi'; // Ícone de três pontinhos
 
-interface Contact {
-  id: number;
-  name: string;
-  phone: string;
-  tags: string;
-  profilePic: string;
-  observation: string;
-  cpf: string;
-  rg: string;
-  email: string;
-}
-
-const Contacts: React.FC = () => {
-  const [contacts, setContacts] = useState<Contact[]>([]);
+const Contacts = () => {
+  const [contacts, setContacts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchContacts = async () => {
