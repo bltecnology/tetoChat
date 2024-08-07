@@ -56,40 +56,48 @@ app.get('/webhook', function (req, res) {
 app.post('/webhook', function (request, response) {
   console.log('Incoming webhook: ' + JSON.stringify(request.body));
 
-  const data = request.body.value;
+  const entries = request.body.entry;
 
-  if (data && data.messages && data.messages.length > 0) {
-    const message = data.messages[0];
-    const contact = data.contacts[0];
+  if (entries && entries.length > 0) {
+    entries.forEach(entry => {
+      const changes = entry.changes;
+      changes.forEach(change => {
+        const data = change.value;
+        if (data && data.messages && data.messages.length > 0) {
+          const message = data.messages[0];
+          const contact = data.contacts[0];
 
-    if (!contact || !contact.profile || !contact.wa_id || !message || !message.text || !message.text.body) {
-      console.error('Dados inválidos recebidos:', JSON.stringify(request.body));
-      response.sendStatus(400);
-      return;
-    }
-
-    const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
-    const values = [
-        data.metadata.phone_number_id,
-        data.metadata.display_phone_number,
-        contact.profile.name,
-        contact.wa_id,
-        message.id,
-        message.from,
-        message.timestamp,
-        message.type,
-        message.text.body
-    ];
-
-    connection.query(sql, values, (err, results) => {
-        if (err) {
-            console.error('Erro ao inserir dados no banco de dados:', err);
-            response.sendStatus(500);
+          if (!contact || !contact.profile || !contact.wa_id || !message || !message.text || !message.text.body) {
+            console.error('Dados inválidos recebidos:', JSON.stringify(request.body));
+            response.sendStatus(400);
             return;
+          }
+
+          const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+          const values = [
+              data.metadata.phone_number_id,
+              data.metadata.display_phone_number,
+              contact.profile.name,
+              contact.wa_id,
+              message.id,
+              message.from,
+              message.timestamp,
+              message.type,
+              message.text.body
+          ];
+
+          connection.query(sql, values, (err, results) => {
+              if (err) {
+                  console.error('Erro ao inserir dados no banco de dados:', err);
+                  response.sendStatus(500);
+                  return;
+              }
+              console.log('Dados inseridos com sucesso:', results);
+          });
         }
-        console.log('Dados inseridos com sucesso:', results);
-        response.sendStatus(200);
+      });
     });
+    response.sendStatus(200);
   } else {
     console.error('Estrutura do webhook não corresponde ao esperado:', JSON.stringify(request.body));
     response.sendStatus(400);
