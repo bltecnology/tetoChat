@@ -19,7 +19,20 @@ const __dirname = dirname(__filename);
 dotenv.config();
 const app = express();
 app.use(bodyParser.json());
-app.use(cors({ origin: "https://tetochat-8m0r.onrender.com", optionsSuccessStatus: 200 }));
+const allowedOrigins = ["https://tetochat-8m0r.onrender.com"];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (allowedOrigins.includes(origin) || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
