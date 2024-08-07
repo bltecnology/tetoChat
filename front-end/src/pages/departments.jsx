@@ -13,7 +13,7 @@ const Departments = () => {
     useEffect(() => {
         const fetchDepartments = async () => {
             try {
-                const response = await axios.get('http://localhost:3005/departments');
+                const response = await axios.get('https://tetochat-8m0r.onrender.com/departments');
                 setDepartments(response.data);
             } catch (error) {
                 console.error('Erro ao buscar departamentos:', error);
@@ -25,7 +25,7 @@ const Departments = () => {
 
     const addDepartment = async (name) => {
         try {
-            const response = await axios.post('http://localhost:3005/departments', { name });
+            const response = await axios.post('https://tetochat-8m0r.onrender.com/departments', { name });
             setDepartments([...departments, response.data]);
             setIsModalOpen(false);
         } catch (error) {

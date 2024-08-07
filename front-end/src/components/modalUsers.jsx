@@ -14,7 +14,7 @@ const ModalUsers = ({ isOpen, onClose, onSave }) => {
     const newUser = { name, email, password, position, department };
 
     try {
-      const response = await axios.post('http://localhost:3005/users', newUser);
+      const response = await axios.post('https://tetochat-8m0r.onrender.com/users', newUser);
       onSave(response.data);
       setName('');
       setEmail('');

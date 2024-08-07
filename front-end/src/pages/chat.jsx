@@ -12,7 +12,7 @@ const Chat = () => {
   useEffect(() => {
     const fetchContacts = async () => {
       try {
-        const response = await axios.get('http://localhost:3005/contacts');
+        const response = await axios.get('https://tetochat-8m0r.onrender.com/contacts');
         setContacts(response.data);
       } catch (error) {
         console.error('Erro ao buscar contatos:', error);
@@ -26,7 +26,7 @@ const Chat = () => {
     if (selectedContact) {
       const fetchMessages = async () => {
         try {
-          const response = await axios.get(`http://localhost:3005/messages?contact=${selectedContact.id}`);
+          const response = await axios.get(`https://tetochat-8m0r.onrender.com/messages?contact=${selectedContact.id}`);
           setMessages(response.data);
         } catch (error) {
           console.error('Erro ao buscar mensagens:', error);
@@ -40,7 +40,7 @@ const Chat = () => {
   const handleSendMessage = async () => {
     if (selectedContact) {
       try {
-        await axios.post('http://localhost:3005/send', {
+        await axios.post('https://tetochat-8m0r.onrender.com/send', {
           toPhone: selectedContact.phone,
           text: newMessage,
         });

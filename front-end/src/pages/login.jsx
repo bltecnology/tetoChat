@@ -12,7 +12,7 @@ const LoginPage = () => {
     event.preventDefault();
 
     try {
-      const response = await axios.post('http://localhost:3005/login', { email, password: senha });
+      const response = await axios.post('https://tetochat-8m0r.onrender.com/login', { email, password: senha });
       const { token } = response.data;
 
       localStorage.setItem('token', token);

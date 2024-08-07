@@ -14,7 +14,7 @@ const Account = () => {
         const fetchUserData = async () => {
             try {
                 const token = localStorage.getItem('token'); // Supondo que você armazene o token no localStorage
-                const response = await axios.get('http://localhost:3005/me', {
+                const response = await axios.get('https://tetochat-8m0r.onrender.com/me', {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }
@@ -36,7 +36,7 @@ const Account = () => {
 
         try {
             const token = localStorage.getItem('token'); // Supondo que você armazene o token no localStorage
-            await axios.put('http://localhost:3005/update-password', {
+            await axios.put('https://tetochat-8m0r.onrender.com/update-password', {
                 password: newPassword
             }, {
                 headers: {

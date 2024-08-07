@@ -13,7 +13,7 @@ const Contacts = () => {
 
   const fetchContacts = async () => {
     try {
-      const response = await axios.get('http://localhost:3005/contacts');
+      const response = await axios.get('https://tetochat-8m0r.onrender.com/contacts');
       setContacts(response.data);
     } catch (error) {
       console.error('Erro ao buscar contatos:', error);

@@ -18,7 +18,7 @@ const Users = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get('http://localhost:3005/users');
+        const response = await axios.get('https://tetochat-8m0r.onrender.com/users');
         setUsers(response.data);
       } catch (error) {
         console.error('Erro ao buscar usuários:', error);
