@@ -58,8 +58,8 @@ const Chat: React.FC = () => {
     if (selectedContact) {
       try {
         await axios.post('http://localhost:3005/send', {
-          phone: selectedContact.phone,
-          message: newMessage,
+          toPhone: selectedContact.phone,
+          text: newMessage,
         });
 
         const sentMessage: Message = {
@@ -125,8 +125,6 @@ const Chat: React.FC = () => {
                   .map((message) => (
                     <div key={message.id} className={`max-w-xs p-3 my-2 rounded-lg ${message.from_phone === 'me' ? 'ml-auto bg-green-200' : 'mr-auto bg-white'}`}>
                       {message.content}
-                    
-                    
                     </div>
                   ))}
               </div>
