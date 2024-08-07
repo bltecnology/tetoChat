@@ -118,10 +118,6 @@ const Chat: React.FC = () => {
             <>
               <div className="flex-grow bg-cover bg-center p-4 overflow-y-auto" style={{ backgroundImage: 'url(/path/to/background-image.png)' }}>
                 {messages
-                  .filter((message) => 
-                    message.from_phone === selectedContact.phone || 
-                    message.to_phone === selectedContact.phone
-                  )
                   .map((message) => (
                     <div key={message.id} className={`max-w-xs p-3 my-2 rounded-lg ${message.from_phone === 'me' ? 'ml-auto bg-green-200' : 'mr-auto bg-white'}`}>
                       {message.content}

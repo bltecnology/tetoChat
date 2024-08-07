@@ -144,7 +144,29 @@ app.post('/send', async (req, res) => {
 
   try {
     await sendMessage(toPhone, text, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
-    res.status(200).send("Mensagem enviada com sucesso");
+
+    // Armazenar a mensagem enviada no banco de dados
+    const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const values = [
+        process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
+        process.env.DISPLAY_PHONE_NUMBER,
+        'API',
+        toPhone,
+        `msg-${Date.now()}`, // Cria um ID único para a mensagem
+        'me',
+        Math.floor(Date.now() / 1000).toString(), // Timestamp atual em segundos
+        'text',
+        text
+    ];
+
+    connection.query(sql, values, (err, results) => {
+        if (err) {
+            console.error('Erro ao inserir dados no banco de dados:', err);
+            return res.status(500).send("Erro ao armazenar mensagem");
+        }
+        console.log('Mensagem enviada e armazenada com sucesso:', results);
+        res.status(200).send("Mensagem enviada com sucesso");
+    });
   } catch (error) {
     console.error("Erro ao enviar mensagem:", error);
     res.status(500).send("Erro ao enviar mensagem");
@@ -165,8 +187,14 @@ async function sendMessage(toPhone, text, whatsappBusinessAccountId) {
 }
 
 app.get("/messages", async (req, res) => {
+  const contactPhone = req.query.contact;
+
+  if (!contactPhone) {
+    return res.status(400).send("O número de telefone do contato é obrigatório");
+  }
+
   try {
-    const [rows] = await pool.query("SELECT * FROM messages");
+    const [rows] = await pool.query("SELECT * FROM whatsapp_messages WHERE wa_id = ? OR message_from = ? ORDER BY message_timestamp ASC", [contactPhone, contactPhone]);
     res.json(rows);
   } catch (error) {
     console.error("Erro ao buscar mensagens:", error);
@@ -228,3 +256,4 @@ app.get('/test', (req, res) => {
 });
 
 app.listen(3005, () => console.log(`Servidor rodando na porta ${3005}`));
+ 
