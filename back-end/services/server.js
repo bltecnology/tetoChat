@@ -19,7 +19,8 @@ const __dirname = dirname(__filename);
 dotenv.config();
 const app = express();
 app.use(bodyParser.json());
-const allowedOrigins = ["https://tetochat-8m0r.onrender.com"];
+
+const allowedOrigins = ["http://localhost:5173", "https://tetochat-8m0r.onrender.com"];
 
 const corsOptions = {
   origin: function (origin, callback) {
@@ -30,6 +31,7 @@ const corsOptions = {
     }
   },
   optionsSuccessStatus: 200,
+  credentials: true
 };
 
 app.use(cors(corsOptions));
@@ -49,44 +51,44 @@ const connection = mysql.createConnection({
 
 connection.connect((err) => {
   if (err) {
-      console.error('Erro ao conectar ao banco de dados:', err);
-      process.exit(1); // Sai do processo em caso de erro na conexão
+    console.error('Erro ao conectar ao banco de dados:', err);
+    process.exit(1); // Sai do processo em caso de erro na conexão
   }
   console.log('Conectado ao banco de dados MySQL.');
 
   // Remover coluna incorreta 'tags' e adicionar a coluna correta 'tag'
   const dropColumnQuery = 'ALTER TABLE contacts DROP COLUMN IF EXISTS tags';
   connection.query(dropColumnQuery, (err, results) => {
-      if (err) {
-          console.error('Erro ao remover a coluna "tags":', err);
-      } else {
-          console.log('Coluna "tags" removida com sucesso, se existia.');
-          
-          // Adicionar coluna 'tag' correta
-          const addColumnQuery = 'ALTER TABLE contacts ADD COLUMN tag VARCHAR(20)';
-          connection.query(addColumnQuery, (err, results) => {
-              if (err) {
-                  if (err.code === 'ER_DUP_FIELDNAME') {
-                      console.log('A coluna "tag" já existe.');
-                  } else {
-                      console.error('Erro ao adicionar a coluna "tag":', err);
-                  }
-              } else {
-                  console.log('Coluna "tag" adicionada com sucesso à tabela "contacts".');
-              }
-          });
-      }
+    if (err) {
+      console.error('Erro ao remover a coluna "tags":', err);
+    } else {
+      console.log('Coluna "tags" removida com sucesso, se existia.');
+      
+      // Adicionar coluna 'tag' correta
+      const addColumnQuery = 'ALTER TABLE contacts ADD COLUMN tag VARCHAR(20)';
+      connection.query(addColumnQuery, (err, results) => {
+        if (err) {
+          if (err.code === 'ER_DUP_FIELDNAME') {
+            console.log('A coluna "tag" já existe.');
+          } else {
+            console.error('Erro ao adicionar a coluna "tag":', err);
+          }
+        } else {
+          console.log('Coluna "tag" adicionada com sucesso à tabela "contacts".');
+        }
+      });
+    }
   });
 });
 
 app.get('/webhook', function (req, res) {
   if (
-      req.query['hub.mode'] == 'subscribe' &&
-      req.query['hub.verify_token'] == process.env.WEBHOOK_VERIFY_TOKEN
+    req.query['hub.mode'] == 'subscribe' &&
+    req.query['hub.verify_token'] == process.env.WEBHOOK_VERIFY_TOKEN
   ) {
-      res.send(req.query['hub.challenge']);
+    res.send(req.query['hub.challenge']);
   } else {
-      res.sendStatus(400);
+    res.sendStatus(400);
   }
 });
 
@@ -133,16 +135,16 @@ app.post('/webhook', async (request, response) => {
 
           const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
           const values = [
-              data.metadata.phone_number_id,
-              data.metadata.display_phone_number,
-              contact.profile.name,
-              contact.wa_id,
-              message.id,
-              message.from,
-              message.timestamp,
-              message.type,
-              message.text.body,
-              contactId
+            data.metadata.phone_number_id,
+            data.metadata.display_phone_number,
+            contact.profile.name,
+            contact.wa_id,
+            message.id,
+            message.from,
+            message.timestamp,
+            message.type,
+            message.text.body,
+            contactId
           ];
 
           try {
@@ -193,16 +195,16 @@ app.post('/send', async (req, res) => {
     // Armazenar a mensagem enviada no banco de dados
     const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     const values = [
-        process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
-        process.env.DISPLAY_PHONE_NUMBER,
-        'API',
-        toPhone,
-        `msg-${Date.now()}`, // Cria um ID único para a mensagem
-        'me',
-        Math.floor(Date.now() / 1000).toString(), // Timestamp atual em segundos
-        'text',
-        text,
-        contactId
+      process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
+      process.env.DISPLAY_PHONE_NUMBER,
+      'API',
+      toPhone,
+      `msg-${Date.now()}`, // Cria um ID único para a mensagem
+      'me',
+      Math.floor(Date.now() / 1000).toString(), // Timestamp atual em segundos
+      'text',
+      text,
+      contactId
     ];
 
     await pool.query(sql, values);

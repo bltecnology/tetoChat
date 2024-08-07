@@ -12,7 +12,9 @@ const Chat = () => {
   useEffect(() => {
     const fetchContacts = async () => {
       try {
-        const response = await axios.get('https://tetochat-8m0r.onrender.com/contacts');
+        const response = await axios.get('https://tetochat-8m0r.onrender.com/contacts', {
+          withCredentials: true
+        })
         setContacts(response.data);
       } catch (error) {
         console.error('Erro ao buscar contatos:', error);
