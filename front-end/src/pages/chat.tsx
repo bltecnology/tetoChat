@@ -43,7 +43,7 @@ const Chat: React.FC = () => {
     if (selectedContact) {
       const fetchMessages = async () => {
         try {
-          const response = await axios.get(`http://localhost:3005/messages?contact=${selectedContact.phone}`);
+          const response = await axios.get(`http://localhost:3005/messages?contact=${selectedContact.id}`);
           setMessages(response.data);
         } catch (error) {
           console.error('Erro ao buscar mensagens:', error);

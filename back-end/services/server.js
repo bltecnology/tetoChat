@@ -77,7 +77,7 @@ app.get('/webhook', function (req, res) {
   }
 });
 
-app.post('/webhook', function (request, response) {
+app.post('/webhook', async (request, response) => {
   console.log('Incoming webhook: ' + JSON.stringify(request.body));
 
   const entries = request.body.entry;
@@ -85,21 +85,40 @@ app.post('/webhook', function (request, response) {
   if (entries && entries.length > 0) {
     let allEntriesProcessed = true;
 
-    entries.forEach(entry => {
+    for (const entry of entries) {
       const changes = entry.changes;
-      changes.forEach(change => {
+      for (const change of changes) {
         const data = change.value;
         if (data && data.messages && data.messages.length > 0) {
           const message = data.messages[0];
-          const contact = data.contacts[0];
+          const contact = data.contacts && data.contacts.length > 0 ? data.contacts[0] : null;
 
           if (!contact || !contact.profile || !contact.wa_id || !message || !message.text || !message.text.body) {
             console.error('Dados inválidos recebidos:', JSON.stringify(request.body));
             allEntriesProcessed = false;
-            return;
+            continue;
           }
 
-          const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+          // Buscar ou criar o contato para obter o contact_id
+          let contactId;
+          try {
+            const [contactRows] = await pool.query("SELECT id FROM contacts WHERE phone = ?", [contact.wa_id]);
+            if (contactRows.length > 0) {
+              contactId = contactRows[0].id;
+            } else {
+              const [result] = await pool.query(
+                "INSERT INTO contacts (name, phone) VALUES (?, ?)",
+                [contact.profile.name, contact.wa_id]
+              );
+              contactId = result.insertId;
+            }
+          } catch (err) {
+            console.error('Erro ao buscar ou criar contato:', err);
+            allEntriesProcessed = false;
+            continue;
+          }
+
+          const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
           const values = [
               data.metadata.phone_number_id,
               data.metadata.display_phone_number,
@@ -109,20 +128,20 @@ app.post('/webhook', function (request, response) {
               message.from,
               message.timestamp,
               message.type,
-              message.text.body
+              message.text.body,
+              contactId
           ];
 
-          connection.query(sql, values, (err, results) => {
-              if (err) {
-                  console.error('Erro ao inserir dados no banco de dados:', err);
-                  allEntriesProcessed = false;
-                  return;
-              }
-              console.log('Dados inseridos com sucesso:', results);
-          });
+          try {
+            await pool.query(sql, values);
+            console.log('Dados inseridos com sucesso');
+          } catch (err) {
+            console.error('Erro ao inserir dados no banco de dados:', err);
+            allEntriesProcessed = false;
+          }
         }
-      });
-    });
+      }
+    }
 
     if (allEntriesProcessed) {
       response.sendStatus(200);
@@ -145,8 +164,17 @@ app.post('/send', async (req, res) => {
   try {
     await sendMessage(toPhone, text, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
 
+    // Buscar o contato para obter o contact_id
+    const [contactRows] = await pool.query("SELECT id FROM contacts WHERE phone = ?", [toPhone]);
+    let contactId;
+    if (contactRows.length > 0) {
+      contactId = contactRows[0].id;
+    } else {
+      return res.status(400).send("Contato não encontrado");
+    }
+
     // Armazenar a mensagem enviada no banco de dados
-    const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     const values = [
         process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
         process.env.DISPLAY_PHONE_NUMBER,
@@ -156,17 +184,13 @@ app.post('/send', async (req, res) => {
         'me',
         Math.floor(Date.now() / 1000).toString(), // Timestamp atual em segundos
         'text',
-        text
+        text,
+        contactId
     ];
 
-    connection.query(sql, values, (err, results) => {
-        if (err) {
-            console.error('Erro ao inserir dados no banco de dados:', err);
-            return res.status(500).send("Erro ao armazenar mensagem");
-        }
-        console.log('Mensagem enviada e armazenada com sucesso:', results);
-        res.status(200).send("Mensagem enviada com sucesso");
-    });
+    await pool.query(sql, values);
+    console.log('Mensagem enviada e armazenada com sucesso');
+    res.status(200).send("Mensagem enviada com sucesso");
   } catch (error) {
     console.error("Erro ao enviar mensagem:", error);
     res.status(500).send("Erro ao enviar mensagem");
@@ -187,14 +211,14 @@ async function sendMessage(toPhone, text, whatsappBusinessAccountId) {
 }
 
 app.get("/messages", async (req, res) => {
-  const contactPhone = req.query.contact;
+  const contactId = req.query.contact;
 
-  if (!contactPhone) {
-    return res.status(400).send("O número de telefone do contato é obrigatório");
+  if (!contactId) {
+    return res.status(400).send("O ID do contato é obrigatório");
   }
 
   try {
-    const [rows] = await pool.query("SELECT * FROM whatsapp_messages WHERE wa_id = ? OR message_from = ? ORDER BY message_timestamp ASC", [contactPhone, contactPhone]);
+    const [rows] = await pool.query("SELECT * FROM whatsapp_messages WHERE contact_id = ? ORDER BY message_timestamp ASC", [contactId]);
     res.json(rows);
   } catch (error) {
     console.error("Erro ao buscar mensagens:", error);
@@ -256,4 +280,3 @@ app.get('/test', (req, res) => {
 });
 
 app.listen(3005, () => console.log(`Servidor rodando na porta ${3005}`));
- 
