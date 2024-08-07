@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS contacts (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   phone VARCHAR(20) NOT NULL,
+  tag VARCHAR(20),
   profilePic VARCHAR(255),
   lastMessage TEXT,
   cpf VARCHAR(11),
