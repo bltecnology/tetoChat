@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FiSend } from 'react-icons/fi';
 import Header from '../components/header';
+import backgroundImage from './path/to/your/image.png'; // Ajuste o caminho conforme necessário
+import { io } from 'socket.io-client';
+
+const socket = io('http://localhost:3005'); // Ajuste para o endereço correto do seu servidor
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
@@ -39,8 +43,20 @@ const Chat = () => {
     }
   }, [selectedContact]);
 
+  useEffect(() => {
+    socket.on('new_message', (message) => {
+      if (message.contact_id === selectedContact?.id) {
+        setMessages((prevMessages) => [...prevMessages, message]);
+      }
+    });
+
+    return () => {
+      socket.off('new_message');
+    };
+  }, [selectedContact]);
+
   const handleSendMessage = async () => {
-    if (selectedContact) {
+    if (selectedContact && newMessage.trim() !== '') {
       try {
         await axios.post('https://tetochat-8m0r.onrender.com/send', {
           toPhone: selectedContact.phone,
@@ -49,10 +65,11 @@ const Chat = () => {
 
         const sentMessage = {
           id: Date.now(),
-          content: newMessage,
+          message_body: newMessage, // Certifique-se de que o campo message_body está correto
           from_phone: 'me',
           to_phone: selectedContact.phone,
           timestamp: new Date().toISOString(),
+          contact_name: 'API',
           type: 'text',
         };
 
@@ -68,14 +85,14 @@ const Chat = () => {
   return (
     <div className="flex flex-col h-screen">
       <Header />
-      <div className="flex flex-grow">
-        <div className="w-1/3 bg-white border-r border-gray-200">
+      <div className="flex flex-grow overflow-hidden">
+        <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col">
           <input
             type="text"
             placeholder="Pesquise por nome ou número"
             className="w-full p-2 border-b border-gray-200"
           />
-          <div className="p-2">
+          <div className="flex-grow p-2 overflow-y-auto">
             <ul>
               {contacts.map((contact) => (
                 <li
@@ -93,12 +110,12 @@ const Chat = () => {
             </ul>
           </div>
         </div>
-        <div className="w-2/3 flex flex-col">
+        <div className="w-2/3 flex flex-col" style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover' }}>
           {selectedContact ? (
             <>
-              <div className="flex-grow bg-cover bg-center p-4 overflow-y-auto" style={{ backgroundImage: 'url(/path/to/background-image.png)' }}>
+              <div className="flex-grow p-4 overflow-y-auto">
                 {messages.map((message) => (
-                  <div key={message.id} className={`max-w-xs p-3 my-2 rounded-lg ${message.from_phone === 'me' ? 'ml-auto bg-green-200 text-white' : 'mr-auto bg-blue-200 text-black'}`}>
+                  <div key={message.id} className={`max-w-xs p-3 my-2 rounded-lg ${message.from_phone === 'me' || message.contact_name === 'API' ? 'ml-auto bg-green-200 text-black' : 'mr-auto bg-blue-200 text-black'}`}>
                     {message.message_body}
                   </div>
                 ))}

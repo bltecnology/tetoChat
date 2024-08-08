@@ -23,6 +23,7 @@
     "react-icons": "^5.2.1",
     "react-router-dom": "^6.24.1",
     "request": "^2.88.2",
+    "socket.io-client": "^4.7.5",
     "typeface-poppins": "^1.1.13"
   },
   "devDependencies": {
