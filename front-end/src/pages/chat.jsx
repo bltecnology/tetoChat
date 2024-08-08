@@ -77,6 +77,12 @@ const Chat = () => {
     }
   };
 
+  const handleKeyPress = (event) => {
+    if (event.key === 'Enter') {
+      handleSendMessage();
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen">
       <Header />
@@ -120,6 +126,7 @@ const Chat = () => {
                   type="text"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={handleKeyPress} // Adicionado evento de tecla
                   placeholder="Digite sua mensagem..."
                   className="flex-grow p-2 mr-2 border rounded"
                 />
