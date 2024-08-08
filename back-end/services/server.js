@@ -316,6 +316,21 @@ app.post("/contacts", async (req, res) => {
   }
 });
 
+app.delete("/contacts/:id", async (req, res) => {
+  const contactId = req.params.id;
+  try {
+    const [result] = await pool.query("DELETE FROM contacts WHERE id = ?", [contactId]);
+    if (result.affectedRows > 0) {
+      res.status(200).send("Contato deletado com sucesso");
+    } else {
+      res.status(404).send("Contato não encontrado");
+    }
+  } catch (error) {
+    console.error("Erro ao deletar contato:", error);
+    res.status(500).send("Erro ao deletar contato");
+  }
+});
+
 app.post("/users", addUser);
 app.post("/login", authenticateUser);
 

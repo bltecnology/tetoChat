@@ -5,13 +5,14 @@ import Header from '../components/header';
 import backgroundImage from '../assets/image.png'; // Ajuste o caminho conforme necessário
 import { io } from 'socket.io-client';
 
-const socket = io('http://localhost:3005'); // Ajuste para o endereço correto do seu servidor
+const socket = io('https://tetochat-8m0r.onrender.com'); // Ajuste para o endereço correto do seu servidor
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [contacts, setContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
+  const [sending, setSending] = useState(false); // Adicionado para evitar envios múltiplos
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -56,28 +57,22 @@ const Chat = () => {
   }, [selectedContact]);
 
   const handleSendMessage = async () => {
-    if (selectedContact && newMessage.trim() !== '') {
+    if (selectedContact && newMessage.trim() !== '' && !sending) { // Verificação adicionada
+      setSending(true);
       try {
-        await axios.post('https://tetochat-8m0r.onrender.com/send', {
+        const response = await axios.post('https://tetochat-8m0r.onrender.com/send', {
           toPhone: selectedContact.phone,
           text: newMessage,
         });
 
-        const sentMessage = {
-          id: Date.now(),
-          message_body: newMessage, // Certifique-se de que o campo message_body está correto
-          from_phone: 'me',
-          to_phone: selectedContact.phone,
-          timestamp: new Date().toISOString(),
-          contact_name: 'API',
-          type: 'text',
-        };
-
-        setMessages((prevMessages) => [...prevMessages, sentMessage]);
-        setNewMessage('');
-        console.log('Mensagem enviada com sucesso');
+        if (response.status === 200) {
+          setNewMessage('');
+          console.log('Mensagem enviada com sucesso');
+        }
       } catch (error) {
         console.error('Erro ao enviar mensagem:', error);
+      } finally {
+        setSending(false);
       }
     }
   };
@@ -131,6 +126,7 @@ const Chat = () => {
                 <button
                   onClick={handleSendMessage}
                   className="p-2 bg-blue-500 text-white rounded mr-2"
+                  disabled={sending} // Desativar botão durante envio
                 >
                   <FiSend />
                 </button>

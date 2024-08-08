@@ -10,6 +10,8 @@ import { FiMoreVertical } from 'react-icons/fi'; // Ícone de três pontinhos
 const Contacts = () => {
   const [contacts, setContacts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(null); // Estado para controlar o menu visível
+  const [selectedContact, setSelectedContact] = useState(null); // Contato selecionado para apagar
 
   const fetchContacts = async () => {
     try {
@@ -29,6 +31,20 @@ const Contacts = () => {
     setIsModalOpen(false);
   };
 
+  const handleDeleteContact = async (contactId) => {
+    try {
+      await axios.delete(`https://tetochat-8m0r.onrender.com/contacts/${contactId}`);
+      fetchContacts(); // Atualizar a lista de contatos
+      setMenuVisible(null); // Fechar o menu
+    } catch (error) {
+      console.error('Erro ao apagar contato:', error);
+    }
+  };
+
+  const toggleMenu = (contactId) => {
+    setMenuVisible(contactId === menuVisible ? null : contactId);
+  };
+
   return (
     <div>
       <Header />
@@ -43,7 +59,7 @@ const Contacts = () => {
           p6="Ações"
           content={
             contacts.map((contact) => (
-              <div key={contact.id} className="flex items-center p-2 border-b space-x-40">
+              <div key={contact.id} className="flex items-center p-2 border-b space-x-40 relative">
                 <div className="flex items-center space-x-2 w-1/4">
                   <img
                     src={contact.profilePic}
@@ -55,7 +71,20 @@ const Contacts = () => {
                 <div className="flex-1 w-1/4">{contact.phone}</div>
                 <div className="flex-1 w-1/4">{contact.tags}</div>
                 <div className="flex w-1/4 justify-end">
-                  <FiMoreVertical className="cursor-pointer" />
+                  <FiMoreVertical
+                    className="cursor-pointer"
+                    onClick={() => toggleMenu(contact.id)}
+                  />
+                  {menuVisible === contact.id && (
+                    <div className="absolute right-0 mt-8 w-40 bg-white border rounded shadow-lg z-10">
+                      <div
+                        className="cursor-pointer p-2 hover:bg-gray-100"
+                        onClick={() => handleDeleteContact(contact.id)}
+                      >
+                        Apagar
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))
