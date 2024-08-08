@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FiSend } from 'react-icons/fi';
 import Header from '../components/header';
-import backgroundImage from './path/to/your/image.png'; // Ajuste o caminho conforme necessário
+import backgroundImage from '../assets/image.png'; // Ajuste o caminho conforme necessário
 import { io } from 'socket.io-client';
 
 const socket = io('http://localhost:3005'); // Ajuste para o endereço correto do seu servidor
@@ -18,7 +18,7 @@ const Chat = () => {
       try {
         const response = await axios.get('https://tetochat-8m0r.onrender.com/contacts', {
           withCredentials: true
-        })
+        });
         setContacts(response.data);
       } catch (error) {
         console.error('Erro ao buscar contatos:', error);

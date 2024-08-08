@@ -1,4 +1,6 @@
 import express from "express";
+import http from "http";
+import { Server } from "socket.io";
 import bodyParser from "body-parser";
 import cors from "cors";
 import axios from "axios";
@@ -18,6 +20,15 @@ const __dirname = dirname(__filename);
 
 dotenv.config();
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: ["http://localhost:5173", "https://tetochat-8m0r.onrender.com"],
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
+
 app.use(bodyParser.json());
 
 const allowedOrigins = ["http://localhost:5173", "https://tetochat-8m0r.onrender.com"];
@@ -78,6 +89,14 @@ connection.connect((err) => {
         }
       });
     }
+  });
+});
+
+io.on('connection', (socket) => {
+  console.log('a user connected');
+
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
   });
 });
 
@@ -149,6 +168,18 @@ app.post('/webhook', async (request, response) => {
 
           try {
             await pool.query(sql, values);
+            io.emit('new_message', {
+              phone_number_id: data.metadata.phone_number_id,
+              display_phone_number: data.metadata.display_phone_number,
+              contact_name: contact.profile.name,
+              wa_id: contact.wa_id,
+              message_id: message.id,
+              message_from: message.from,
+              message_timestamp: message.timestamp,
+              message_type: message.type,
+              message_body: message.text.body,
+              contact_id: contactId
+            });
             console.log('Dados inseridos com sucesso');
           } catch (err) {
             console.error('Erro ao inserir dados no banco de dados:', err);
@@ -208,6 +239,18 @@ app.post('/send', async (req, res) => {
     ];
 
     await pool.query(sql, values);
+    io.emit('new_message', {
+      phone_number_id: process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
+      display_phone_number: process.env.DISPLAY_PHONE_NUMBER,
+      contact_name: 'API',
+      wa_id: toPhone,
+      message_id: `msg-${Date.now()}`,
+      message_from: 'me',
+      message_timestamp: Math.floor(Date.now() / 1000).toString(),
+      message_type: 'text',
+      message_body: text,
+      contact_id: contactId
+    });
     console.log('Mensagem enviada e armazenada com sucesso');
     res.status(200).send("Mensagem enviada com sucesso");
   } catch (error) {
@@ -298,4 +341,4 @@ app.get('/test', (req, res) => {
   res.json({ message: 'Hello World' });
 });
 
-app.listen(3005, () => console.log(`Servidor rodando na porta ${3005}`));
+server.listen(3005, () => console.log(`Servidor rodando na porta ${3005}`));
