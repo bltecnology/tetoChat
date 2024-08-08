@@ -98,7 +98,7 @@ const Chat = () => {
             <>
               <div className="flex-grow bg-cover bg-center p-4 overflow-y-auto" style={{ backgroundImage: 'url(/path/to/background-image.png)' }}>
                 {messages.map((message) => (
-                  <div key={message.id} className={`max-w-xs p-3 my-2 rounded-lg ${message.from_phone === 'me' ? 'ml-auto bg-green-200' : 'mr-auto bg-white'}`}>
+                  <div key={message.id} className={`max-w-xs p-3 my-2 rounded-lg ${message.from_phone === 'me' ? 'ml-auto bg-green-200 text-white' : 'mr-auto bg-blue-200 text-black'}`}>
                     {message.message_body}
                   </div>
                 ))}
