@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS contacts (
   name VARCHAR(100) NOT NULL,
   phone VARCHAR(20) NOT NULL,
   tag VARCHAR(20),
+  note VARCHAR(280),
   profilePic VARCHAR(255),
   lastMessage TEXT,
   cpf VARCHAR(11),
