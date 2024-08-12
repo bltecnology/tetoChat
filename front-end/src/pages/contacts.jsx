@@ -16,7 +16,18 @@ const Contacts = () => {
   const fetchContacts = async () => {
     try {
       const response = await axios.get('https://tetochat-8m0r.onrender.com/contacts');
-      setContacts(response.data);
+      const contactsWithProfilePics = await Promise.all(
+        response.data.map(async (contact) => {
+          try {
+            const profilePicResponse = await axios.get(`https://tetochat-8m0r.onrender.com/profile-picture/${contact.phone}`);
+            return { ...contact, profilePic: profilePicResponse.data.profilePicUrl };
+          } catch (error) {
+            console.error('Erro ao buscar foto de perfil:', error);
+            return { ...contact, profilePic: null };
+          }
+        })
+      );
+      setContacts(contactsWithProfilePics);
     } catch (error) {
       console.error('Erro ao buscar contatos:', error);
     }
@@ -62,14 +73,14 @@ const Contacts = () => {
               <div key={contact.id} className="flex items-center p-2 border-b space-x-40 relative">
                 <div className="flex items-center space-x-2 w-1/4">
                   <img
-                    src={contact.profilePic}
+                    src={contact.profilePic || '/default-profile-pic.png'} // Use uma imagem padrão se não houver foto de perfil
                     alt={contact.name}
                     className="w-10 h-10 rounded-full mr-3"
                   />
                   <div>{contact.name}</div>
                 </div>
-                <div className="flex-1 w-1/4">{contact.phone}</div>
-                <div className="flex-1 w-1/4">{contact.tags}</div>
+                <div className="flex-1 w-1/4 text-right">{contact.phone}</div>
+                <div className="flex-1 w-1/4">{contact.tag}</div>
                 <div className="flex w-1/4 justify-end">
                   <FiMoreVertical
                     className="cursor-pointer"

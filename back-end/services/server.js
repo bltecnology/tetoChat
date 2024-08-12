@@ -352,6 +352,31 @@ app.get("/me", authenticateJWT, async (req, res) => {
   }
 });
 
+app.get('/profile-picture/:wa_id', async (req, res) => {
+  const { wa_id } = req.params;
+
+  try {
+    const response = await axios.get(
+      `https://graph.facebook.com/v20.0/${process.env.WHATSAPP_BUSINESS_ACCOUNT_ID}/contacts`,
+      {
+        params: { phone_number: wa_id },
+        headers: { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}` },
+      }
+    );
+
+    const profilePicUrl = response.data.data[0]?.profile_picture_url || null;
+
+    if (profilePicUrl) {
+      res.json({ profilePicUrl });
+    } else {
+      res.status(404).json({ message: 'Profile picture not found' });
+    }
+  } catch (error) {
+    console.error('Error fetching profile picture:', error);
+    res.status(500).json({ message: 'Error fetching profile picture' });
+  }
+});
+
 app.get('/test', (req, res) => {
   res.json({ message: 'Hello World' });
 });
