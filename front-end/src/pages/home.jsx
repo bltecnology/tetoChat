@@ -23,8 +23,11 @@ const Home = () => {
                             <ButtonCard icon={<FaTags />} text="Departamentos" />
                         </Link>
                     </div>
-                    <div className="flex justify-between gap-24 col-span-3 w-full max-w-md">
-                        <ButtonCard icon={<FaChartBar />} text="Estatísticas de Atendimento" />
+                    <div className="flex justify-between gap-24 col-span-3">
+                        <Link to="/statistics" className="flex-1 mx-2">
+                            <ButtonCard icon={<FaChartBar />} text="Estatísticas de Atendimento" />
+                        </Link>
+
                         <Link to="/connectedDevices">
                             <ButtonCard icon={<FaMobileAlt />} text="Dispositivos conectados" />
                         </Link>

@@ -85,68 +85,71 @@ const Chat = () => {
 
   return (
     <div className="flex flex-col h-screen">
-      <Header />
-      <div className="flex flex-grow overflow-hidden">
-        <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col">
-          <input
-            type="text"
-            placeholder="Pesquise por nome ou número"
-            className="w-full p-2 border-b border-gray-200"
-          />
-          <div className="flex-grow p-2 overflow-y-auto">
-            <ul>
-              {contacts.map((contact) => (
-                <li
-                  key={contact.id}
-                  className="flex items-center p-2 cursor-pointer hover:bg-gray-100"
-                  onClick={() => setSelectedContact(contact)}
-                >
-                  <img src={contact.profilePic} alt={contact.name} className="w-10 h-10 rounded-full mr-2" />
-                  <div>
-                    <div className="font-bold">{contact.name}</div>
-                    <div className="text-sm text-gray-600">{contact.lastMessage}</div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        <div className="w-2/3 flex flex-col" style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover' }}>
-          {selectedContact ? (
-            <>
-              <div className="flex-grow p-4 overflow-y-auto">
-                {messages.map((message) => (
-                  <div key={message.id} className={`max-w-xs p-3 my-2 rounded-lg ${message.from_phone === 'me' || message.contact_name === 'API' ? 'ml-auto bg-green-200 text-black' : 'mr-auto bg-blue-200 text-black'}`}>
-                    {message.message_body}
-                  </div>
-                ))}
+  <Header />
+  <div className="flex flex-grow overflow-hidden">
+    {/* Coluna esquerda com 40% da largura */}
+    <div className="flex-shrink-0 w-1/4 bg-white border-r border-gray-200 flex flex-col">
+      <input
+        type="text"
+        placeholder="Pesquise por nome ou número"
+        className="w-full p-2 border-b border-gray-200"
+      />
+      <div className="flex-grow p-2 overflow-y-auto">
+        <ul>
+          {contacts.map((contact) => (
+            <li
+              key={contact.id}
+              className="flex items-center p-2 cursor-pointer hover:bg-gray-100"
+              onClick={() => setSelectedContact(contact)}
+            >
+              <img src={contact.profilePic} alt={contact.name} className="w-10 h-10 rounded-full mr-2" />
+              <div>
+                <div className="font-bold">{contact.name}</div>
+                <div className="text-sm text-gray-600">{contact.lastMessage}</div>
               </div>
-              <div className="flex items-center p-4 bg-white border-t border-gray-200">
-                <input
-                  type="text"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={handleKeyPress} // Adicionado evento de tecla
-                  placeholder="Digite sua mensagem..."
-                  className="flex-grow p-2 mr-2 border rounded"
-                />
-                <button
-                  onClick={handleSendMessage}
-                  className="p-2 bg-blue-500 text-white rounded mr-2"
-                  disabled={sending} // Desativar botão durante envio
-                >
-                  <FiSend />
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="flex-grow flex items-center justify-center">
-              <div className="text-gray-500">Selecione um contato para começar a conversar</div>
-            </div>
-          )}
-        </div>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
+    {/* Coluna direita com 60% da largura */}
+    <div className="flex-grow flex flex-col" style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover' }}>
+      {selectedContact ? (
+        <>
+          <div className="flex-grow p-4 overflow-y-auto">
+            {messages.map((message) => (
+              <div key={message.id} className={`max-w-xs p-3 my-2 rounded-lg ${message.from_phone === 'me' || message.contact_name === 'API' ? 'ml-auto bg-green-200 text-black' : 'mr-auto bg-blue-200 text-black'}`}>
+                {message.message_body}
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center p-4 bg-white border-t border-gray-200">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyPress={handleKeyPress} // Adicionado evento de tecla
+              placeholder="Digite sua mensagem..."
+              className="flex-grow p-2 mr-2 border rounded"
+            />
+            <button
+              onClick={handleSendMessage}
+              className="p-2 bg-blue-500 text-white rounded mr-2"
+              disabled={sending} // Desativar botão durante envio
+            >
+              <FiSend />
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="flex-grow flex items-center justify-center">
+          <div className="text-gray-500">Selecione um contato para começar a conversar</div>
+        </div>
+      )}
+    </div>
+  </div>
+</div>
+
   );
 };
 

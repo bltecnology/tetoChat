@@ -13,13 +13,13 @@ const Header = () => {
       </div>
       <div className="flex items-center">
         <div className="mr-8">
-          <FiEye size={24} />
+          <FiEye size={24} className="hover:rotate-y-360" />
         </div>
         <div className="relative mr-8">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="focus:outline-none hover:bg-gray-700 p-2 rounded">
-                <FiMenu size={24} />
+              <button className=" p-2 rounded">
+                <FiMenu size={24} className="hover:rotate-y-360" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="bg-white text-black mt-2 w-48">
@@ -39,11 +39,11 @@ const Header = () => {
           </DropdownMenu>
         </div>
         <div className="mr-8">
-          <FiBell size={24} />
+          <FiBell size={24} className="hover:rotate-y-360" />
         </div>
         <div className="mr-8">
           <Link to="/account">
-            <FiUser size={24} />
+            <FiUser size={24} className="hover:rotate-y-360" />
           </Link>
         </div>
       </div>
