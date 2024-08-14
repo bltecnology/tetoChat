@@ -357,14 +357,14 @@ app.get('/profile-picture/:wa_id', async (req, res) => {
 
   try {
     const response = await axios.get(
-      `https://graph.facebook.com/v20.0/${process.env.WHATSAPP_BUSINESS_ACCOUNT_ID}/contacts`,
+      `https://graph.facebook.com/v20.0/${wa_id}`,
       {
-        params: { phone_number: wa_id },
+        params: { fields: 'profile_pic' },
         headers: { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}` },
       }
     );
 
-    const profilePicUrl = response.data.data[0]?.profile_picture_url || null;
+    const profilePicUrl = response.data.profile_pic || null;
 
     if (profilePicUrl) {
       res.json({ profilePicUrl });
