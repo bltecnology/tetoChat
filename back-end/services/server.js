@@ -353,11 +353,11 @@ app.get("/me", authenticateJWT, async (req, res) => {
 });
 
 app.get('/profile-picture/:wa_id', async (req, res) => {
-  const { wa_id } = req.params;
+  const WHATSAPP_BUSINESS_ACCOUNT_ID = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
 
   try {
     const response = await axios.get(
-      `https://graph.facebook.com/v20.0/${wa_id}/whatsapp_business_profile`,
+      `https://graph.facebook.com/v20.0/${WHATSAPP_BUSINESS_ACCOUNT_ID}/whatsapp_business_profile`,
       {
         params: {
           fields: 'profile_picture_url'
