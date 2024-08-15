@@ -67,7 +67,6 @@ connection.connect((err) => {
   }
   console.log('Conectado ao banco de dados MySQL.');
 
-  // Remover coluna incorreta 'tags' e adicionar a coluna correta 'tag'
   const dropColumnQuery = 'ALTER TABLE contacts DROP COLUMN IF EXISTS tags';
   connection.query(dropColumnQuery, (err, results) => {
     if (err) {
@@ -75,7 +74,6 @@ connection.connect((err) => {
     } else {
       console.log('Coluna "tags" removida com sucesso, se existia.');
       
-      // Adicionar coluna 'tag' correta
       const addColumnQuery = 'ALTER TABLE contacts ADD COLUMN tag VARCHAR(20)';
       connection.query(addColumnQuery, (err, results) => {
         if (err) {
@@ -133,7 +131,6 @@ app.post('/webhook', async (request, response) => {
             continue;
           }
 
-          // Buscar ou criar o contato para obter o contact_id
           let contactId;
           try {
             const [contactRows] = await pool.query("SELECT id FROM contacts WHERE phone = ?", [contact.wa_id]);
@@ -210,7 +207,6 @@ app.post('/send', async (req, res) => {
   try {
     await sendMessage(toPhone, text, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
 
-    // Buscar o contato para obter o contact_id
     const [contactRows] = await pool.query("SELECT id FROM contacts WHERE phone = ?", [toPhone]);
     let contactId;
     if (contactRows.length > 0) {
@@ -223,16 +219,15 @@ app.post('/send', async (req, res) => {
       contactId = result.insertId;
     }
 
-    // Armazenar a mensagem enviada no banco de dados
     const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     const values = [
       process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
       process.env.DISPLAY_PHONE_NUMBER,
       'API',
       toPhone,
-      `msg-${Date.now()}`, // Cria um ID único para a mensagem
+      `msg-${Date.now()}`,
       'me',
-      Math.floor(Date.now() / 1000).toString(), // Timestamp atual em segundos
+      Math.floor(Date.now() / 1000).toString(),
       'text',
       text,
       contactId
@@ -352,33 +347,10 @@ app.get("/me", authenticateJWT, async (req, res) => {
   }
 });
 
+// Como não podemos obter a foto de perfil de usuários comuns do WhatsApp, estamos usando uma imagem padrão.
 app.get('/profile-picture/:wa_id', async (req, res) => {
-  const WHATSAPP_BUSINESS_ACCOUNT_ID = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
-
-  try {
-    const response = await axios.get(
-      `https://graph.facebook.com/v20.0/${WHATSAPP_BUSINESS_ACCOUNT_ID}/whatsapp_business_profile`,
-      {
-        params: {
-          fields: 'profile_picture_url'
-        },
-        headers: {
-          Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
-        }
-      }
-    );
-
-    const profilePicUrl = response.data.data[0]?.profile_picture_url || null;
-
-    if (profilePicUrl) {
-      res.json({ profilePicUrl });
-    } else {
-      res.status(404).json({ message: 'Profile picture not found' });
-    }
-  } catch (error) {
-    console.error('Error fetching profile picture:', error.response ? error.response.data : error.message);
-    res.status(500).json({ message: 'Error fetching profile picture' });
-  }
+  const defaultProfilePic = '/path/to/default-profile-pic.png';
+  res.json({ profilePicUrl: defaultProfilePic });
 });
 
 app.get('/test', (req, res) => {

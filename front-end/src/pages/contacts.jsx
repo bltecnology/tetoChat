@@ -22,14 +22,14 @@ const Contacts = () => {
             const profilePicResponse = await axios.get(`https://tetochat-8m0r.onrender.com/profile-picture/${contact.phone}`);
             return { ...contact, profilePic: profilePicResponse.data.profilePicUrl };
           } catch (error) {
-            console.error('Erro ao buscar foto de perfil:', error);
-            return { ...contact, profilePic: null };
+            console.error(`Erro ao buscar foto de perfil para ${contact.phone}:`, error.response ? error.response.data : error.message);
+            return { ...contact, profilePic: '/default-profile-pic.png' };  // Usar uma imagem padrão caso a foto de perfil não seja encontrada
           }
         })
       );
       setContacts(contactsWithProfilePics);
     } catch (error) {
-      console.error('Erro ao buscar contatos:', error);
+      console.error('Erro ao buscar contatos:', error.response ? error.response.data : error.message);
     }
   };
 
