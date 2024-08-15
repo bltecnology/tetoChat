@@ -357,14 +357,18 @@ app.get('/profile-picture/:wa_id', async (req, res) => {
 
   try {
     const response = await axios.get(
-      `https://graph.facebook.com/v20.0/${wa_id}`,
+      `https://graph.facebook.com/v20.0/${wa_id}/whatsapp_business_profile`,
       {
-        params: { fields: 'profile_pic' },
-        headers: { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}` },
+        params: {
+          fields: 'profile_picture_url'
+        },
+        headers: {
+          Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
+        }
       }
     );
 
-    const profilePicUrl = response.data.profile_pic || null;
+    const profilePicUrl = response.data.data[0]?.profile_picture_url || null;
 
     if (profilePicUrl) {
       res.json({ profilePicUrl });
@@ -372,7 +376,7 @@ app.get('/profile-picture/:wa_id', async (req, res) => {
       res.status(404).json({ message: 'Profile picture not found' });
     }
   } catch (error) {
-    console.error('Error fetching profile picture:', error);
+    console.error('Error fetching profile picture:', error.response ? error.response.data : error.message);
     res.status(500).json({ message: 'Error fetching profile picture' });
   }
 });
