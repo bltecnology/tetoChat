@@ -370,6 +370,16 @@ app.post('/departments', async (req, res) => {
   }
 });
 
+app.get('/departments', async (req, res) => {
+  try {
+      const [rows] = await pool.query("SELECT * FROM departments");
+      res.json(rows);
+  } catch (error) {
+      console.error("Erro ao buscar departamentos:", error);
+      res.status(500).send("Erro ao buscar departamentos");
+  }
+});
+
 
 app.get('/test', (req, res) => {
   res.json({ message: 'Hello World' });
