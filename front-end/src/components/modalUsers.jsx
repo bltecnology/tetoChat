@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const ModalUsers = ({ isOpen, onClose, onSave }) => {
@@ -7,8 +7,22 @@ const ModalUsers = ({ isOpen, onClose, onSave }) => {
   const [password, setPassword] = useState('');
   const [position, setPosition] = useState('');
   const [department, setDepartment] = useState('');
+  const [departments, setDepartments] = useState([]);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen) {
+      // Fetch departments only when the modal is open
+      const fetchDepartments = async () => {
+        try {
+          const response = await axios.get('https://tetochat-8m0r.onrender.com/departments');
+          setDepartments(response.data);
+        } catch (error) {
+          console.error('Erro ao buscar departamentos:', error);
+        }
+      };
+      fetchDepartments();
+    }
+  }, [isOpen]);
 
   const handleSave = async () => {
     const newUser = { name, email, password, position, department };
@@ -26,6 +40,8 @@ const ModalUsers = ({ isOpen, onClose, onSave }) => {
       console.error('Erro ao salvar usuário:', error);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
@@ -59,13 +75,18 @@ const ModalUsers = ({ isOpen, onClose, onSave }) => {
           value={position}
           onChange={(e) => setPosition(e.target.value)}
         />
-        <input
-          type="text"
+        <select
           className="border p-2 mb-4 w-full"
-          placeholder="Departamento"
           value={department}
           onChange={(e) => setDepartment(e.target.value)}
-        />
+        >
+          <option value="">Selecione o Departamento</option>
+          {departments.map((dept) => (
+            <option key={dept.id} value={dept.name}>
+              {dept.name}
+            </option>
+          ))}
+        </select>
         <div className="flex justify-end">
           <button
             className="bg-gray-200 px-4 py-2 mr-2"
@@ -83,6 +104,6 @@ const ModalUsers = ({ isOpen, onClose, onSave }) => {
       </div>
     </div>
   );
-}
+};
 
 export default ModalUsers;

@@ -380,6 +380,17 @@ app.get('/departments', async (req, res) => {
   }
 });
 
+app.get('/users', async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT * FROM users");
+    res.json(rows);
+  } catch (error) {
+    console.error("Erro ao buscar usuários:", error);
+    res.status(500).send("Erro ao buscar usuários");
+  }
+});
+
+
 
 app.get('/test', (req, res) => {
   res.json({ message: 'Hello World' });
