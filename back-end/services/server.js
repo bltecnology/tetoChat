@@ -353,6 +353,24 @@ app.get('/profile-picture/:wa_id', async (req, res) => {
   res.json({ profilePicUrl: defaultProfilePic });
 });
 
+app.post('/departments', async (req, res) => {
+  const { name } = req.body;
+
+  if (!name) {
+    return res.status(400).send("O nome do departamento é obrigatório");
+  }
+
+  try {
+    const [result] = await pool.query("INSERT INTO departments (name) VALUES (?)", [name]);
+    const insertId = result.insertId;
+    res.status(201).json({ id: insertId, name });
+  } catch (error) {
+    console.error("Erro ao salvar departamento:", error);
+    res.status(500).send("Erro ao salvar departamento");
+  }
+});
+
+
 app.get('/test', (req, res) => {
   res.json({ message: 'Hello World' });
 });

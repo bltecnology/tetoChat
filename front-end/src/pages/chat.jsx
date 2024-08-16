@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FiSend, FiSmile, FiPaperclip, FiMic } from 'react-icons/fi';
+import { FiPhoneForwarded, FiSmile, FiPaperclip, FiMic, FiMoreVertical } from 'react-icons/fi';
 import { AiOutlineThunderbolt } from 'react-icons/ai'; // Ícone de raio
 import Header from '../components/header';
-import backgroundImage from '../assets/image.png'; // Ajuste o caminho conforme necessário
+import TransferModal from '../components/modalChat'; // Importando o TransferModal
 import { io } from 'socket.io-client';
+import backgroundImage from '../assets/image.png';
 
 const socket = io('https://tetochat-8m0r.onrender.com'); // Ajuste para o endereço correto do seu servidor
 
@@ -13,7 +14,8 @@ const Chat = () => {
   const [newMessage, setNewMessage] = useState('');
   const [contacts, setContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
-  const [sending, setSending] = useState(false); // Adicionado para evitar envios múltiplos
+  const [showModal, setShowModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('chat'); // Para controlar as abas
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -58,8 +60,7 @@ const Chat = () => {
   }, [selectedContact]);
 
   const handleSendMessage = async () => {
-    if (selectedContact && newMessage.trim() !== '' && !sending) { // Verificação adicionada
-      setSending(true);
+    if (selectedContact && newMessage.trim() !== '') {
       try {
         const response = await axios.post('https://tetochat-8m0r.onrender.com/send', {
           toPhone: selectedContact.phone,
@@ -72,8 +73,6 @@ const Chat = () => {
         }
       } catch (error) {
         console.error('Erro ao enviar mensagem:', error);
-      } finally {
-        setSending(false);
       }
     }
   };
@@ -84,17 +83,61 @@ const Chat = () => {
     }
   };
 
+  const handleTransferClick = (contact) => {
+    setSelectedContact(contact);
+    setShowModal(true);
+  };
+
+  const handleTransferComplete = () => {
+    // Atualize a lista de contatos ou faça outras ações necessárias após a transferência
+  };
+
+  const fetchChats = async () => {
+    try {
+      const response = await axios.get(`https://tetochat-8m0r.onrender.com/chats?department=${loggedUser.departmentId}`);
+      setContacts(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar chats:', error);
+    }
+  };
+
+  const fetchQueue = async () => {
+    try {
+      const response = await axios.get(`https://tetochat-8m0r.onrender.com/queue?department=${loggedUser.departmentId}`);
+      setContacts(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar fila:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'chat') {
+      fetchChats();
+    } else if (activeTab === 'fila') {
+      fetchQueue();
+    }
+  }, [activeTab]);
+
   return (
     <div className="flex flex-col h-screen">
       <Header />
       <div className="flex flex-grow overflow-hidden">
-        {/* Coluna esquerda com 40% da largura */}
+        {/* Coluna esquerda com as abas de Chat e Fila */}
         <div className="flex-shrink-0 w-1/4 bg-white border-r border-gray-200 flex flex-col">
-          <input
-            type="text"
-            placeholder="Pesquise por nome ou número"
-            className="w-full p-2 border-b border-gray-200"
-          />
+          <div className="flex">
+            <button
+              onClick={() => setActiveTab('chat')}
+              className={`w-1/2 p-2 ${activeTab === 'chat' ? 'bg-blue-500 text-white' : 'bg-white text-black'}`}
+            >
+              Chat
+            </button>
+            <button
+              onClick={() => setActiveTab('fila')}
+              className={`w-1/2 p-2 ${activeTab === 'fila' ? 'bg-blue-500 text-white' : 'bg-white text-black'}`}
+            >
+              Fila
+            </button>
+          </div>
           <div className="flex-grow p-2 overflow-y-auto">
             <ul>
               {contacts.map((contact) => (
@@ -113,12 +156,16 @@ const Chat = () => {
             </ul>
           </div>
         </div>
-        {/* Coluna direita com 60% da largura */}
+        {/* Coluna direita com o chat */}
         <div className="flex-grow flex flex-col" style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover' }}>
           {/* Div para exibir o nome do contato */}
           {selectedContact && (
-            <div className="w-full p-2 bg-white border-b border-gray-200">
+            <div className="w-full p-2 bg-white border-b border-gray-200 flex items-center justify-between">
               <div className="text-lg ml-10 font-bold">{selectedContact.name}</div>
+              <div className="flex items-center mr-6 space-x-4">
+                <FiPhoneForwarded size={20} onClick={() => handleTransferClick(selectedContact)} />
+                <FiMoreVertical size={20} />
+              </div>
             </div>
           )}
           {/* Div para exibir as mensagens */}
@@ -144,7 +191,7 @@ const Chat = () => {
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={handleKeyPress} // Adicionado evento de tecla
+              onKeyPress={handleKeyPress}
               placeholder="Digite uma mensagem"
               className="flex-grow p-2 mx-2 border rounded-full"
             />
@@ -154,6 +201,15 @@ const Chat = () => {
           </div>
         </div>
       </div>
+      {/* Modal de Transferência */}
+      {selectedContact && (
+        <TransferModal
+          show={showModal}
+          onClose={() => setShowModal(false)}
+          onTransfer={handleTransferComplete}
+          contactId={selectedContact.id}
+        />
+      )}
     </div>
   );
 };
