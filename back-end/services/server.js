@@ -390,6 +390,26 @@ app.get('/users', async (req, res) => {
   }
 });
 
+app.post('/transfer', async (req, res) => {
+  const { contactId, departmentId } = req.body;
+
+  if (!contactId || !departmentId) {
+    return res.status(400).send("Os campos 'contactId' e 'departmentId' são obrigatórios");
+  }
+  try {
+    const result = await pool.query("UPDATE contacts SET department_id = ? WHERE id = ?", [departmentId, contactId]);
+    
+    if (result.affectedRows > 0) {
+      res.status(200).send("Atendimento transferido com sucesso");
+    } else {
+      res.status(404).send("Contato não encontrado");
+    }
+  } catch (error) {
+    console.error("Erro ao transferir atendimento:", error);
+    res.status(500).send("Erro ao transferir atendimento");
+  }
+});
+
 
 
 app.get('/test', (req, res) => {

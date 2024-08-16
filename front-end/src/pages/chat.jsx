@@ -85,11 +85,12 @@ const Chat = () => {
 
   const handleTransferClick = (contact) => {
     setSelectedContact(contact);
-    setShowModal(true);
+    setShowModal(true); // Ativa o modal
   };
 
   const handleTransferComplete = () => {
     // Atualize a lista de contatos ou faça outras ações necessárias após a transferência
+    setShowModal(false); // Fecha o modal após a transferência
   };
 
   const fetchChats = async () => {
@@ -204,7 +205,7 @@ const Chat = () => {
       {/* Modal de Transferência */}
       {selectedContact && (
         <TransferModal
-          show={showModal}
+          isOpen={showModal} // Passe a prop isOpen em vez de show
           onClose={() => setShowModal(false)}
           onTransfer={handleTransferComplete}
           contactId={selectedContact.id}
