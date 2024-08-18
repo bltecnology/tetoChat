@@ -49,3 +49,12 @@ CREATE TABLE IF NOT EXISTS departments (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS queue (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    contact_id INT NOT NULL,
+    department_atual VARCHAR(255) NOT NULL,
+    status VARCHAR(50) NOT NULL, -- Valores possíveis: "fila", "respondida"
+    FOREIGN KEY (contact_id) REFERENCES contacts(id)
+);
+
