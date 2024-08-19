@@ -417,12 +417,9 @@ app.post('/transfer', async (req, res) => {
   try {
     // Atualize o departamento atual na tabela queue
     await pool.query(
-      "INSERT INTO queue (contact_id, department_atual, status) VALUES (?, ?, 'fila')",
-      [contactId, departmentId]
+      "UPDATE queue SET department_atual = ?, status = 'fila' WHERE contact_id = ?",
+      [departmentId, contactId]
     );
-
-    // Remova o contato da lista do departamento anterior
-    await pool.query("DELETE FROM contacts WHERE id = ?", [contactId]);
 
     res.status(200).send("Atendimento transferido com sucesso");
   } catch (error) {
@@ -430,6 +427,7 @@ app.post('/transfer', async (req, res) => {
     res.status(500).send("Erro ao transferir atendimento");
   }
 });
+
 
 app.get('/test', (req, res) => {
   res.json({ message: 'Hello World' });
