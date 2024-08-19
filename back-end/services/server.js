@@ -394,21 +394,25 @@ app.post('/transfer', async (req, res) => {
   const { contactId, departmentId } = req.body;
 
   if (!contactId || !departmentId) {
-      return res.status(400).send("Os campos 'contactId' e 'departmentId' são obrigatórios");
+    return res.status(400).send("Os campos 'contactId' e 'departmentId' são obrigatórios");
   }
 
   try {
-      // Insere a conversa na tabela 'queue'
-      await pool.query("INSERT INTO queue (contact_id, department_atual, status) VALUES (?, ?, 'fila')", 
-                       [contactId, departmentId]);
+    // Atualize o departamento atual na tabela queue
+    await pool.query(
+      "INSERT INTO queue (contact_id, department_atual, status) VALUES (?, ?, 'fila')",
+      [contactId, departmentId]
+    );
 
-      res.status(200).send("Atendimento transferido com sucesso");
+    // Remova o contato da lista do departamento anterior
+    await pool.query("DELETE FROM contacts WHERE id = ?", [contactId]);
+
+    res.status(200).send("Atendimento transferido com sucesso");
   } catch (error) {
-      console.error("Erro ao transferir atendimento:", error);
-      res.status(500).send("Erro ao transferir atendimento");
+    console.error("Erro ao transferir atendimento:", error);
+    res.status(500).send("Erro ao transferir atendimento");
   }
 });
-
 
 
 

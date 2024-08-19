@@ -89,8 +89,14 @@ const Chat = () => {
   };
 
   const handleTransferComplete = () => {
-    // Atualize a lista de contatos ou faça outras ações necessárias após a transferência
-    setShowModal(false); // Fecha o modal após a transferência
+    // Filtra o contato transferido da lista de contatos
+    setContacts(contacts.filter(contact => contact.id !== selectedContact.id));
+
+    // Depois de transferir o contato, defina o selectedContact como null
+    setSelectedContact(null);
+
+    // Fecha o modal após a transferência
+    setShowModal(false);
   };
 
   const fetchChats = async () => {
