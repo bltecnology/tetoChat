@@ -1,35 +1,35 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import Header from '../components/header';
 import Background from '../components/background';
 import { GrAdd, GrMoreVertical } from 'react-icons/gr';
 import MainContainer from '../components/mainContainer';
-import ModalDepartments from "../components/modalDepartments";
+import ModalContacts from '../components/modalContacts';
 
-const Departments = () => {
-    const [departments, setDepartments] = useState([]);
+const Contacts = () => {
+    const [contacts, setContacts] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
-        const fetchDepartments = async () => {
+        const fetchContacts = async () => {
             try {
-                const response = await axios.get('https://tetochat-8m0r.onrender.com/departments');
-                setDepartments(response.data);
+                const response = await axios.get('https://tetochat-8m0r.onrender.com/contacts');
+                setContacts(response.data);
             } catch (error) {
-                console.error('Erro ao buscar departamentos:', error);
+                console.error('Erro ao buscar contatos:', error);
             }
         };
 
-        fetchDepartments();
-    }, []); // Certifique-se de que o array de dependências está vazio para que a função seja chamada apenas uma vez ao carregar a página
+        fetchContacts();
+    }, []);
 
-    const addDepartment = async (name) => {
+    const addContact = async () => {
         try {
-            const response = await axios.post('https://tetochat-8m0r.onrender.com/departments', { name });
-            setDepartments([...departments, response.data]);
+            const response = await axios.get('https://tetochat-8m0r.onrender.com/contacts');
+            setContacts(response.data);
             setIsModalOpen(false);
         } catch (error) {
-            console.error('Erro ao salvar departamento:', error);
+            console.error('Erro ao adicionar contato:', error);
         }
     };
 
@@ -37,31 +37,39 @@ const Departments = () => {
         <div>
             <Header />
             <Background
-                text="Departamentos"
+                text="Contatos"
                 btn1={<GrAdd onClick={() => setIsModalOpen(true)} />}
             >
                 <MainContainer
                     p1="Nome"
+                    p2="Número"
+                    p3="Tags"
+                    p4="Observação"
+                    p5="Email"
                     p6="Ações"
                     content={
                         <div>
-                            {departments.map((department) => (
-                                <div key={department.id} className="flex justify-between items-center border-b py-2">
-                                    <div>{department.name}</div>
-                                    <div><GrMoreVertical /></div>
+                            {contacts.map((contact) => (
+                                <div key={contact.id} className="flex justify-between items-center border-b py-2">
+                                    <div className="w-1/5">{contact.name}</div>
+                                    <div className="w-1/5">{contact.phone}</div>
+                                    <div className="w-1/5">{contact.tag}</div>
+                                    <div className="w-1/5">{contact.note}</div>
+                                    <div className="w-1/5">{contact.email}</div>
+                                    <div className="w-1/5 flex justify-end"><GrMoreVertical /></div>
                                 </div>
                             ))}
                         </div>
                     }
                 />
             </Background>
-            <ModalDepartments
+            <ModalContacts
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onSave={addDepartment}
+                onSave={addContact}
             />
         </div>
     );
 }
 
-export default Departments;
+export default Contacts;
