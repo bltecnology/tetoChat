@@ -6,16 +6,28 @@ import Header from '../components/header';
 import TransferModal from '../components/modalChat'; // Importando o TransferModal
 import { io } from 'socket.io-client';
 import backgroundImage from '../assets/image.png';
+import EmojiPicker from 'emoji-picker-react';
 
 const socket = io('https://tetochat-8m0r.onrender.com'); // Ajuste para o endereço correto do seu servidor
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [contacts, setContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState('chat'); // Para controlar as abas
+
+  // Função para adicionar o emoji ao campo de mensagem
+  const handleEmojiClick = (event, emojiObject) => {
+    console.log('Emoji selecionado:', emojiObject);
+    if (emojiObject && emojiObject.emoji) {
+      setNewMessage(prevInput => prevInput + emojiObject.emoji);
+    }
+    setShowEmojiPicker(false); // Fecha o emoji picker após selecionar um emoji
+  };
+  
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -184,10 +196,18 @@ const Chat = () => {
             ))}
           </div>
           {/* Div para enviar nova mensagem */}
-          <div className="flex items-center p-4 bg-white border-t border-gray-200">
-            <button className="p-2 text-gray-500">
+          <div className="flex items-center p-4 bg-white border-t border-gray-200 relative">
+            <button 
+              className="p-2 text-gray-500"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            >
               <FiSmile size={24} />
             </button>
+            {showEmojiPicker && (
+              <div className="absolute bottom-14">
+                <EmojiPicker onEmojiClick={handleEmojiClick} />
+              </div>
+            )}
             <button className="p-2 text-gray-500">
               <AiOutlineThunderbolt size={24} />
             </button>

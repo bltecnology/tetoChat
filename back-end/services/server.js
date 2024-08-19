@@ -67,26 +67,30 @@ connection.connect((err) => {
   }
   console.log('Conectado ao banco de dados MySQL.');
 
-  const dropColumnQuery = 'ALTER TABLE contacts DROP COLUMN IF EXISTS tags';
+  const dropColumnQuery = 'ALTER TABLE contacts DROP COLUMN tags';
   connection.query(dropColumnQuery, (err, results) => {
     if (err) {
-      console.error('Erro ao remover a coluna "tags":', err);
+      if (err.code === 'ER_CANT_DROP_FIELD_OR_KEY') {
+        console.log('A coluna "tags" não existe ou não pode ser removida.');
+      } else {
+        console.error('Erro ao remover a coluna "tags":', err);
+      }
     } else {
-      console.log('Coluna "tags" removida com sucesso, se existia.');
-      
-      const addColumnQuery = 'ALTER TABLE contacts ADD COLUMN tag VARCHAR(20)';
-      connection.query(addColumnQuery, (err, results) => {
-        if (err) {
-          if (err.code === 'ER_DUP_FIELDNAME') {
-            console.log('A coluna "tag" já existe.');
-          } else {
-            console.error('Erro ao adicionar a coluna "tag":', err);
-          }
-        } else {
-          console.log('Coluna "tag" adicionada com sucesso à tabela "contacts".');
-        }
-      });
+      console.log('Coluna "tags" removida com sucesso.');
     }
+
+    const addColumnQuery = 'ALTER TABLE contacts ADD COLUMN IF NOT EXISTS tag VARCHAR(20)';
+    connection.query(addColumnQuery, (err, results) => {
+      if (err) {
+        if (err.code === 'ER_DUP_FIELDNAME') {
+          console.log('A coluna "tag" já existe.');
+        } else {
+          console.error('Erro ao adicionar a coluna "tag":', err);
+        }
+      } else {
+        console.log('Coluna "tag" adicionada com sucesso à tabela "contacts".');
+      }
+    });
   });
 });
 
@@ -200,6 +204,8 @@ app.post('/webhook', async (request, response) => {
 app.post('/send', async (req, res) => {
   const { toPhone, text } = req.body;
 
+  console.log('Dados recebidos:', { toPhone, text });
+
   if (!toPhone || !text) {
     return res.status(400).send("toPhone e text são obrigatórios");
   }
@@ -233,6 +239,8 @@ app.post('/send', async (req, res) => {
       contactId
     ];
 
+    console.log('Valores a serem inseridos no banco:', values);
+
     await pool.query(sql, values);
     io.emit('new_message', {
       phone_number_id: process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
@@ -255,6 +263,9 @@ app.post('/send', async (req, res) => {
 });
 
 async function sendMessage(toPhone, text, whatsappBusinessAccountId) {
+  console.log('Enviando mensagem para:', toPhone);
+  console.log('Conteúdo da mensagem:', text);
+
   const url = `https://graph.facebook.com/v20.0/${whatsappBusinessAccountId}/messages`;
   const data = {
     messaging_product: "whatsapp",
@@ -264,7 +275,14 @@ async function sendMessage(toPhone, text, whatsappBusinessAccountId) {
     text: { body: text }
   };
   const headers = { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}` };
-  await axios.post(url, data, { headers });
+
+  try {
+    const response = await axios.post(url, data, { headers });
+    console.log('Resposta da API do WhatsApp:', response.data);
+  } catch (error) {
+    console.error('Erro ao enviar mensagem para o WhatsApp:', error);
+    throw error;
+  }
 }
 
 app.get("/messages", async (req, res) => {
@@ -347,7 +365,6 @@ app.get("/me", authenticateJWT, async (req, res) => {
   }
 });
 
-// Como não podemos obter a foto de perfil de usuários comuns do WhatsApp, estamos usando uma imagem padrão.
 app.get('/profile-picture/:wa_id', async (req, res) => {
   const defaultProfilePic = '/path/to/default-profile-pic.png';
   res.json({ profilePicUrl: defaultProfilePic });
@@ -413,8 +430,6 @@ app.post('/transfer', async (req, res) => {
     res.status(500).send("Erro ao transferir atendimento");
   }
 });
-
-
 
 app.get('/test', (req, res) => {
   res.json({ message: 'Hello World' });

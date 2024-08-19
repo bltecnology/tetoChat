@@ -1,4 +1,4 @@
-CREATE TABLE whatsapp_messages (
+CREATE TABLE IF NOT EXISTS whatsapp_messages (
     id INT AUTO_INCREMENT PRIMARY KEY,
     phone_number_id VARCHAR(50),
     display_phone_number VARCHAR(20),
