@@ -250,15 +250,6 @@ app.post('/send', async (req, res) => {
       contactId = result.insertId;
     }
 
-    // Atualiza o status da conversa para "respondida"
-    const sqlUpdateQueue = `
-      INSERT INTO queue (contact_id, department_atual, status) 
-      VALUES (?, ?, 'respondida') 
-      ON DUPLICATE KEY UPDATE 
-      department_atual = VALUES(department_atual), 
-      status = 'respondida'`;
-    await pool.query(sqlUpdateQueue, [contactId, req.user.department]);
-
     const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     const values = [
       process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,

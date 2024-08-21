@@ -105,11 +105,6 @@ const Chat = () => {
         if (response.status === 200) {
           setNewMessage(''); // Limpa o campo de nova mensagem
           console.log('Mensagem enviada com sucesso');
-          
-          // Mover o contato para a aba de chat se não estiver lá
-          if (activeTab !== 'chat') {
-            setActiveTab('chat');
-          }
         }
       } catch (error) {
         console.error('Erro ao enviar mensagem:', error);
