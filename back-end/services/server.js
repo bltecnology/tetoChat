@@ -178,7 +178,7 @@ app.post('/webhook', async (request, response) => {
             continue;
           }
 
-          const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+          const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
           const values = [
             data.metadata.phone_number_id,
             data.metadata.display_phone_number,
@@ -189,7 +189,8 @@ app.post('/webhook', async (request, response) => {
             message.timestamp,
             message.type,
             message.text.body,
-            contactId
+            contactId,
+            req.user.id // Salvando o ID do usuário que enviou a mensagem
           ];
 
           try {
@@ -204,7 +205,8 @@ app.post('/webhook', async (request, response) => {
               message_timestamp: message.timestamp,
               message_type: message.type,
               message_body: message.text.body,
-              contact_id: contactId
+              contact_id: contactId,
+              user_id: req.user.id // Incluindo o ID do usuário na mensagem
             });
             console.log('Dados inseridos com sucesso');
           } catch (err) {
@@ -226,8 +228,9 @@ app.post('/webhook', async (request, response) => {
   }
 });
 
-app.post('/send', async (req, res) => {
+app.post('/send', authenticateJWT, async (req, res) => {
   const { toPhone, text } = req.body;
+  const userId = req.user.id;
 
   console.log('Dados recebidos:', { toPhone, text });
 
@@ -250,7 +253,10 @@ app.post('/send', async (req, res) => {
       contactId = result.insertId;
     }
 
-    const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const sql = `
+      INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
     const values = [
       process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
       process.env.DISPLAY_PHONE_NUMBER,
@@ -261,7 +267,8 @@ app.post('/send', async (req, res) => {
       Math.floor(Date.now() / 1000).toString(),
       'text',
       text,
-      contactId
+      contactId,
+      userId // Armazene o userId da mensagem enviada
     ];
 
     await pool.query(sql, values);
@@ -282,7 +289,8 @@ app.post('/send', async (req, res) => {
       message_timestamp: Math.floor(Date.now() / 1000).toString(),
       message_type: 'text',
       message_body: text,
-      contact_id: contactId
+      contact_id: contactId,
+      user_id: userId // Inclua o userId na mensagem emitida
     });
 
     res.status(200).send("Mensagem enviada com sucesso");
@@ -292,6 +300,23 @@ app.post('/send', async (req, res) => {
   }
 });
 
+app.get("/chats", authenticateJWT, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const [rows] = await pool.query(`
+      SELECT DISTINCT c.*
+      FROM contacts c
+      JOIN whatsapp_messages wm ON c.id = wm.contact_id
+      WHERE wm.message_from = 'me' AND wm.user_id = ?
+    `, [userId]);
+
+    res.json(rows);
+  } catch (error) {
+    console.error("Erro ao buscar conversas:", error);
+    res.status(500).send("Erro ao buscar conversas");
+  }
+});
 
 app.get("/messages", async (req, res) => {
   const contactId = req.query.contact;

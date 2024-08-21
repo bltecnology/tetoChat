@@ -18,7 +18,7 @@ const Chat = () => {
   const [selectedContact, setSelectedContact] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState('chat'); // Para controlar as abas
-  const loggedUser = { departmentId: 1 }; // Exemplo de usuário logado (substitua conforme necessário)
+  const loggedUser = { id: 1, departmentId: 1 }; // Exemplo de usuário logado (substitua conforme necessário)
 
   // Função para adicionar o emoji ao campo de mensagem
   const handleEmojiClick = (event, emojiObject) => {
@@ -31,7 +31,12 @@ const Chat = () => {
   useEffect(() => {
     const fetchChats = async () => {
       try {
-        const response = await axios.get(`https://tetochat-8m0r.onrender.com/chats?department=${loggedUser.departmentId}&status=respondida`);
+        // Obtém todos os contatos para os quais o usuário atual enviou mensagens
+        const response = await axios.get(`https://tetochat-8m0r.onrender.com/chats`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}` // Supondo que o token JWT esteja armazenado no localStorage
+          }
+        });
         setContacts(response.data);
       } catch (error) {
         console.error('Erro ao buscar chats:', error);
@@ -40,7 +45,11 @@ const Chat = () => {
   
     const fetchQueue = async () => {
       try {
-        const response = await axios.get(`https://tetochat-8m0r.onrender.com/queue?department=${loggedUser.departmentId}&status=fila`);
+        const response = await axios.get(`https://tetochat-8m0r.onrender.com/queue?department=${loggedUser.departmentId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
         setContacts(response.data);
       } catch (error) {
         console.error('Erro ao buscar fila:', error);
@@ -49,7 +58,11 @@ const Chat = () => {
   
     const fetchContacts = async () => {
       try {
-        const response = await axios.get('https://tetochat-8m0r.onrender.com/contacts');
+        const response = await axios.get('https://tetochat-8m0r.onrender.com/contacts', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
         setContacts(response.data);
       } catch (error) {
         console.error('Erro ao buscar contatos:', error);
@@ -65,13 +78,15 @@ const Chat = () => {
     }
   }, [activeTab]);
   
-  
-
   useEffect(() => {
     if (selectedContact) {
       const fetchMessages = async () => {
         try {
-          const response = await axios.get(`https://tetochat-8m0r.onrender.com/messages?contact=${selectedContact.id}`);
+          const response = await axios.get(`https://tetochat-8m0r.onrender.com/messages?contact=${selectedContact.id}`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+          });
           setMessages(response.data);
         } catch (error) {
           console.error('Erro ao buscar mensagens:', error);
@@ -101,6 +116,10 @@ const Chat = () => {
         const response = await axios.post('https://tetochat-8m0r.onrender.com/send', {
           toPhone: selectedContact.phone,
           text: newMessage,
+        }, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
         });
   
         if (response.status === 200) {
@@ -117,7 +136,6 @@ const Chat = () => {
       }
     }
   };
-  
 
   const handleKeyPress = (event) => {
     if (event.key === 'Enter') {
@@ -139,6 +157,11 @@ const Chat = () => {
 
     // Fecha o modal após a transferência
     setShowModal(false);
+  };
+
+  const handleContactClick = (contact) => {
+    setSelectedContact(contact);
+    setShowModal(false); // Fecha qualquer modal aberto
   };
 
   return (
@@ -173,7 +196,7 @@ const Chat = () => {
                 <li
                   key={contact.id}
                   className="flex items-center p-2 cursor-pointer hover:bg-gray-100"
-                  onClick={() => setSelectedContact(contact)}
+                  onClick={() => handleContactClick(contact)}
                 >
                   <img src={contact.profilePic} alt={contact.name} className="w-10 h-10 rounded-full mr-2" />
                   <div>
