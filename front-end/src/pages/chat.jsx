@@ -96,19 +96,6 @@ const Chat = () => {
   const handleSendMessage = async () => {
     if (selectedContact && newMessage.trim() !== '') {
       try {
-        // Adicionar a mensagem à lista de mensagens localmente antes de enviar para o backend
-        const sentMessage = {
-          id: `msg-${Date.now()}`,
-          contact_id: selectedContact.id,
-          message_from: 'me',
-          message_timestamp: Math.floor(Date.now() / 1000).toString(),
-          message_body: newMessage,
-          contact_name: 'API',
-          message_type: 'text',
-          wa_id: selectedContact.phone,
-        };
-        setMessages((prevMessages) => [...prevMessages, sentMessage]);
-
         // Envia a mensagem para o backend
         const response = await axios.post('https://tetochat-8m0r.onrender.com/send', {
           toPhone: selectedContact.phone,
@@ -116,8 +103,13 @@ const Chat = () => {
         });
 
         if (response.status === 200) {
-          setNewMessage('');
+          setNewMessage(''); // Limpa o campo de nova mensagem
           console.log('Mensagem enviada com sucesso');
+          
+          // Mover o contato para a aba de chat se não estiver lá
+          if (activeTab !== 'chat') {
+            setActiveTab('chat');
+          }
         }
       } catch (error) {
         console.error('Erro ao enviar mensagem:', error);
