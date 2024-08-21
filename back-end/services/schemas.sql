@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS whatsapp_messages (
     display_phone_number VARCHAR(20),
     contact_name VARCHAR(100),
     wa_id VARCHAR(20),
-    message_id VARCHAR(50),
+    message_id VARCHAR(280),
     message_from VARCHAR(20),
     message_timestamp VARCHAR(20),
     message_type VARCHAR(20),

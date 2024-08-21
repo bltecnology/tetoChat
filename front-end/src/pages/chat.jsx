@@ -32,22 +32,22 @@ const Chat = () => {
   useEffect(() => {
     const fetchChats = async () => {
       try {
-        const response = await axios.get(`https://tetochat-8m0r.onrender.com/chats?department=${loggedUser.departmentId}`);
+        const response = await axios.get(`https://tetochat-8m0r.onrender.com/chats?department=${loggedUser.departmentId}&status=respondida`);
         setContacts(response.data);
       } catch (error) {
         console.error('Erro ao buscar chats:', error);
       }
     };
-
+  
     const fetchQueue = async () => {
       try {
-        const response = await axios.get(`https://tetochat-8m0r.onrender.com/queue?department=${loggedUser.departmentId}`);
+        const response = await axios.get(`https://tetochat-8m0r.onrender.com/queue?department=${loggedUser.departmentId}&status=fila`);
         setContacts(response.data);
       } catch (error) {
         console.error('Erro ao buscar fila:', error);
       }
     };
-
+  
     const fetchContacts = async () => {
       try {
         const response = await axios.get('https://tetochat-8m0r.onrender.com/contacts');
@@ -56,7 +56,7 @@ const Chat = () => {
         console.error('Erro ao buscar contatos:', error);
       }
     };
-
+  
     if (activeTab === 'chat') {
       fetchChats();
     } else if (activeTab === 'fila') {
@@ -65,6 +65,7 @@ const Chat = () => {
       fetchContacts();
     }
   }, [activeTab]);
+  
 
   useEffect(() => {
     if (selectedContact) {
