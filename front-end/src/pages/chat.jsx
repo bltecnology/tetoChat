@@ -22,7 +22,6 @@ const Chat = () => {
 
   // Função para adicionar o emoji ao campo de mensagem
   const handleEmojiClick = (event, emojiObject) => {
-    console.log('Emoji selecionado:', emojiObject);
     if (emojiObject && emojiObject.emoji) {
       setNewMessage(prevInput => prevInput + emojiObject.emoji);
     }
@@ -97,6 +96,20 @@ const Chat = () => {
   const handleSendMessage = async () => {
     if (selectedContact && newMessage.trim() !== '') {
       try {
+        // Adicionar a mensagem à lista de mensagens localmente antes de enviar para o backend
+        const sentMessage = {
+          id: `msg-${Date.now()}`,
+          contact_id: selectedContact.id,
+          message_from: 'me',
+          message_timestamp: Math.floor(Date.now() / 1000).toString(),
+          message_body: newMessage,
+          contact_name: 'API',
+          message_type: 'text',
+          wa_id: selectedContact.phone,
+        };
+        setMessages((prevMessages) => [...prevMessages, sentMessage]);
+
+        // Envia a mensagem para o backend
         const response = await axios.post('https://tetochat-8m0r.onrender.com/send', {
           toPhone: selectedContact.phone,
           text: newMessage,
@@ -193,7 +206,7 @@ const Chat = () => {
           {/* Div para exibir as mensagens */}
           <div className="flex-grow p-4 overflow-y-auto">
             {messages.map((message) => (
-              <div key={message.id} className={`max-w-xs p-3 my-2 rounded-lg ${message.from_phone === 'me' || message.contact_name === 'API' ? 'ml-auto bg-green-200 text-black' : 'mr-auto bg-blue-200 text-black'}`}>
+              <div key={message.id} className={`max-w-xs p-3 my-2 rounded-lg ${message.message_from === 'me' ? 'ml-auto bg-green-200 text-black' : 'mr-auto bg-blue-200 text-black'}`}>
                 {message.message_body}
               </div>
             ))}

@@ -439,6 +439,25 @@ app.post('/transfer', async (req, res) => {
   }
 });
 
+app.get('/queue', async (req, res) => {
+  const departmentId = req.query.department;
+
+  try {
+    // Buscando apenas as conversas que foram transferidas e têm status 'fila'
+    const [rows] = await pool.query(`
+      SELECT c.*, q.status 
+      FROM contacts c
+      JOIN queue q ON c.id = q.contact_id
+      WHERE q.department_atual = ? AND q.status = 'fila'
+    `, [departmentId]);
+
+    res.json(rows);
+  } catch (error) {
+    console.error('Erro ao buscar fila:', error);
+    res.status(500).send('Erro ao buscar fila');
+  }
+});
+
 app.get('/test', (req, res) => {
   res.json({ message: 'Hello World' });
 });
