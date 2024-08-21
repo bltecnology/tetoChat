@@ -265,6 +265,13 @@ app.post('/send', async (req, res) => {
     ];
 
     await pool.query(sql, values);
+
+    // Atualiza a tabela de fila para indicar que a conversa foi respondida
+    await pool.query(
+      "UPDATE queue SET status = 'respondida' WHERE contact_id = ?",
+      [contactId]
+    );
+
     io.emit('new_message', {
       phone_number_id: process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
       display_phone_number: process.env.DISPLAY_PHONE_NUMBER,
@@ -284,6 +291,7 @@ app.post('/send', async (req, res) => {
     res.status(500).send("Erro ao enviar mensagem");
   }
 });
+
 
 app.get("/messages", async (req, res) => {
   const contactId = req.query.contact;

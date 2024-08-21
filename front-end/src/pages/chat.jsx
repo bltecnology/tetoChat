@@ -65,6 +65,7 @@ const Chat = () => {
     }
   }, [activeTab]);
   
+  
 
   useEffect(() => {
     if (selectedContact) {
@@ -101,16 +102,22 @@ const Chat = () => {
           toPhone: selectedContact.phone,
           text: newMessage,
         });
-
+  
         if (response.status === 200) {
           setNewMessage(''); // Limpa o campo de nova mensagem
           console.log('Mensagem enviada com sucesso');
+  
+          // Verifique se o contato já está na lista de chats
+          if (!contacts.find(contact => contact.id === selectedContact.id)) {
+            setContacts([...contacts, selectedContact]); // Adicione o contato à lista de chats
+          }
         }
       } catch (error) {
         console.error('Erro ao enviar mensagem:', error);
       }
     }
   };
+  
 
   const handleKeyPress = (event) => {
     if (event.key === 'Enter') {
