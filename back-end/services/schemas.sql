@@ -8,8 +8,11 @@ CREATE TABLE IF NOT EXISTS whatsapp_messages (
     message_from VARCHAR(20),
     message_timestamp VARCHAR(20),
     message_type VARCHAR(20),
-    message_body TEXT
+    message_body TEXT,
+    contact_id INT,  
+    FOREIGN KEY (contact_id) REFERENCES contacts(id)  --chave estrangeira
 );
+
 
 
 CREATE TABLE IF NOT EXISTS contacts (
