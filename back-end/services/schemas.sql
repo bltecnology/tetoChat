@@ -9,11 +9,9 @@ CREATE TABLE IF NOT EXISTS whatsapp_messages (
     message_timestamp VARCHAR(20),
     message_type VARCHAR(20),
     message_body TEXT,
-    contact_id INT,  
-    FOREIGN KEY (contact_id) REFERENCES contacts(id)  --chave estrangeira
+    contact_id INT,  -- Adicionando a coluna contact_id
+    FOREIGN KEY (contact_id) REFERENCES contacts(id) -- Adicionando a chave estrangeira
 );
-
-
 
 CREATE TABLE IF NOT EXISTS contacts (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -60,4 +58,3 @@ CREATE TABLE IF NOT EXISTS queue (
     status VARCHAR(50) NOT NULL, -- Valores possíveis: "fila", "respondida"
     FOREIGN KEY (contact_id) REFERENCES contacts(id)
 );
-
