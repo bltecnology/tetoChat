@@ -250,30 +250,19 @@ app.post('/send', async (req, res) => {
       contactId = result.insertId;
     }
 
-    // Atualiza o status da conversa para "respondida" e associa ao departamento do usuário logado
-    const sqlUpdateQueue = `
-      INSERT INTO queue (contact_id, department_atual, status) 
-      VALUES (?, ?, 'respondida') 
-      ON DUPLICATE KEY UPDATE 
-      department_atual = VALUES(department_atual), 
-      status = VALUES(status)`;
-    await pool.query(sqlUpdateQueue, [contactId, req.user.department]);
-
     const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     const values = [
       process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
       process.env.DISPLAY_PHONE_NUMBER,
       'API',
       toPhone,
-      `msg-${Date.now()}`,
+      `msg-${Date.now()}`,  // Gerando ID único para a mensagem
       'me',
       Math.floor(Date.now() / 1000).toString(),
       'text',
       text,
       contactId
     ];
-
-    console.log('Valores a serem inseridos no banco:', values);
 
     await pool.query(sql, values);
     io.emit('new_message', {
@@ -288,7 +277,7 @@ app.post('/send', async (req, res) => {
       message_body: text,
       contact_id: contactId
     });
-    console.log('Mensagem enviada e armazenada com sucesso');
+
     res.status(200).send("Mensagem enviada com sucesso");
   } catch (error) {
     console.error("Erro ao enviar mensagem:", error);
