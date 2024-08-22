@@ -178,7 +178,7 @@ app.post('/webhook', async (request, response) => {
             continue;
           }
 
-          const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+          const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
           const values = [
             data.metadata.phone_number_id,
             data.metadata.display_phone_number,
@@ -189,8 +189,7 @@ app.post('/webhook', async (request, response) => {
             message.timestamp,
             message.type,
             message.text.body,
-            contactId,
-            req.user.id // Salvando o ID do usuário que enviou a mensagem
+            contactId
           ];
 
           try {
@@ -205,8 +204,7 @@ app.post('/webhook', async (request, response) => {
               message_timestamp: message.timestamp,
               message_type: message.type,
               message_body: message.text.body,
-              contact_id: contactId,
-              user_id: req.user.id // Incluindo o ID do usuário na mensagem
+              contact_id: contactId
             });
             console.log('Dados inseridos com sucesso');
           } catch (err) {
