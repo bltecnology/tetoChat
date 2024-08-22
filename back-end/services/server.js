@@ -480,6 +480,24 @@ app.get('/queue', async (req, res) => {
   }
 });
 
+app.post('/quickResponses', (req, res) => {
+  const { text, department } = req.body;
+
+  if (!text || !department) {
+    return res.status(400).json({ error: 'Campos text e department são obrigatórios' });
+  }
+
+  const query = 'INSERT INTO quickResponses (text, department) VALUES (?, ?)';
+  db.query(query, [text, department], (err, result) => {
+    if (err) {
+      console.error('Erro ao inserir no banco de dados:', err);
+      return res.status(500).json({ error: 'Erro ao salvar resposta rápida' });
+    }
+    res.status(201).json({ message: 'Resposta rápida salva com sucesso', id: result.insertId });
+  });
+});
+
+
 app.get('/test', (req, res) => {
   res.json({ message: 'Hello World' });
 });
