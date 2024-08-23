@@ -67,30 +67,28 @@ connection.connect((err) => {
   }
   console.log('Conectado ao banco de dados MySQL.');
 
-  const dropColumnQuery = 'ALTER TABLE contacts DROP COLUMN tags';
-  connection.query(dropColumnQuery, (err, results) => {
+  // Verifica se a coluna "tag" já existe
+  const checkColumnQuery = `
+    SELECT COLUMN_NAME 
+    FROM INFORMATION_SCHEMA.COLUMNS 
+    WHERE TABLE_NAME = 'contacts' AND COLUMN_NAME = 'tag'
+  `;
+  connection.query(checkColumnQuery, (err, results) => {
     if (err) {
-      if (err.code === 'ER_CANT_DROP_FIELD_OR_KEY') {
-        console.log('A coluna "tags" não existe ou não pode ser removida.');
-      } else {
-        console.error('Erro ao remover a coluna "tags":', err);
-      }
-    } else {
-      console.log('Coluna "tags" removida com sucesso.');
-    }
-
-    const addColumnQuery = 'ALTER TABLE contacts ADD COLUMN IF NOT EXISTS tag VARCHAR(20)';
-    connection.query(addColumnQuery, (err, results) => {
-      if (err) {
-        if (err.code === 'ER_DUP_FIELDNAME') {
-          console.log('A coluna "tag" já existe.');
-        } else {
+      console.error('Erro ao verificar coluna "tag":', err);
+    } else if (results.length === 0) {
+      // Adiciona a coluna "tag" se ela não existir
+      const addColumnQuery = 'ALTER TABLE contacts ADD COLUMN tag VARCHAR(20)';
+      connection.query(addColumnQuery, (err, results) => {
+        if (err) {
           console.error('Erro ao adicionar a coluna "tag":', err);
+        } else {
+          console.log('Coluna "tag" adicionada com sucesso à tabela "contacts".');
         }
-      } else {
-        console.log('Coluna "tag" adicionada com sucesso à tabela "contacts".');
-      }
-    });
+      });
+    } else {
+      console.log('A coluna "tag" já existe na tabela "contacts".');
+    }
   });
 });
 
