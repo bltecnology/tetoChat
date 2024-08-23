@@ -93,15 +93,22 @@ connection.connect((err) => {
 });
 
 io.on('connection', (socket) => {
-  console.log('a user connected');
+  const userId = socket.handshake.query.userId;  // Supondo que você passe o userId na conexão do socket
 
   socket.on('disconnect', () => {
     console.log('user disconnected');
   });
+
+  socket.on('new_message', (message) => {
+    if (message.user_id === userId) {
+      socket.emit('new_message', message); // Apenas o usuário específico recebe a mensagem
+    }
+  });
 });
 
+
 // Função para enviar mensagem via WhatsApp API
-async function sendMessage(toPhone, text, whatsappBusinessAccountId) {
+async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
   console.log('Enviando mensagem para:', toPhone);
   console.log('Conteúdo da mensagem:', text);
 
@@ -118,12 +125,24 @@ async function sendMessage(toPhone, text, whatsappBusinessAccountId) {
   try {
     const response = await axios.post(url, data, { headers });
     console.log('Resposta da API do WhatsApp:', response.data);
+
+    // Emitindo um evento pelo socket.io para notificar os outros usuários
+    if (socket) {
+      socket.emit('new_message', {
+        phone_number_id: whatsappBusinessAccountId,
+        to: toPhone,
+        message_body: text,
+        timestamp: new Date().getTime()
+      });
+    }
+
     return response.data;
   } catch (error) {
     console.error('Erro ao enviar mensagem para o WhatsApp:', error);
     throw error;
   }
 }
+
 
 app.get('/webhook', function (req, res) {
   if (
@@ -313,6 +332,7 @@ app.get("/chats", authenticateJWT, async (req, res) => {
     res.status(500).send("Erro ao buscar conversas");
   }
 });
+
 
 app.get("/messages", async (req, res) => {
   const contactId = req.query.contact;

@@ -7,7 +7,8 @@ import TransferModal from '../components/modalChat';
 import { io } from 'socket.io-client';
 import backgroundImage from '../assets/image.png';
 import EmojiPicker from 'emoji-picker-react';
-import { format } from 'date-fns'; // Importando a função format do date-fns
+import { format } from 'date-fns';
+import defaultProfilePic from '../assets/defaultProfile.png'; // Certifique-se de que o caminho está correto
 
 const socket = io('https://tetochat-8m0r.onrender.com');
 
@@ -189,7 +190,7 @@ const Chat = () => {
                   className="flex items-center p-2 cursor-pointer hover:bg-gray-100"
                   onClick={() => handleContactClick(contact)}
                 >
-                  <img src={contact.profilePic} alt={contact.name} className="w-10 h-10 rounded-full mr-2" />
+                  <img src={contact.profilePic || defaultProfilePic} alt={contact.name} className="w-10 h-10 rounded-full mr-2" />
                   <div>
                     <div className="font-bold">{contact.name}</div>
                     <div className="text-sm text-gray-600">{contact.lastMessage}</div>
@@ -209,10 +210,10 @@ const Chat = () => {
               </div>
             </div>
           )}
-          <div className="flex-grow p-4 overflow-y-auto">
+          <div className="flex-grow p-2 overflow-y-auto">
             {messages.map((message) => (
-              <div key={message.id} className={`max-w-xs p-3 my-2 rounded-lg ${message.message_from === 'me' ? 'ml-auto bg-green-200 text-black' : 'mr-auto bg-blue-200 text-black'}`}>
-                <div>{message.message_body}</div>
+              <div key={message.id} className={`max-w-xs px-2 py-1 my-1 rounded-lg ${message.message_from === 'me' ? 'ml-auto bg-green-200 text-black' : 'mr-auto bg-blue-200 text-black'}`}>
+              <div>{message.message_body}</div>
                 <div className="text-[10px] text-gray-500 text-right">
                   {format(new Date(message.message_timestamp * 1000), 'HH:mm')}
                 </div>
