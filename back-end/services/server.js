@@ -66,17 +66,41 @@ connection.connect((err) => {
     process.exit(1);
   }
   console.log('Conectado ao banco de dados MySQL.');
+
+  const checkColumnQuery = `
+    SELECT COLUMN_NAME 
+    FROM INFORMATION_SCHEMA.COLUMNS 
+    WHERE TABLE_NAME = 'contacts' AND COLUMN_NAME = 'tag'
+  `;
+  connection.query(checkColumnQuery, (err, results) => {
+    if (err) {
+      console.error('Erro ao verificar coluna "tag":', err);
+    } else if (results.length === 0) {
+      const addColumnQuery = 'ALTER TABLE contacts ADD COLUMN tag VARCHAR(20)';
+      connection.query(addColumnQuery, (err, results) => {
+        if (err) {
+          console.error('Erro ao adicionar a coluna "tag":', err);
+        } else {
+          console.log('Coluna "tag" adicionada com sucesso à tabela "contacts".');
+        }
+      });
+    } else {
+      console.log('A coluna "tag" já existe na tabela "contacts".');
+    }
+  });
 });
 
 io.on('connection', (socket) => {
-  console.log('Novo cliente conectado');
-  
+  const userId = socket.handshake.query.userId;
+
   socket.on('disconnect', () => {
-    console.log('Cliente desconectado');
+    console.log('user disconnected');
   });
 
   socket.on('new_message', (message) => {
-    io.emit('new_message', message);  // Emite para todos os conectados
+    if (message.user_id === userId) {
+      socket.emit('new_message', message);
+    }
   });
 });
 
@@ -114,9 +138,110 @@ async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
   }
 }
 
+app.get('/webhook', function (req, res) {
+  if (
+    req.query['hub.mode'] == 'subscribe' &&
+    req.query['hub.verify_token'] == process.env.WEBHOOK_VERIFY_TOKEN
+  ) {
+    res.send(req.query['hub.challenge']);
+  } else {
+    res.sendStatus(400);
+  }
+});
+
+app.post('/webhook', async (request, response) => {
+  console.log('Incoming webhook: ' + JSON.stringify(request.body));
+
+  const entries = request.body.entry;
+
+  if (entries && entries.length > 0) {
+    let allEntriesProcessed = true;
+
+    for (const entry of entries) {
+      const changes = entry.changes;
+      for (const change of changes) {
+        const data = change.value;
+        if (data && data.messages && data.messages.length > 0) {
+          const message = data.messages[0];
+          const contact = data.contacts && data.contacts.length > 0 ? data.contacts[0] : null;
+
+          if (!contact || !contact.profile || !contact.wa_id || !message || !message.text || !message.text.body) {
+            console.error('Dados inválidos recebidos:', JSON.stringify(request.body));
+            allEntriesProcessed = false;
+            continue;
+          }
+
+          let contactId;
+          try {
+            const [contactRows] = await pool.query("SELECT id FROM contacts WHERE phone = ?", [contact.wa_id]);
+            if (contactRows.length > 0) {
+              contactId = contactRows[0].id;
+            } else {
+              const [result] = await pool.query(
+                "INSERT INTO contacts (name, phone) VALUES (?, ?)",
+                [contact.profile.name, contact.wa_id]
+              );
+              contactId = result.insertId;
+            }
+          } catch (err) {
+            console.error('Erro ao buscar ou criar contato:', err);
+            allEntriesProcessed = false;
+            continue;
+          }
+
+          const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+          const values = [
+            data.metadata.phone_number_id,
+            data.metadata.display_phone_number,
+            contact.profile.name,
+            contact.wa_id,
+            message.id,
+            message.from,
+            message.timestamp,
+            message.type,
+            message.text.body,
+            contactId
+          ];
+
+          try {
+            await pool.query(sql, values);
+            io.emit('new_message', {
+              phone_number_id: data.metadata.phone_number_id,
+              display_phone_number: data.metadata.display_phone_number,
+              contact_name: contact.profile.name,
+              wa_id: contact.wa_id,
+              message_id: message.id,
+              message_from: message.from,
+              message_timestamp: message.timestamp,
+              message_type: message.type,
+              message_body: message.text.body,
+              contact_id: contactId
+            });
+            console.log('Dados inseridos com sucesso');
+          } catch (err) {
+            console.error('Erro ao inserir dados no banco de dados:', err);
+            allEntriesProcessed = false;
+          }
+        }
+      }
+    }
+
+    if (allEntriesProcessed) {
+      response.sendStatus(200);
+    } else {
+      response.sendStatus(500);
+    }
+  } else {
+    console.error('Estrutura do webhook não corresponde ao esperado:', JSON.stringify(request.body));
+    response.sendStatus(400);
+  }
+});
+
 app.post('/send', authenticateJWT, async (req, res) => {
   const { toPhone, text } = req.body;
   const userId = req.user.id;
+
+  console.log('Dados recebidos:', { toPhone, text });
 
   if (!toPhone || !text) {
     return res.status(400).send("toPhone e text são obrigatórios");
@@ -203,6 +328,128 @@ app.get("/chats", authenticateJWT, async (req, res) => {
   }
 });
 
+app.get("/messages", async (req, res) => {
+  const contactId = req.query.contact;
+
+  if (!contactId) {
+    return res.status(400).send("O ID do contato é obrigatório");
+  }
+
+  try {
+    const [rows] = await pool.query("SELECT * FROM whatsapp_messages WHERE contact_id = ? ORDER BY message_timestamp ASC", [contactId]);
+    res.json(rows);
+  } catch (error) {
+    console.error("Erro ao buscar mensagens:", error);
+    res.status(500).send("Erro ao buscar mensagens");
+  }
+});
+
+app.get("/contacts", async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT * FROM contacts");
+    res.json(rows);
+  } catch (error) {
+    console.error("Erro ao buscar contatos:", error);
+    res.status(500).send("Erro ao buscar contatos");
+  }
+});
+
+app.post("/contacts", async (req, res) => {
+  const { name, phone, tag, note, cpf, rg, email } = req.body;
+  if (!name || !phone) {
+    return res.status(400).send("Nome e telefone são obrigatórios");
+  }
+  try {
+    const [result] = await pool.query(
+      "INSERT INTO contacts (name, phone, tag, note, cpf, rg, email) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [name, phone, tag, note, cpf, rg, email]
+    );
+    const insertId = result.insertId;
+    res.status(201).send(`Contato adicionado com sucesso. ID: ${insertId}`);
+  } catch (error) {
+    console.error("Erro ao salvar contato:", error);
+    res.status(500).send("Erro ao salvar contato");
+  }
+});
+
+app.delete("/contacts/:id", async (req, res) => {
+  const contactId = req.params.id;
+  try {
+    const [result] = await pool.query("DELETE FROM contacts WHERE id = ?", [contactId]);
+    if (result.affectedRows > 0) {
+      res.status(200).send("Contato deletado com sucesso");
+    } else {
+      res.status(404).send("Contato não encontrado");
+    }
+  } catch (error) {
+    console.error("Erro ao deletar contato:", error);
+    res.status(500).send("Erro ao deletar contato");
+  }
+});
+
+app.post("/users", addUser);
+app.post("/login", authenticateUser);
+
+app.get("/me", authenticateJWT, async (req, res) => {
+  const userId = req.user.id;
+  try {
+    const [rows] = await pool.query(
+      "SELECT id, name, email, position, department FROM users WHERE id = ?",
+      [userId]
+    );
+    const user = rows[0];
+    if (!user) {
+      return res.status(404).send("Usuário não encontrado");
+    }
+    res.json(user);
+  } catch (error) {
+    console.error("Erro ao buscar dados do usuário:", error);
+    res.status(500).send("Erro ao buscar dados do usuário");
+  }
+});
+
+app.get('/profile-picture/:wa_id', async (req, res) => {
+  const defaultProfilePic = '/path/to/default-profile-pic.png';
+  res.json({ profilePicUrl: defaultProfilePic });
+});
+
+app.post('/departments', async (req, res) => {
+  const { name } = req.body;
+
+  if (!name) {
+    return res.status(400).send("O nome do departamento é obrigatório");
+  }
+
+  try {
+    const [result] = await pool.query("INSERT INTO departments (name) VALUES (?)", [name]);
+    const insertId = result.insertId;
+    res.status(201).json({ id: insertId, name });
+  } catch (error) {
+    console.error("Erro ao salvar departamento:", error);
+    res.status(500).send("Erro ao salvar departamento");
+  }
+});
+
+app.get('/departments', async (req, res) => {
+  try {
+      const [rows] = await pool.query("SELECT * FROM departments");
+      res.json(rows);
+  } catch (error) {
+      console.error("Erro ao buscar departamentos:", error);
+      res.status(500).send("Erro ao buscar departamentos");
+  }
+});
+
+app.get('/users', async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT * FROM users");
+    res.json(rows);
+  } catch (error) {
+    console.error("Erro ao buscar usuários:", error);
+    res.status(500).send("Erro ao buscar usuários");
+  }
+});
+
 app.post('/transfer', async (req, res) => {
   const { contactId, departmentId } = req.body;
 
@@ -216,13 +463,70 @@ app.post('/transfer', async (req, res) => {
       [departmentId, contactId]
     );
 
-    io.emit('contact_transferred', { contactId, departmentId });
-
     res.status(200).send("Atendimento transferido com sucesso para a fila");
   } catch (error) {
     console.error("Erro ao transferir atendimento:", error);
     res.status(500).send("Erro ao transferir atendimento");
   }
+});
+
+app.post('/updateQueueStatus', async (req, res) => {
+  const { contactId, userId } = req.body;
+
+  if (!contactId || !userId) {
+    return res.status(400).send("Os campos 'contactId' e 'userId' são obrigatórios");
+  }
+
+  try {
+    await pool.query(
+      "UPDATE queue SET status = 'respondida', user_id = ? WHERE contact_id = ?",
+      [userId, contactId]
+    );
+
+    res.status(200).send("Status atualizado com sucesso");
+  } catch (error) {
+    console.error("Erro ao atualizar status da fila:", error);
+    res.status(500).send("Erro ao atualizar status da fila");
+  }
+});
+
+app.get('/queue', async (req, res) => {
+  const departmentId = req.query.department;
+
+  try {
+    const [rows] = await pool.query(`
+      SELECT c.*, q.status 
+      FROM contacts c
+      JOIN queue q ON c.id = q.contact_id
+      WHERE q.department_atual = ? AND q.status = 'fila'
+    `, [departmentId]);
+
+    res.json(rows);
+  } catch (error) {
+    console.error('Erro ao buscar fila:', error);
+    res.status(500).send('Erro ao buscar fila');
+  }
+});
+
+app.post('/quickResponses', (req, res) => {
+  const { text, department } = req.body;
+
+  if (!text || !department) {
+    return res.status(400).json({ error: 'Campos text e department são obrigatórios' });
+  }
+
+  const query = 'INSERT INTO quickResponses (text, department) VALUES (?, ?)';
+  db.query(query, [text, department], (err, result) => {
+    if (err) {
+      console.error('Erro ao inserir no banco de dados:', err);
+      return res.status(500).json({ error: 'Erro ao salvar resposta rápida' });
+    }
+    res.status(201).json({ message: 'Resposta rápida salva com sucesso', id: result.insertId });
+  });
+});
+
+app.get('/test', (req, res) => {
+  res.json({ message: 'Hello World' });
 });
 
 server.listen(3005, () => console.log(`Servidor rodando na porta ${3005}`));
