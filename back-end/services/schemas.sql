@@ -56,5 +56,7 @@ CREATE TABLE IF NOT EXISTS queue (
     contact_id INT NOT NULL,
     department_atual VARCHAR(255) NOT NULL,
     status VARCHAR(50) NOT NULL, -- Valores possíveis: "fila", "respondida"
-    FOREIGN KEY (contact_id) REFERENCES contacts(id)
+    user_id INT, -- Nova coluna para armazenar o ID do usuário
+    FOREIGN KEY (contact_id) REFERENCES contacts(id),
+    FOREIGN KEY (user_id) REFERENCES users(id) -- Chave estrangeira referenciando a tabela de usuários
 );
