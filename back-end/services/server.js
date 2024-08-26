@@ -63,11 +63,10 @@ const connection = mysql.createConnection({
 connection.connect((err) => {
   if (err) {
     console.error('Erro ao conectar ao banco de dados:', err);
-    process.exit(1); // Sai do processo em caso de erro na conexão
+    process.exit(1);
   }
   console.log('Conectado ao banco de dados MySQL.');
 
-  // Verifica se a coluna "tag" já existe
   const checkColumnQuery = `
     SELECT COLUMN_NAME 
     FROM INFORMATION_SCHEMA.COLUMNS 
@@ -77,7 +76,6 @@ connection.connect((err) => {
     if (err) {
       console.error('Erro ao verificar coluna "tag":', err);
     } else if (results.length === 0) {
-      // Adiciona a coluna "tag" se ela não existir
       const addColumnQuery = 'ALTER TABLE contacts ADD COLUMN tag VARCHAR(20)';
       connection.query(addColumnQuery, (err, results) => {
         if (err) {
@@ -93,7 +91,7 @@ connection.connect((err) => {
 });
 
 io.on('connection', (socket) => {
-  const userId = socket.handshake.query.userId;  // Supondo que você passe o userId na conexão do socket
+  const userId = socket.handshake.query.userId;
 
   socket.on('disconnect', () => {
     console.log('user disconnected');
@@ -101,13 +99,11 @@ io.on('connection', (socket) => {
 
   socket.on('new_message', (message) => {
     if (message.user_id === userId) {
-      socket.emit('new_message', message); // Apenas o usuário específico recebe a mensagem
+      socket.emit('new_message', message);
     }
   });
 });
 
-
-// Função para enviar mensagem via WhatsApp API
 async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
   console.log('Enviando mensagem para:', toPhone);
   console.log('Conteúdo da mensagem:', text);
@@ -126,7 +122,6 @@ async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
     const response = await axios.post(url, data, { headers });
     console.log('Resposta da API do WhatsApp:', response.data);
 
-    // Emitindo um evento pelo socket.io para notificar os outros usuários
     if (socket) {
       socket.emit('new_message', {
         phone_number_id: whatsappBusinessAccountId,
@@ -142,7 +137,6 @@ async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
     throw error;
   }
 }
-
 
 app.get('/webhook', function (req, res) {
   if (
@@ -277,18 +271,17 @@ app.post('/send', authenticateJWT, async (req, res) => {
       process.env.DISPLAY_PHONE_NUMBER,
       'API',
       toPhone,
-      `msg-${Date.now()}`,  // Gerando ID único para a mensagem
+      `msg-${Date.now()}`,
       'me',
       Math.floor(Date.now() / 1000).toString(),
       'text',
       text,
       contactId,
-      userId // Armazene o userId da mensagem enviada
+      userId
     ];
 
     await pool.query(sql, values);
 
-    // Atualiza a tabela de fila para indicar que a conversa foi respondida
     await pool.query(
       "UPDATE queue SET status = 'respondida' WHERE contact_id = ?",
       [contactId]
@@ -305,7 +298,7 @@ app.post('/send', authenticateJWT, async (req, res) => {
       message_type: 'text',
       message_body: text,
       contact_id: contactId,
-      user_id: userId // Inclua o userId na mensagem emitida
+      user_id: userId
     });
 
     res.status(200).send("Mensagem enviada com sucesso");
@@ -464,16 +457,35 @@ app.post('/transfer', async (req, res) => {
   }
 
   try {
-    // Atualize o departamento atual na tabela queue
     await pool.query(
       "UPDATE queue SET department_atual = ?, status = 'fila' WHERE contact_id = ?",
       [departmentId, contactId]
     );
 
-    res.status(200).send("Atendimento transferido com sucesso");
+    res.status(200).send("Atendimento transferido com sucesso para a fila");
   } catch (error) {
     console.error("Erro ao transferir atendimento:", error);
     res.status(500).send("Erro ao transferir atendimento");
+  }
+});
+
+app.post('/updateQueueStatus', async (req, res) => {
+  const { contactId, userId } = req.body;
+
+  if (!contactId || !userId) {
+    return res.status(400).send("Os campos 'contactId' e 'userId' são obrigatórios");
+  }
+
+  try {
+    await pool.query(
+      "UPDATE queue SET status = 'respondida', user_id = ? WHERE contact_id = ?",
+      [userId, contactId]
+    );
+
+    res.status(200).send("Status atualizado com sucesso");
+  } catch (error) {
+    console.error("Erro ao atualizar status da fila:", error);
+    res.status(500).send("Erro ao atualizar status da fila");
   }
 });
 
@@ -481,7 +493,6 @@ app.get('/queue', async (req, res) => {
   const departmentId = req.query.department;
 
   try {
-    // Buscando apenas as conversas que foram transferidas e têm status 'fila'
     const [rows] = await pool.query(`
       SELECT c.*, q.status 
       FROM contacts c
@@ -512,7 +523,6 @@ app.post('/quickResponses', (req, res) => {
     res.status(201).json({ message: 'Resposta rápida salva com sucesso', id: result.insertId });
   });
 });
-
 
 app.get('/test', (req, res) => {
   res.json({ message: 'Hello World' });

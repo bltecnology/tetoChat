@@ -8,7 +8,7 @@ import { io } from 'socket.io-client';
 import backgroundImage from '../assets/image.png';
 import EmojiPicker from 'emoji-picker-react';
 import { format } from 'date-fns';
-import defaultProfilePic from '../assets/defaultProfile.png'; // Certifique-se de que o caminho está correto
+import defaultProfilePic from '../assets/defaultProfile.png';
 
 const socket = io('https://tetochat-8m0r.onrender.com');
 
@@ -20,7 +20,7 @@ const Chat = () => {
   const [selectedContact, setSelectedContact] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
-  const loggedUser = { id: 1, departmentId: 1 };
+  const loggedUser = JSON.parse(localStorage.getItem('user'));
 
   const handleEmojiClick = (event, emojiObject) => {
     if (emojiObject && emojiObject.emoji) {
@@ -45,7 +45,7 @@ const Chat = () => {
 
     const fetchQueue = async () => {
       try {
-        const response = await axios.get(`https://tetochat-8m0r.onrender.com/queue?department=${loggedUser.departmentId}`, {
+        const response = await axios.get(`https://tetochat-8m0r.onrender.com/queue?department=${loggedUser.department}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
@@ -128,6 +128,16 @@ const Chat = () => {
           if (!contacts.find(contact => contact.id === selectedContact.id)) {
             setContacts([...contacts, selectedContact]);
           }
+
+          // Atualiza o status da fila para "respondida"
+          await axios.post('https://tetochat-8m0r.onrender.com/updateQueueStatus', {
+            contactId: selectedContact.id,
+            userId: loggedUser.id
+          }, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+          });
         }
       } catch (error) {
         console.error('Erro ao enviar mensagem:', error);
