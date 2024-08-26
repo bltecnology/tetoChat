@@ -104,8 +104,16 @@ const Chat = () => {
       }
     });
 
+    socket.on('contact_transferred', ({ contactId, departmentId }) => {
+      if (selectedContact?.id === contactId && departmentId !== loggedUser.department) {
+        setContacts((prevContacts) => prevContacts.filter(c => c.id !== contactId));
+        setSelectedContact(null);
+      }
+    });
+
     return () => {
       socket.off('new_message');
+      socket.off('contact_transferred');
     };
   }, [selectedContact]);
 
@@ -123,11 +131,15 @@ const Chat = () => {
 
         if (response.status === 200) {
           setNewMessage('');
-          console.log('Mensagem enviada com sucesso');
-
-          if (!contacts.find(contact => contact.id === selectedContact.id)) {
-            setContacts([...contacts, selectedContact]);
-          }
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            {
+              id: `msg-${Date.now()}`,
+              message_body: newMessage,
+              message_from: 'me',
+              message_timestamp: Math.floor(Date.now() / 1000),
+            },
+          ]);
 
           await axios.post('https://tetochat-8m0r.onrender.com/updateQueueStatus', {
             contactId: selectedContact.id,
@@ -138,7 +150,6 @@ const Chat = () => {
             }
           });
 
-          // Mudar de aba para chat após a resposta
           setActiveTab('chat');
         }
       } catch (error) {
