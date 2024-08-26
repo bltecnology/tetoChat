@@ -316,8 +316,10 @@ app.get("/chats", authenticateJWT, async (req, res) => {
       SELECT DISTINCT c.*
       FROM contacts c
       JOIN whatsapp_messages wm ON c.id = wm.contact_id
+      JOIN queue q ON c.id = q.contact_id
       WHERE wm.message_from = 'me' AND wm.user_id = ?
-    `, [userId]);
+      AND q.status = 'respondida' AND q.department_atual = ?
+    `, [userId, req.user.department]);
 
     res.json(rows);
   } catch (error) {
@@ -325,6 +327,7 @@ app.get("/chats", authenticateJWT, async (req, res) => {
     res.status(500).send("Erro ao buscar conversas");
   }
 });
+
 
 
 app.get("/messages", async (req, res) => {
