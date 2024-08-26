@@ -1,4 +1,3 @@
-// src/routes.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/login';
@@ -10,7 +9,8 @@ import Chat from './pages/chat';
 import Users from './pages/users';
 import Departments from './pages/departments';
 import Positions from './pages/positions';
-import QuickResponses from './pages/quickResponses'
+import QuickResponses from './pages/quickResponses';
+import PrivateRoute from './components/privateRoute';
 
 const AppRoutes = () => {
   return (
@@ -18,15 +18,80 @@ const AppRoutes = () => {
       <Routes>
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/contacts" element={<Contacts />} />
-        <Route path="/departments" element={<Departments />} />
-        <Route path="/connectedDevices" element={<ConnectedDevices />} />
-        <Route path="/account" element={<Account />} />
-        <Route path="/chat" element={<Chat />} />
-        <Route path="/users" element={<Users />} />
-        <Route path="/positions" element={<Positions />} />
-        <Route path="/quickResponses" element={<QuickResponses />} />
+        
+        {/* Rotas protegidas */}
+        <Route
+          path="/home"
+          element={
+            <PrivateRoute>
+              <Home />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/contacts"
+          element={
+            <PrivateRoute>
+              <Contacts />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/departments"
+          element={
+            <PrivateRoute>
+              <Departments />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/connectedDevices"
+          element={
+            <PrivateRoute>
+              <ConnectedDevices />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/account"
+          element={
+            <PrivateRoute>
+              <Account />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            <PrivateRoute>
+              <Chat />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <PrivateRoute>
+              <Users />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/positions"
+          element={
+            <PrivateRoute>
+              <Positions />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/quickResponses"
+          element={
+            <PrivateRoute>
+              <QuickResponses />
+            </PrivateRoute>
+          }
+        />
       </Routes>
     </Router>
   );
