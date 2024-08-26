@@ -129,7 +129,6 @@ const Chat = () => {
             setContacts([...contacts, selectedContact]);
           }
 
-          // Atualiza o status da fila para "respondida"
           await axios.post('https://tetochat-8m0r.onrender.com/updateQueueStatus', {
             contactId: selectedContact.id,
             userId: loggedUser.id
@@ -138,6 +137,9 @@ const Chat = () => {
               Authorization: `Bearer ${localStorage.getItem('token')}`
             }
           });
+
+          // Mudar de aba para chat após a resposta
+          setActiveTab('chat');
         }
       } catch (error) {
         console.error('Erro ao enviar mensagem:', error);
@@ -165,6 +167,9 @@ const Chat = () => {
   const handleContactClick = (contact) => {
     setSelectedContact(contact);
     setShowModal(false);
+    if (activeTab !== 'chat') {
+      setActiveTab('chat');
+    }
   };
 
   return (

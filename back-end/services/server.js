@@ -283,8 +283,8 @@ app.post('/send', authenticateJWT, async (req, res) => {
     await pool.query(sql, values);
 
     await pool.query(
-      "UPDATE queue SET status = 'respondida' WHERE contact_id = ?",
-      [contactId]
+      "UPDATE queue SET status = 'respondida', user_id = ? WHERE contact_id = ?",
+      [userId, contactId]
     );
 
     io.emit('new_message', {
@@ -327,8 +327,6 @@ app.get("/chats", authenticateJWT, async (req, res) => {
     res.status(500).send("Erro ao buscar conversas");
   }
 });
-
-
 
 app.get("/messages", async (req, res) => {
   const contactId = req.query.contact;
@@ -461,7 +459,7 @@ app.post('/transfer', async (req, res) => {
 
   try {
     await pool.query(
-      "UPDATE queue SET department_atual = ?, status = 'fila' WHERE contact_id = ?",
+      "UPDATE queue SET department_atual = ?, status = 'fila', user_id = NULL WHERE contact_id = ?",
       [departmentId, contactId]
     );
 
