@@ -29,6 +29,10 @@ const io = new Server(server, {
   }
 });
 
+app.use(bodyParser.json());
+
+const allowedOrigins = ["http://localhost:5173", "https://tetochat-8m0r.onrender.com"];
+
 const corsOptions = {
   origin: function (origin, callback) {
     if (allowedOrigins.includes(origin) || !origin) {
@@ -37,27 +41,11 @@ const corsOptions = {
       callback(new Error("Not allowed by CORS"));
     }
   },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  exposedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-  preflightContinue: false, // Certifique-se de que as requisições preflight não sejam tratadas como erros
-  optionsSuccessStatus: 204 // Responde com sucesso para preflight
+  optionsSuccessStatus: 200,
+  credentials: true
 };
 
 app.use(cors(corsOptions));
-
-app.options('*', cors(corsOptions)); // Habilitar preflight em todas as rotas
-
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  next();
-});
-
-
-
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
@@ -112,6 +100,8 @@ io.on('connection', (socket) => {
   socket.on('new_message', (message) => {
     if (message.user_id === userId) {
       socket.emit('new_message', message);
+
+      // Emitir um evento adicional para atualizar a aba de "Chat"
       socket.broadcast.emit('update_chat_contacts', {
         contact_id: message.contact_id,
         user_id: message.user_id
