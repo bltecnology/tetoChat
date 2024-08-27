@@ -29,10 +29,6 @@ const io = new Server(server, {
   }
 });
 
-app.use(bodyParser.json());
-
-const allowedOrigins = ["http://localhost:5173", "https://tetochat-8m0r.onrender.com"];
-
 const corsOptions = {
   origin: function (origin, callback) {
     if (allowedOrigins.includes(origin) || !origin) {
@@ -41,11 +37,14 @@ const corsOptions = {
       callback(new Error("Not allowed by CORS"));
     }
   },
-  optionsSuccessStatus: 200,
-  credentials: true
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+  optionsSuccessStatus: 200 // Para garantir o sucesso das requisições preflight em alguns navegadores
 };
 
 app.use(cors(corsOptions));
+
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
