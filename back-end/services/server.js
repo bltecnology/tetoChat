@@ -112,8 +112,6 @@ io.on('connection', (socket) => {
   socket.on('new_message', (message) => {
     if (message.user_id === userId) {
       socket.emit('new_message', message);
-
-      // Emitir um evento adicional para atualizar a aba de "Chat"
       socket.broadcast.emit('update_chat_contacts', {
         contact_id: message.contact_id,
         user_id: message.user_id
