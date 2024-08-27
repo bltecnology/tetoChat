@@ -17,9 +17,11 @@ const Chat = () => {
   const [newMessage, setNewMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [contacts, setContacts] = useState([]);
+  const [chatContacts, setChatContacts] = useState([]); // Contatos da aba "Chat"
+  const [queueContacts, setQueueContacts] = useState([]); // Contatos da aba "Fila"
   const [selectedContact, setSelectedContact] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('chat');
+  const [activeTab, setActiveTab] = useState('contatos');
   const loggedUser = JSON.parse(localStorage.getItem('user'));
 
   const handleEmojiClick = (event, emojiObject) => {
@@ -29,46 +31,64 @@ const Chat = () => {
     setShowEmojiPicker(false);
   };
 
+  // Função para carregar mensagens ao clicar em um contato
+  const loadMessages = async (contactId) => {
+    try {
+      const response = await axios.get(`https://tetochat-8m0r.onrender.com/messages?contact=${contactId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      setMessages(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar mensagens:', error);
+    }
+  };
+
+  // Carregar as conversas (chats) na aba "Chat"
+  const fetchChats = async () => {
+    try {
+      const response = await axios.get(`https://tetochat-8m0r.onrender.com/chats`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      setChatContacts(response.data); // Atualiza contatos na aba "Chat"
+    } catch (error) {
+      console.error('Erro ao buscar chats:', error);
+    }
+  };
+
+  // Carregar a fila de contatos na aba "Fila"
+  const fetchQueue = async () => {
+    try {
+      const response = await axios.get(`https://tetochat-8m0r.onrender.com/queue?department=${loggedUser.department}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      setQueueContacts(response.data); // Atualiza contatos na aba "Fila"
+    } catch (error) {
+      console.error('Erro ao buscar fila:', error);
+    }
+  };
+
+  // Carregar a lista de contatos na aba "Contatos"
+  const fetchContacts = async () => {
+    try {
+      const response = await axios.get('https://tetochat-8m0r.onrender.com/contacts', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      setContacts(response.data); // Atualiza contatos na aba "Contatos"
+    } catch (error) {
+      console.error('Erro ao buscar contatos:', error);
+    }
+  };
+
+  // UseEffect para carregar a lista de contatos conforme a aba ativa
   useEffect(() => {
-    const fetchChats = async () => {
-      try {
-        const response = await axios.get(`https://tetochat-8m0r.onrender.com/chats`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        setContacts(response.data);
-      } catch (error) {
-        console.error('Erro ao buscar chats:', error);
-      }
-    };
-
-    const fetchQueue = async () => {
-      try {
-        const response = await axios.get(`https://tetochat-8m0r.onrender.com/queue?department=${loggedUser.department}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        setContacts(response.data);
-      } catch (error) {
-        console.error('Erro ao buscar fila:', error);
-      }
-    };
-
-    const fetchContacts = async () => {
-      try {
-        const response = await axios.get('https://tetochat-8m0r.onrender.com/contacts', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        setContacts(response.data);
-      } catch (error) {
-        console.error('Erro ao buscar contatos:', error);
-      }
-    };
-
     if (activeTab === 'chat') {
       fetchChats();
     } else if (activeTab === 'fila') {
@@ -78,44 +98,30 @@ const Chat = () => {
     }
   }, [activeTab]);
 
+  // UseEffect para carregar mensagens ao selecionar um contato
   useEffect(() => {
     if (selectedContact) {
-      const fetchMessages = async () => {
-        try {
-          const response = await axios.get(`https://tetochat-8m0r.onrender.com/messages?contact=${selectedContact.id}`, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`
-            }
-          });
-          setMessages(response.data);
-        } catch (error) {
-          console.error('Erro ao buscar mensagens:', error);
-        }
-      };
-
-      fetchMessages();
+      loadMessages(selectedContact.id);
     }
   }, [selectedContact]);
 
+  // UseEffect para escutar novos eventos de mensagens
   useEffect(() => {
     socket.on('new_message', (message) => {
       if (message.contact_id === selectedContact?.id) {
         setMessages((prevMessages) => [...prevMessages, message]);
       }
-    });
 
-    socket.on('contact_transferred', ({ contactId, departmentId }) => {
-      if (selectedContact?.id === contactId && departmentId !== loggedUser.department) {
-        setContacts((prevContacts) => prevContacts.filter(c => c.id !== contactId));
-        setSelectedContact(null);
+      // Adiciona o contato na aba "Chat" se a mensagem for enviada ou recebida
+      if (!chatContacts.some(c => c.id === message.contact_id)) {
+        setChatContacts((prevChats) => [...prevChats, selectedContact]); // Usando selectedContact
       }
     });
 
     return () => {
       socket.off('new_message');
-      socket.off('contact_transferred');
     };
-  }, [selectedContact]);
+  }, [selectedContact, chatContacts]);
 
   const handleSendMessage = async () => {
     if (selectedContact && newMessage.trim() !== '') {
@@ -128,19 +134,16 @@ const Chat = () => {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
-
+  
         if (response.status === 200) {
           setNewMessage('');
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            {
-              id: `msg-${Date.now()}`,
-              message_body: newMessage,
-              message_from: 'me',
-              message_timestamp: Math.floor(Date.now() / 1000),
-            },
-          ]);
-
+  
+          // Add the contact to the chatContacts state only if it's not already there
+          if (!chatContacts.some(contact => contact.id === selectedContact.id)) {
+            setChatContacts((prevChats) => [...prevChats, selectedContact]);
+          }
+  
+          // Atualiza o status da fila (se estiver na fila)
           await axios.post('https://tetochat-8m0r.onrender.com/updateQueueStatus', {
             contactId: selectedContact.id,
             userId: loggedUser.id
@@ -149,8 +152,6 @@ const Chat = () => {
               Authorization: `Bearer ${localStorage.getItem('token')}`
             }
           });
-
-          setActiveTab('chat');
         }
       } catch (error) {
         console.error('Erro ao enviar mensagem:', error);
@@ -170,16 +171,21 @@ const Chat = () => {
   };
 
   const handleTransferComplete = () => {
-    setContacts(contacts.filter(contact => contact.id !== selectedContact.id));
+    setQueueContacts(queueContacts.filter(contact => contact.id !== selectedContact.id));
     setSelectedContact(null);
     setShowModal(false);
   };
 
-  const handleContactClick = (contact) => {
+  const handleContactClick = async (contact) => {
     setSelectedContact(contact);
     setShowModal(false);
-    if (activeTab !== 'chat') {
-      setActiveTab('chat');
+  
+    // Carrega as mensagens do contato ao clicar em "Contatos"
+    await loadMessages(contact.id);
+  
+    // Garante que o contato será adicionado na aba "Chat" apenas se não estiver lá
+    if (!chatContacts.some(c => c.id === contact.id)) {
+      setChatContacts((prevChats) => [...prevChats, contact]);
     }
   };
 
@@ -210,7 +216,7 @@ const Chat = () => {
           </div>
           <div className="flex-grow p-2 overflow-y-auto">
             <ul>
-              {contacts.map((contact) => (
+              {(activeTab === 'chat' ? chatContacts : activeTab === 'fila' ? queueContacts : contacts).map((contact) => (
                 <li
                   key={contact.id}
                   className="flex items-center p-2 cursor-pointer hover:bg-gray-100"
@@ -239,7 +245,7 @@ const Chat = () => {
           <div className="flex-grow p-2 overflow-y-auto">
             {messages.map((message) => (
               <div key={message.id} className={`max-w-xs px-2 py-1 my-1 rounded-lg ${message.message_from === 'me' ? 'ml-auto bg-green-200 text-black' : 'mr-auto bg-blue-200 text-black'}`}>
-              <div>{message.message_body}</div>
+                <div>{message.message_body}</div>
                 <div className="text-[10px] text-gray-500 text-right">
                   {format(new Date(message.message_timestamp * 1000), 'HH:mm')}
                 </div>

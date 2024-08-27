@@ -100,9 +100,16 @@ io.on('connection', (socket) => {
   socket.on('new_message', (message) => {
     if (message.user_id === userId) {
       socket.emit('new_message', message);
+
+      // Emitir um evento adicional para atualizar a aba de "Chat"
+      socket.broadcast.emit('update_chat_contacts', {
+        contact_id: message.contact_id,
+        user_id: message.user_id
+      });
     }
   });
 });
+
 
 async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
   console.log('Enviando mensagem para:', toPhone);
@@ -317,8 +324,8 @@ app.get("/chats", authenticateJWT, async (req, res) => {
       FROM contacts c
       JOIN whatsapp_messages wm ON c.id = wm.contact_id
       JOIN queue q ON c.id = q.contact_id
-      WHERE wm.message_from = 'me' AND wm.user_id = ?
-      AND q.status = 'respondida' AND q.department_atual = ?
+      WHERE wm.user_id = ? AND q.status = 'respondida'
+      AND q.department_atual = ? 
     `, [userId, req.user.department]);
 
     res.json(rows);
@@ -327,6 +334,8 @@ app.get("/chats", authenticateJWT, async (req, res) => {
     res.status(500).send("Erro ao buscar conversas");
   }
 });
+
+
 
 app.get("/messages", async (req, res) => {
   const contactId = req.query.contact;
