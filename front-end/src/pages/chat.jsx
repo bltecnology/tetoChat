@@ -114,7 +114,7 @@ const Chat = () => {
 
       // Adiciona o contato na aba "Chat" se a mensagem for enviada ou recebida
       if (!chatContacts.some(c => c.id === message.contact_id)) {
-        setChatContacts((prevChats) => [...prevChats, selectedContact]); // Usando selectedContact
+        setChatContacts((prevChats) => [...prevChats, message.contact]); // Usando `message.contact`
       }
     });
 
