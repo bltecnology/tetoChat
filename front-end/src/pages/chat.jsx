@@ -201,24 +201,27 @@ const Chat = () => {
       <Header />
       <div className="flex flex-grow overflow-hidden">
         <div className="flex-shrink-0 w-1/4 bg-white border-r border-gray-200 flex flex-col">
-          <div className="flex">
+          <div className="flex relative">
             <button
               onClick={() => setActiveTab('chat')}
-              className={`w-1/3 p-2 ${activeTab === 'chat' ? 'bg-blue-500 text-white' : 'bg-white text-black'}`}
+              className={`w-1/3 p-2 relative ${activeTab === 'chat' ? 'text-red-500' : 'text-gray-500'}`}
             >
               Chat
+              {activeTab === 'chat' && <div className="absolute bottom-0 left-0 w-full h-1 bg-red-500" />}
             </button>
             <button
               onClick={() => setActiveTab('fila')}
-              className={`w-1/3 p-2 ${activeTab === 'fila' ? 'bg-blue-500 text-white' : 'bg-white text-black'}`}
+              className={`w-1/3 p-2 relative ${activeTab === 'fila' ? 'text-red-500' : 'text-gray-500'}`}
             >
               Fila
+              {activeTab === 'fila' && <div className="absolute bottom-0 left-0 w-full h-1 bg-red-500" />}
             </button>
             <button
               onClick={() => setActiveTab('contatos')}
-              className={`w-1/3 p-2 ${activeTab === 'contatos' ? 'bg-blue-500 text-white' : 'bg-white text-black'}`}
+              className={`w-1/3 p-2 relative ${activeTab === 'contatos' ? 'text-red-500' : 'text-gray-500'}`}
             >
               Contatos
+              {activeTab === 'contatos' && <div className="absolute bottom-0 left-0 w-full h-1 bg-red-500" />}
             </button>
           </div>
           <div className="flex-grow p-2 overflow-y-auto">
