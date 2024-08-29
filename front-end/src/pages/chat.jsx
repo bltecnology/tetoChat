@@ -53,7 +53,15 @@ const Chat = () => {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
-      setChatContacts(response.data); // Atualiza contatos na aba "Chat"
+
+      const fetchedChats = response.data;
+
+      // Adiciona os contatos na aba "Chat" apenas se não estiverem lá
+      const uniqueChats = fetchedChats.filter(chat =>
+        !chatContacts.some(c => c.id === chat.id)
+      );
+
+      setChatContacts(prevChats => [...prevChats, ...uniqueChats]);
     } catch (error) {
       console.error('Erro ao buscar chats:', error);
     }
@@ -114,18 +122,30 @@ const Chat = () => {
 
       // Adiciona o contato na aba "Chat" se a mensagem for enviada ou recebida
       if (!chatContacts.some(c => c.id === message.contact_id)) {
-        setChatContacts((prevChats) => [...prevChats, message.contact]); // Usando `message.contact`
+        const updatedContact = contacts.find(contact => contact.id === message.contact_id);
+        setChatContacts((prevChats) => [...prevChats, updatedContact]);
       }
     });
 
     return () => {
       socket.off('new_message');
     };
-  }, [selectedContact, chatContacts]);
+  }, [selectedContact, chatContacts, contacts]);
 
   const handleSendMessage = async () => {
     if (selectedContact && newMessage.trim() !== '') {
       try {
+        const sentMessage = {
+          id: `msg-${Date.now()}`, // Gerar um ID temporário para a mensagem
+          message_body: newMessage,
+          message_from: 'me',
+          message_timestamp: Math.floor(Date.now() / 1000).toString(),
+          contact_id: selectedContact.id,
+        };
+
+        setMessages((prevMessages) => [...prevMessages, sentMessage]);
+
+        // Envia a mensagem para o servidor
         const response = await axios.post('https://tetochat-8m0r.onrender.com/send', {
           toPhone: selectedContact.phone,
           text: newMessage,
@@ -134,25 +154,12 @@ const Chat = () => {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
-  
+
         if (response.status === 200) {
-          setNewMessage('');
-  
-          // Add the contact to the chatContacts state only if it's not already there
-          if (!chatContacts.some(contact => contact.id === selectedContact.id)) {
-            setChatContacts((prevChats) => [...prevChats, selectedContact]);
-          }
-  
-          // Atualiza o status da fila (se estiver na fila)
-          await axios.post('https://tetochat-8m0r.onrender.com/updateQueueStatus', {
-            contactId: selectedContact.id,
-            userId: loggedUser.id
-          }, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`
-            }
-          });
+          // Aqui você pode atualizar o estado, se necessário, com os dados reais da resposta
         }
+
+        setNewMessage(''); // Limpar o campo de nova mensagem
       } catch (error) {
         console.error('Erro ao enviar mensagem:', error);
       }
@@ -179,10 +186,10 @@ const Chat = () => {
   const handleContactClick = async (contact) => {
     setSelectedContact(contact);
     setShowModal(false);
-  
+
     // Carrega as mensagens do contato ao clicar em "Contatos"
     await loadMessages(contact.id);
-  
+
     // Garante que o contato será adicionado na aba "Chat" apenas se não estiver lá
     if (!chatContacts.some(c => c.id === contact.id)) {
       setChatContacts((prevChats) => [...prevChats, contact]);
