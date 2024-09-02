@@ -10,10 +10,23 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 const Users = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [users, setUsers] = useState([]);
+  const [editingUser, setEditingUser] = useState(null); // Estado para armazenar o usuário sendo editado
 
   const handleSaveUser = (user) => {
-    setUsers([...users, user]);
+    if (editingUser) {
+      // Atualizar usuário existente
+      setUsers(users.map(u => u.id === user.id ? user : u));
+    } else {
+      // Adicionar novo usuário
+      setUsers([...users, user]);
+    }
     setIsModalOpen(false);
+    setEditingUser(null); // Resetar o estado de edição
+  };
+
+  const handleEditUser = (user) => {
+    setEditingUser(user);
+    setIsModalOpen(true);
   };
 
   useEffect(() => {
@@ -34,7 +47,8 @@ const Users = () => {
       <Header />
       <Background
         text="Usuários"
-        btn1={<GrAdd onClick={() => setIsModalOpen(true)} />}
+        btn1={<GrAdd className="rounded-full hover:bg-gray-400 hover:scale-110 transition-transform transition-colors duration-300"
+           onClick={() => setIsModalOpen(true)} />}
       >
         <MainContainer
           p1="Nome"
@@ -59,7 +73,7 @@ const Users = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="bg-white text-black mt-2 w-48">
                         <DropdownMenuItem className="hover:bg-gray-200 text-center">
-                          <p>Editar</p>
+                          <button onClick={() => handleEditUser(user)}>Editar</button>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -72,8 +86,12 @@ const Users = () => {
       </Background>
       <ModalUsers
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingUser(null); // Resetar o estado de edição ao fechar o modal
+        }}
         onSave={handleSaveUser}
+        user={editingUser} // Passa o usuário sendo editado
       />
     </div>
   );

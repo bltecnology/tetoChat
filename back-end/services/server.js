@@ -521,6 +521,40 @@ app.post('/quickResponses', (req, res) => {
   });
 });
 
+// Atualizar um usuário existente
+app.put('/users/:id', authenticateJWT, async (req, res) => {
+  const userId = req.params.id;
+  const { name, email, password, position, department } = req.body;
+
+  try {
+    const [user] = await pool.query("SELECT * FROM users WHERE id = ?", [userId]);
+
+    if (user.length === 0) {
+      return res.status(404).send('Usuário não encontrado');
+    }
+
+    const updatedUser = {
+      name: name || user[0].name,
+      email: email || user[0].email,
+      position: position || user[0].position,
+      department: department || user[0].department,
+    };
+
+    
+    if (password) {
+      updatedUser.password = password; // aplicar alguma hash na senha aqui
+    }
+
+    await pool.query("UPDATE users SET ? WHERE id = ?", [updatedUser, userId]);
+
+    res.status(200).send('Usuário atualizado com sucesso');
+  } catch (error) {
+    console.error('Erro ao atualizar usuário:', error);
+    res.status(500).send('Erro ao atualizar usuário');
+  }
+});
+
+
 app.get('/test', (req, res) => {
   res.json({ message: 'Hello World' });
 });
