@@ -10,23 +10,33 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 const Users = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [users, setUsers] = useState([]);
-  const [editingUser, setEditingUser] = useState(null); // Estado para armazenar o usuário sendo editado
+  const [editingUser, setEditingUser] = useState(null);
 
   const handleSaveUser = (user) => {
     if (editingUser) {
-      // Atualizar usuário existente
       setUsers(users.map(u => u.id === user.id ? user : u));
     } else {
-      // Adicionar novo usuário
       setUsers([...users, user]);
     }
     setIsModalOpen(false);
-    setEditingUser(null); // Resetar o estado de edição
+    setEditingUser(null);
   };
 
   const handleEditUser = (user) => {
     setEditingUser(user);
     setIsModalOpen(true);
+  };
+
+  const handleDeleteUser = async (userId) => {
+    const confirmDelete = window.confirm("Você realmente deseja excluir este usuário?");
+    if (confirmDelete) {
+      try {
+        await axios.delete(`https://tetochat-8m0r.onrender.com/users/${userId}`);
+        setUsers(users.filter(user => user.id !== userId));
+      } catch (error) {
+        console.error('Erro ao excluir usuário:', error);
+      }
+    }
   };
 
   useEffect(() => {
@@ -75,6 +85,9 @@ const Users = () => {
                         <DropdownMenuItem className="hover:bg-gray-200 text-center">
                           <button onClick={() => handleEditUser(user)}>Editar</button>
                         </DropdownMenuItem>
+                        <DropdownMenuItem className="hover:bg-gray-200 text-center">
+                          <button onClick={() => handleDeleteUser(user.id)}>Excluir</button>
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -88,10 +101,10 @@ const Users = () => {
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setEditingUser(null); // Resetar o estado de edição ao fechar o modal
+          setEditingUser(null);
         }}
         onSave={handleSaveUser}
-        user={editingUser} // Passa o usuário sendo editado
+        user={editingUser}
       />
     </div>
   );

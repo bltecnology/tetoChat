@@ -554,6 +554,23 @@ app.put('/users/:id', authenticateJWT, async (req, res) => {
   }
 });
 
+app.delete('/users/:id', authenticateJWT, async (rec, res) => {
+  const userId = req.params.id;
+
+  try{
+    const [result] = await pool.query("DELETE FROM users WHERE id = ?", [userId])
+
+    if (result.affectedRows === 0) {
+      return res.status(404).send('Usuário não encontrado')
+    }
+
+    res.status(200).send("Usuário deletado com sucesso")
+  } catch (error) {
+    console.error('Erro ao deletar usuário:', error)
+    res.status(500).send('Erro ao deletar usuário')
+  }
+})
+
 
 app.get('/test', (req, res) => {
   res.json({ message: 'Hello World' });
