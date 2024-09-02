@@ -27,10 +27,10 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex h-screen" style={{ background: 'linear-gradient(to bottom, rgba(238, 4, 48, 0.5), rgba(255, 92, 123, 0.5))' }}>
+    <div className="flex h-screen bg-white">
       <div className="flex justify-center items-center flex-1">
         <div className="bg-white rounded-lg p-8 w-96" style={{ boxShadow: '10px 10px 20px rgba(0, 0, 0, 0.25), 0 10px 20px rgba(0, 0, 0, 0.25)' }}>
-          <h2 className="text-center text-2xl font-semibold text-red-700 mb-6">Login</h2>
+          <h2 className="text-center text-2xl font-semibold text-red-700 mb-6">Olá novamente!</h2>
           <form onSubmit={handleLogin}>
             {error && <p className="text-red-500 text-center mb-4">{error}</p>}
             <div className="mb-4">

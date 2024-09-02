@@ -10,7 +10,9 @@ CREATE TABLE IF NOT EXISTS whatsapp_messages (
     message_type VARCHAR(20),
     message_body TEXT,
     contact_id INT,  -- Adicionando a coluna contact_id
-    FOREIGN KEY (contact_id) REFERENCES contacts(id) -- Adicionando a chave estrangeira
+    FOREIGN KEY (contact_id) REFERENCES contacts(id), -- Adicionando a chave estrangeira
+    user_id INT,  -- Adicionando a coluna user_id
+    FOREIGN KEY (user_id) REFERENCES users(id) -- Adicionando a chave estrangeira para users
 );
 
 CREATE TABLE IF NOT EXISTS contacts (
