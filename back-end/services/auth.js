@@ -2,7 +2,11 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import pool from './database.js';
 
-const SECRET_KEY = process.env.SECRET_KEY || 'your_secret_key';
+const SECRET_KEY = process.env.SECRET_KEY;
+
+if (!SECRET_KEY) {
+  throw new Error('A SECRET_KEY deve ser definida nas variáveis de ambiente');
+}
 
 export const authenticateUser = async (req, res) => {
   const { email, password } = req.body;
@@ -39,7 +43,7 @@ export const authenticateJWT = (req, res, next) => {
       return res.sendStatus(403);
     }
 
-    (req).user = user;
+    req.user = user;
     next();
   });
 };
