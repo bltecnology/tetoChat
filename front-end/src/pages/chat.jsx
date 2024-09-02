@@ -134,28 +134,37 @@ const Chat = () => {
 
   const handleSendMessage = async () => {
     if (selectedContact && newMessage.trim() !== '') {
-        try {
-            const response = await axios.post('https://tetochat-8m0r.onrender.com/send', {
-                toPhone: selectedContact.phone,
-                text: newMessage,
-            }, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}` // Certifique-se de que o token está presente
-                }
-            });
+      const sentMessage = {
+        id: `msg-${Date.now()}`, // Gerar um ID temporário para a mensagem
+        message_body: newMessage,
+        message_from: 'me',
+        message_timestamp: Math.floor(Date.now() / 1000).toString(),
+        contact_id: selectedContact.id,
+      };
 
-            // Verifique se a resposta foi bem-sucedida
-            if (response.status === 200) {
-                // Aqui você pode atualizar o estado, se necessário, com os dados reais da resposta
-            }
+      // Adiciona a mensagem imediatamente ao estado
+      setMessages((prevMessages) => [...prevMessages, sentMessage]);
 
-            setNewMessage(''); // Limpar o campo de nova mensagem
-        } catch (error) {
-            console.error('Erro ao enviar mensagem:', error);
+      try {
+        const response = await axios.post('https://tetochat-8m0r.onrender.com/send', {
+          toPhone: selectedContact.phone,
+          text: newMessage,
+        }, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        if (response.status === 200) {
+          // Se necessário, você pode atualizar o estado com a resposta do servidor aqui
         }
-    }
-};
 
+        setNewMessage(''); // Limpar o campo de nova mensagem
+      } catch (error) {
+        console.error('Erro ao enviar mensagem:', error);
+      }
+    }
+  };
 
   const handleKeyPress = (event) => {
     if (event.key === 'Enter') {

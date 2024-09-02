@@ -17,7 +17,11 @@ const LoginPage = () => {
       const response = await axios.post('https://tetochat-8m0r.onrender.com/login', { email, password: senha });
       const { token } = response.data;
 
+      // Armazena o token no localStorage
       localStorage.setItem('token', token);
+
+      // Configura o token em todas as requisições Axios
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       navigate('/home');
     } catch (error) {

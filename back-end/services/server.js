@@ -45,7 +45,6 @@ const corsOptions = {
   credentials: true
 };
 
-
 app.use(cors(corsOptions));
 
 const storage = multer.diskStorage({
@@ -110,7 +109,6 @@ io.on('connection', (socket) => {
     }
   });
 });
-
 
 async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
   console.log('Enviando mensagem para:', toPhone);
@@ -321,9 +319,6 @@ app.get("/chats", authenticateJWT, async (req, res) => {
       res.status(500).send("Erro ao buscar conversas");
   }
 });
-
-
-
 
 app.get("/messages", async (req, res) => {
   const contactId = req.query.contact;
@@ -571,7 +566,6 @@ app.delete('/users/:id', authenticateJWT, async (rec, res) => {
     res.status(500).send('Erro ao deletar usuário')
   }
 })
-
 
 app.get('/test', (req, res) => {
   res.json({ message: 'Hello World' });
