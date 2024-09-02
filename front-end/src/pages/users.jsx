@@ -4,7 +4,8 @@ import Header from "../components/header";
 import Background from "../components/background";
 import { GrAdd, GrMoreVertical } from "react-icons/gr";
 import MainContainer from "../components/mainContainer";
-import ModalUsers from "../components/modalUsers"; // Certifique-se de que o caminho está correto
+import ModalUsers from "../components/modalUsers"; 
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@radix-ui/react-dropdown-menu';
 
 const Users = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -50,7 +51,18 @@ const Users = () => {
                   <div className="w-1/5 px-2">{user.position}</div>
                   <div className="w-1/5 px-2">{user.department}</div>
                   <div className="w-1/5 flex justify-end px-4">
-                    <GrMoreVertical className="cursor-pointer" />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="p-2 rounded">
+                        <GrMoreVertical className="cursor-pointer" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-white text-black mt-2 w-48">
+                        <DropdownMenuItem className="hover:bg-gray-200 text-center">
+                          <p>Editar</p>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               ))}
