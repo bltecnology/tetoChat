@@ -24,26 +24,22 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: ["http://localhost:5173", "https://tetochat-8m0r.onrender.com"],
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "DELETE", "PUTCH"],
     credentials: true
   }
 });
+
 
 app.use(bodyParser.json());
 
 const allowedOrigins = ["http://localhost:5173", "https://tetochat-8m0r.onrender.com"];
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (allowedOrigins.includes(origin) || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  optionsSuccessStatus: 200,
+app.use(cors({
+  origin: ['http://localhost:5173', 'https://tetochat-8m0r.onrender.com'],
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true
-};
+}));
+
 
 app.use(cors(corsOptions));
 

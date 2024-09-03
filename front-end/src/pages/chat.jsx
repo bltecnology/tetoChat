@@ -9,6 +9,7 @@ import backgroundImage from '../assets/image.png';
 import EmojiPicker from 'emoji-picker-react';
 import { format } from 'date-fns';
 import defaultProfilePic from '../assets/defaultProfile.png';
+import { useNavigate } from 'react-router-dom'; // Importando useNavigate
 
 const socket = io('https://tetochat-8m0r.onrender.com');
 
@@ -22,7 +23,15 @@ const Chat = () => {
   const [selectedContact, setSelectedContact] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState('contatos');
+  const navigate = useNavigate(); // Inicializando useNavigate
   const loggedUser = JSON.parse(localStorage.getItem('user'));
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/login'); // Redireciona para a página de login se o token não estiver presente
+    }
+  }, [navigate]);
 
   const handleEmojiClick = (event, emojiObject) => {
     if (emojiObject && emojiObject.emoji) {
