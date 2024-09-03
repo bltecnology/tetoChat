@@ -24,24 +24,19 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: ["http://localhost:5173", "https://tetochat-8m0r.onrender.com"],
-    methods: ["GET", "POST", "DELETE", "PUTCH"],
+    methods: ["GET", "POST", "DELETE", "PATCH"],
     credentials: true
   }
 });
 
-
 app.use(bodyParser.json());
 
-const allowedOrigins = ["http://localhost:5173", "https://tetochat-8m0r.onrender.com"];
-
+// Configuração de CORS
 app.use(cors({
   origin: ['http://localhost:5173', 'https://tetochat-8m0r.onrender.com'],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true
 }));
-
-
-app.use(cors(corsOptions));
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
@@ -49,6 +44,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+// Conexão com o banco de dados
 const connection = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -105,6 +101,7 @@ io.on('connection', (socket) => {
     }
   });
 });
+
 
 async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
   console.log('Enviando mensagem para:', toPhone);
