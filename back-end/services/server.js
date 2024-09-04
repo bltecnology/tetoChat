@@ -507,21 +507,24 @@ app.post('/updateQueueStatus', async (req, res) => {
   }
 });
 
-app.get('/queue', async (req, res) => {
-  const departmentId = req.query.department;
+app.get('/queue', authenticateJWT, async (req, res) => {
+  const userId = req.user.id;
 
   try {
-    const [rows] = await pool.query(`
-      SELECT c.*, q.status 
-      FROM contacts c
-      JOIN queue q ON c.id = q.contact_id
-      WHERE q.department_atual = ? AND q.status = 'fila'
-    `, [departmentId]);
+      // Obter o nome da tabela de fila associada ao usuário
+      const [userRow] = await pool.query("SELECT queue_table_name FROM users WHERE id = ?", [userId]);
+      if (userRow.length === 0) {
+          return res.status(404).send('Usuário não encontrado');
+      }
 
-    res.json(rows);
+      const queueTableName = userRow[0].queue_table_name;
+
+      // Carregar as conversas da tabela de fila do departamento do usuário
+      const [rows] = await pool.query(`SELECT * FROM ${queueTableName} WHERE status = 'fila'`);
+      res.json(rows);
   } catch (error) {
-    console.error('Erro ao buscar fila:', error);
-    res.status(500).send('Erro ao buscar fila');
+      console.error('Erro ao buscar fila:', error);
+      res.status(500).send('Erro ao buscar fila');
   }
 });
 

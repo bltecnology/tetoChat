@@ -80,16 +80,17 @@ const Chat = () => {
   // Carregar a fila de contatos na aba "Fila"
   const fetchQueue = async () => {
     try {
-      const response = await axios.get(`https://tetochat-8m0r.onrender.com/queue?department=${loggedUser.department}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      setQueueContacts(response.data); // Atualiza contatos na aba "Fila"
+        const response = await axios.get(`/queue?userId=${loggedUser.id}`, {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        setQueueContacts(response.data); // Atualiza contatos na aba "Fila"
     } catch (error) {
-      console.error('Erro ao buscar fila:', error);
+        console.error('Erro ao buscar fila:', error);
     }
-  };
+};
+
 
   // Carregar a lista de contatos na aba "Contatos"
   const fetchContacts = async () => {
