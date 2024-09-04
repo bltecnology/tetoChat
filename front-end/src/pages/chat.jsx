@@ -157,6 +157,7 @@ const Chat = () => {
       setMessages((prevMessages) => [...prevMessages, sentMessage]);
   
       try {
+        // Enviar a mensagem para o backend
         const response = await axios.post('https://tetochat-8m0r.onrender.com/send', {
           toPhone: selectedContact.phone,
           text: newMessage,
@@ -167,19 +168,8 @@ const Chat = () => {
         });
   
         if (response.status === 200) {
-          // Remove da fila e adiciona ao chat do usuário
-          await axios.post('https://tetochat-8m0r.onrender.com/updateQueueStatus', {
-            contactId: selectedContact.id,
-            userId: loggedUser.id
-          }, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`
-            }
-          });
-  
-          // **Salvar na tabela de chat do usuário**
+          // Salvar a mensagem na tabela correta de chat do usuário logado
           await axios.post('https://tetochat-8m0r.onrender.com/saveMessage', {
-            userId: loggedUser.id,
             contactId: selectedContact.id,
             message: newMessage,
             message_from: 'me'
@@ -189,16 +179,15 @@ const Chat = () => {
             }
           });
   
-          fetchQueue(); // Atualizar a fila
           fetchChats(); // Atualizar os chats do usuário
+          setNewMessage(''); // Limpar o campo de nova mensagem
         }
-  
-        setNewMessage(''); // Limpar o campo de nova mensagem
       } catch (error) {
         console.error('Erro ao enviar mensagem:', error);
       }
     }
   };
+  
 
   const handleKeyPress = (event) => {
     if (event.key === 'Enter') {

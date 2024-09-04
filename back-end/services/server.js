@@ -605,21 +605,46 @@ app.delete('/users/:id', authenticateJWT, async (rec, res) => {
 })
 
 app.post('/saveMessage', authenticateJWT, async (req, res) => {
-  const { userId, contactId, message, message_from } = req.body;
-  const chatTableName = `chat_user_${userId}`;
+  const { contactId, message, message_from } = req.body;
+  const userId = req.user.id;  // Pegar o ID do usuário logado a partir do JWT
+  const chatTableName = `chat_user_${userId}`;  // Definir a tabela de chat com base no ID do usuário
 
   try {
-    await pool.query(`
-      INSERT INTO ${chatTableName} (contact_id, message_body, message_from, message_timestamp)
-      VALUES (?, ?, ?, ?)`,
-      [contactId, message, message_from, Math.floor(Date.now() / 1000)]
-    );
+    // Verificar se a tabela existe para o usuário. Se não, criar a tabela.
+    const createTableQuery = `
+      CREATE TABLE IF NOT EXISTS ${chatTableName} (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        contact_id INT,
+        conversation_id VARCHAR(255),
+        message_body TEXT,
+        message_from VARCHAR(255),
+        message_timestamp BIGINT,
+        FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+      )
+    `;
+    await pool.query(createTableQuery);
+
+    // Inserir a mensagem na tabela do usuário logado
+    const insertMessageQuery = `
+      INSERT INTO ${chatTableName} (contact_id, conversation_id, message_body, message_from, message_timestamp)
+      VALUES (?, ?, ?, ?, ?)
+    `;
+    await pool.query(insertMessageQuery, [
+      contactId,
+      `conv-${Date.now()}`,  // Gerar um ID de conversa único
+      message,
+      message_from,
+      Math.floor(Date.now() / 1000)  // Timestamp atual
+    ]);
+
     res.status(200).send('Mensagem salva com sucesso');
   } catch (error) {
     console.error('Erro ao salvar mensagem:', error);
     res.status(500).send('Erro ao salvar mensagem');
   }
 });
+
+
 
 
 app.get('/test', (req, res) => {
