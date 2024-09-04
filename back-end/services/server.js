@@ -86,7 +86,7 @@ io.on('connection', (socket) => {
   const userId = socket.handshake.query.userId;
 
   socket.on('disconnect', () => {
-    console.log('user disconnected');
+    console.log('User disconnected');
   });
 
   socket.on('new_message', (message) => {
@@ -101,7 +101,6 @@ io.on('connection', (socket) => {
     }
   });
 });
-
 
 async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
   console.log('Enviando mensagem para:', toPhone);
@@ -245,10 +244,8 @@ app.post('/send', authenticateJWT, async (req, res) => {
   }
 
   try {
-    // Enviar a mensagem pelo WhatsApp API
     await sendMessage(toPhone, text, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
 
-    // Verificar ou criar o contato
     const [contactRows] = await pool.query("SELECT id FROM contacts WHERE phone = ?", [toPhone]);
     let contactId;
     if (contactRows.length > 0) {
@@ -261,10 +258,8 @@ app.post('/send', authenticateJWT, async (req, res) => {
       contactId = result.insertId;
     }
 
-    // Criar ou usar uma conversa existente
     const conversationId = `conv-${Date.now()}`;
 
-    // **1. Salvar a mensagem na tabela `whatsapp_messages`:**
     const insertMessageQuery = `
       INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -283,7 +278,6 @@ app.post('/send', authenticateJWT, async (req, res) => {
       userId
     ]);
 
-    // **2. Inserir a conversa na fila associada ao departamento do usuário:**
     const [userRow] = await pool.query("SELECT department FROM users WHERE id = ?", [userId]);
     const departmentName = userRow[0].department;
     const queueTableName = `queueOf${departmentName}`;
@@ -300,8 +294,6 @@ app.post('/send', authenticateJWT, async (req, res) => {
     res.status(500).send("Erro ao enviar mensagem");
   }
 });
-
-
 
 app.get("/chats", authenticateJWT, async (req, res) => {
   const userId = req.user.id;
@@ -320,8 +312,6 @@ app.get("/chats", authenticateJWT, async (req, res) => {
     res.status(500).send("Erro ao buscar conversas");
   }
 });
-
-
 
 app.get("/messages", async (req, res) => {
   const contactId = req.query.contact;
@@ -419,7 +409,6 @@ app.post('/departments', async (req, res) => {
     const [result] = await pool.query("INSERT INTO departments (name) VALUES (?)", [name]);
     const insertId = result.insertId;
 
-    // Criar a tabela para o departamento
     const tableName = `queueOf${name}`;
     const createTableQuery = `
       CREATE TABLE IF NOT EXISTS ${tableName} (
@@ -441,7 +430,6 @@ app.post('/departments', async (req, res) => {
     res.status(500).send("Erro ao salvar departamento");
   }
 });
-
 
 app.get('/departments', async (req, res) => {
   try {
@@ -495,7 +483,6 @@ app.post('/transfer', async (req, res) => {
   }
 });
 
-
 app.post('/updateQueueStatus', async (req, res) => {
   const { contactId, userId } = req.body;
 
@@ -520,7 +507,6 @@ app.get('/queue', authenticateJWT, async (req, res) => {
   const userId = req.user.id;
 
   try {
-      // Obter o departamento do usuário
       const [userRow] = await pool.query("SELECT department FROM users WHERE id = ?", [userId]);
       if (userRow.length === 0) {
           return res.status(404).send('Usuário não encontrado');
@@ -529,7 +515,6 @@ app.get('/queue', authenticateJWT, async (req, res) => {
       const departmentName = userRow[0].department;
       const queueTableName = `queueOf${departmentName}`;
 
-      // Carregar as conversas da tabela de fila do departamento do usuário
       const [rows] = await pool.query(`SELECT * FROM ${queueTableName} WHERE status = 'fila'`);
       res.json(rows);
   } catch (error) {
@@ -537,7 +522,6 @@ app.get('/queue', authenticateJWT, async (req, res) => {
       res.status(500).send('Erro ao buscar fila');
   }
 });
-
 
 app.post('/quickResponses', (req, res) => {
   const { text, department } = req.body;
@@ -556,7 +540,6 @@ app.post('/quickResponses', (req, res) => {
   });
 });
 
-// Atualizar um usuário existente
 app.put('/users/:id', authenticateJWT, async (req, res) => {
   const userId = req.params.id;
   const { name, email, password, position, department } = req.body;
@@ -575,9 +558,8 @@ app.put('/users/:id', authenticateJWT, async (req, res) => {
       department: department || user[0].department,
     };
 
-    
     if (password) {
-      updatedUser.password = password; // aplicar alguma hash na senha aqui
+      updatedUser.password = password;
     }
 
     await pool.query("UPDATE users SET ? WHERE id = ?", [updatedUser, userId]);
@@ -592,27 +574,26 @@ app.put('/users/:id', authenticateJWT, async (req, res) => {
 app.delete('/users/:id', authenticateJWT, async (rec, res) => {
   const userId = req.params.id;
 
-  try{
-    const [result] = await pool.query("DELETE FROM users WHERE id = ?", [userId])
+  try {
+    const [result] = await pool.query("DELETE FROM users WHERE id = ?", [userId]);
 
     if (result.affectedRows === 0) {
-      return res.status(404).send('Usuário não encontrado')
+      return res.status(404).send('Usuário não encontrado');
     }
 
-    res.status(200).send("Usuário deletado com sucesso")
+    res.status(200).send("Usuário deletado com sucesso");
   } catch (error) {
-    console.error('Erro ao deletar usuário:', error)
-    res.status(500).send('Erro ao deletar usuário')
+    console.error('Erro ao deletar usuário:', error);
+    res.status(500).send('Erro ao deletar usuário');
   }
-})
+});
 
 app.post('/saveMessage', authenticateJWT, async (req, res) => {
   const { contactId, message, message_from } = req.body;
-  const userId = req.user.id;  // Pegar o ID do usuário logado a partir do JWT
-  const chatTableName = `chat_user_${userId}`;  // Definir a tabela de chat com base no ID do usuário
+  const userId = req.user.id;
+  const chatTableName = `chat_user_${userId}`;
 
   try {
-    // Verificar se a tabela existe para o usuário. Se não, criar a tabela.
     const createTableQuery = `
       CREATE TABLE IF NOT EXISTS ${chatTableName} (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -626,17 +607,16 @@ app.post('/saveMessage', authenticateJWT, async (req, res) => {
     `;
     await pool.query(createTableQuery);
 
-    // Inserir a mensagem na tabela do usuário logado
     const insertMessageQuery = `
       INSERT INTO ${chatTableName} (contact_id, conversation_id, message_body, message_from, message_timestamp)
       VALUES (?, ?, ?, ?, ?)
     `;
     await pool.query(insertMessageQuery, [
       contactId,
-      `conv-${Date.now()}`,  // Gerar um ID de conversa único
+      `conv-${Date.now()}`,
       message,
       message_from,
-      Math.floor(Date.now() / 1000)  // Timestamp atual
+      Math.floor(Date.now() / 1000)
     ]);
 
     res.status(200).send('Mensagem salva com sucesso');
@@ -646,12 +626,8 @@ app.post('/saveMessage', authenticateJWT, async (req, res) => {
   }
 });
 
-
-
-
-
 app.get('/test', (req, res) => {
   res.json({ message: 'Hello World' });
 });
 
-server.listen(3005, () => console.log(`Servidor rodando na porta ${3005}`));
+server.listen(3005, () => console.log(`Servidor rodando na porta 3005`));
