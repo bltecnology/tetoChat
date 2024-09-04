@@ -9,11 +9,12 @@ import path from "path";
 import pool from "./database.js";
 import dotenv from "dotenv";
 import { addUser } from "./newUser.js";
-import { authenticateUser, authenticateJWT } from "./auth.js";
+import { authenticateUser, authenticateJWT } from "./auth.js"; // Use a função importada de auth.js
 import moment from "moment";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import mysql from "mysql2";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
