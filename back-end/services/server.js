@@ -247,6 +247,7 @@ app.post('/send', authenticateJWT, async (req, res) => {
   try {
     await sendMessage(toPhone, text, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
 
+    // Verificar ou criar o contato
     const [contactRows] = await pool.query("SELECT id FROM contacts WHERE phone = ?", [toPhone]);
     let contactId;
     if (contactRows.length > 0) {
@@ -259,42 +260,34 @@ app.post('/send', authenticateJWT, async (req, res) => {
       contactId = result.insertId;
     }
 
-    const sql = `
-      INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-    const values = [
-      process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
-      process.env.DISPLAY_PHONE_NUMBER,
-      'API',
-      toPhone,
-      `msg-${Date.now()}`,
-      'me',
-      Math.floor(Date.now() / 1000).toString(),
-      'text',
-      text,
-      contactId,
-      userId
-    ];
+    // Criar uma nova conversa ou usar a existente
+    const conversationId = `conv-${Date.now()}`;
 
-    await pool.query(sql, values);
-
-    // Inserir a conversa na tabela de chat do usuário, mas apenas se não existir
+    // Inserir a conversa na tabela de chat do usuário
     const chatTableName = `chat_user_${userId}`;
     const insertChatQuery = `
       INSERT INTO ${chatTableName} (contact_id, conversation_id)
-      SELECT ?, ?
-      WHERE NOT EXISTS (SELECT 1 FROM ${chatTableName} WHERE contact_id = ?)
+      VALUES (?, ?)
     `;
-    await pool.query(insertChatQuery, [contactId, contactId, contactId]);
+    await pool.query(insertChatQuery, [contactId, conversationId]);
 
-    res.status(200).send("Mensagem enviada com sucesso");
+    // Inserir a conversa na fila associada ao departamento do usuário
+    const [userRow] = await pool.query("SELECT department FROM users WHERE id = ?", [userId]);
+    const departmentName = userRow[0].department;
+    const queueTableName = `queueOf${departmentName}`;
+    
+    const insertQueueQuery = `
+      INSERT INTO ${queueTableName} (contact_id, conversation_id, message_body, message_from, message_timestamp, status)
+      VALUES (?, ?, ?, ?, ?, 'fila')
+    `;
+    await pool.query(insertQueueQuery, [contactId, conversationId, text, 'me', Math.floor(Date.now() / 1000)]);
+
+    res.status(200).send("Mensagem enviada e salva com sucesso");
   } catch (error) {
     console.error("Erro ao enviar mensagem:", error);
     res.status(500).send("Erro ao enviar mensagem");
   }
 });
-
 
 
 app.get("/chats", authenticateJWT, async (req, res) => {
