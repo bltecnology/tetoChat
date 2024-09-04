@@ -241,58 +241,60 @@ app.post('/send', authenticateJWT, async (req, res) => {
   const userId = req.user.id;
 
   if (!toPhone || !text) {
-      return res.status(400).send("toPhone e text são obrigatórios");
+    return res.status(400).send("toPhone e text são obrigatórios");
   }
 
   try {
-      await sendMessage(toPhone, text, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
+    await sendMessage(toPhone, text, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
 
-      const [contactRows] = await pool.query("SELECT id FROM contacts WHERE phone = ?", [toPhone]);
-      let contactId;
-      if (contactRows.length > 0) {
-          contactId = contactRows[0].id;
-      } else {
-          const [result] = await pool.query(
-              "INSERT INTO contacts (name, phone) VALUES (?, ?)",
-              ['API', toPhone]
-          );
-          contactId = result.insertId;
-      }
+    const [contactRows] = await pool.query("SELECT id FROM contacts WHERE phone = ?", [toPhone]);
+    let contactId;
+    if (contactRows.length > 0) {
+      contactId = contactRows[0].id;
+    } else {
+      const [result] = await pool.query(
+        "INSERT INTO contacts (name, phone) VALUES (?, ?)",
+        ['API', toPhone]
+      );
+      contactId = result.insertId;
+    }
 
-      const sql = `
-        INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `;
-      const values = [
-          process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
-          process.env.DISPLAY_PHONE_NUMBER,
-          'API',
-          toPhone,
-          `msg-${Date.now()}`,
-          'me',
-          Math.floor(Date.now() / 1000).toString(),
-          'text',
-          text,
-          contactId,
-          userId
-      ];
+    const sql = `
+      INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    const values = [
+      process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
+      process.env.DISPLAY_PHONE_NUMBER,
+      'API',
+      toPhone,
+      `msg-${Date.now()}`,
+      'me',
+      Math.floor(Date.now() / 1000).toString(),
+      'text',
+      text,
+      contactId,
+      userId
+    ];
 
-      await pool.query(sql, values);
+    await pool.query(sql, values);
 
-      // Inserir a conversa na tabela de chat do usuário
-      const chatTableName = `chat_user_${userId}`;
-      const insertChatQuery = `
-          INSERT INTO ${chatTableName} (contact_id, conversation_id)
-          VALUES (?, ?)
-      `;
-      await pool.query(insertChatQuery, [contactId, contactId]);
+    // Inserir a conversa na tabela de chat do usuário, mas apenas se não existir
+    const chatTableName = `chat_user_${userId}`;
+    const insertChatQuery = `
+      INSERT INTO ${chatTableName} (contact_id, conversation_id)
+      SELECT ?, ?
+      WHERE NOT EXISTS (SELECT 1 FROM ${chatTableName} WHERE contact_id = ?)
+    `;
+    await pool.query(insertChatQuery, [contactId, contactId, contactId]);
 
-      res.status(200).send("Mensagem enviada com sucesso");
+    res.status(200).send("Mensagem enviada com sucesso");
   } catch (error) {
-      console.error("Erro ao enviar mensagem:", error);
-      res.status(500).send("Erro ao enviar mensagem");
+    console.error("Erro ao enviar mensagem:", error);
+    res.status(500).send("Erro ao enviar mensagem");
   }
 });
+
 
 
 app.get("/chats", authenticateJWT, async (req, res) => {

@@ -57,24 +57,25 @@ const Chat = () => {
   // Carregar as conversas (chats) na aba "Chat"
   const fetchChats = async () => {
     try {
-      const response = await axios.get(`https://tetochat-8m0r.onrender.com/chats`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+        const response = await axios.get(`https://tetochat-8m0r.onrender.com/chats`, {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+        });
 
-      const fetchedChats = response.data;
+        const fetchedChats = response.data;
 
-      // Adiciona os contatos na aba "Chat" apenas se não estiverem lá
-      const uniqueChats = fetchedChats.filter(chat =>
-        !chatContacts.some(c => c.id === chat.id)
-      );
+        // Filtrar para evitar duplicações
+        const uniqueChats = fetchedChats.filter(chat =>
+            !chatContacts.some(c => c.id === chat.id)
+        );
 
-      setChatContacts(prevChats => [...prevChats, ...uniqueChats]);
+        setChatContacts(prevChats => [...prevChats, ...uniqueChats]);
     } catch (error) {
-      console.error('Erro ao buscar chats:', error);
+        console.error('Erro ao buscar chats:', error);
     }
-  };
+};
+
 
   // Carregar a fila de contatos na aba "Fila"
   const fetchQueue = async () => {
@@ -125,21 +126,26 @@ const Chat = () => {
   // UseEffect para escutar novos eventos de mensagens
   useEffect(() => {
     socket.on('new_message', (message) => {
-      if (message.contact_id === selectedContact?.id) {
-        setMessages((prevMessages) => [...prevMessages, message]);
-      }
+        if (message.contact_id === selectedContact?.id) {
+            setMessages((prevMessages) => [...prevMessages, message]);
+        }
 
-      // Adiciona o contato na aba "Chat" se a mensagem for enviada ou recebida
-      if (!chatContacts.some(c => c.id === message.contact_id)) {
-        const updatedContact = contacts.find(contact => contact.id === message.contact_id);
-        setChatContacts((prevChats) => [...prevChats, updatedContact]);
-      }
+        // Verificar diretamente se o contato já existe na aba "Chat"
+        if (!chatContacts.some(c => c.id === message.contact_id)) {
+            const updatedContact = contacts.find(contact => contact.id === message.contact_id);
+            if (updatedContact) {
+                setChatContacts((prevChats) => [...prevChats, updatedContact]);
+            }
+        }
     });
 
     return () => {
-      socket.off('new_message');
+        socket.off('new_message');
     };
-  }, [selectedContact, chatContacts, contacts]);
+}, [selectedContact, chatContacts, contacts]);
+
+
+  
 
   const handleSendMessage = async () => {
     if (selectedContact && newMessage.trim() !== '') {
