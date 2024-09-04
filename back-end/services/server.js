@@ -412,6 +412,7 @@ app.post('/departments', async (req, res) => {
         contact_id INT,
         message_body TEXT,
         message_from VARCHAR(255),
+        conversation_id VARCHAR(255),
         message_timestamp BIGINT,
         status ENUM('fila', 'respondida') DEFAULT 'fila',
         FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
