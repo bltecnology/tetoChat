@@ -322,6 +322,7 @@ app.get("/chats", authenticateJWT, async (req, res) => {
 });
 
 
+
 app.get("/messages", async (req, res) => {
   const contactId = req.query.contact;
 
