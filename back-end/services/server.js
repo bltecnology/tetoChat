@@ -511,13 +511,14 @@ app.get('/queue', authenticateJWT, async (req, res) => {
   const userId = req.user.id;
 
   try {
-      // Obter o nome da tabela de fila associada ao usuário
-      const [userRow] = await pool.query("SELECT queue_table_name FROM users WHERE id = ?", [userId]);
+      // Obter o departamento do usuário
+      const [userRow] = await pool.query("SELECT department FROM users WHERE id = ?", [userId]);
       if (userRow.length === 0) {
           return res.status(404).send('Usuário não encontrado');
       }
 
-      const queueTableName = userRow[0].queue_table_name;
+      const departmentName = userRow[0].department;
+      const queueTableName = `queueOf${departmentName}`;
 
       // Carregar as conversas da tabela de fila do departamento do usuário
       const [rows] = await pool.query(`SELECT * FROM ${queueTableName} WHERE status = 'fila'`);
@@ -527,6 +528,7 @@ app.get('/queue', authenticateJWT, async (req, res) => {
       res.status(500).send('Erro ao buscar fila');
   }
 });
+
 
 app.post('/quickResponses', (req, res) => {
   const { text, department } = req.body;

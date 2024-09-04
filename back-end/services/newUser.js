@@ -13,17 +13,15 @@ export const addUser = async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Verifique se você está buscando pelo ID ou pelo nome do departamento
+    // Verifique se o departamento existe pelo nome
     const [departmentRow] = await pool.query("SELECT name FROM departments WHERE name = ?", [department]);
     if (departmentRow.length === 0) {
       return res.status(404).send('Departamento não encontrado');
     }
 
-    const queueTableName = `queueOf${departmentRow[0].name}`;
-
     const [result] = await pool.execute(
-      'INSERT INTO users (name, email, password, position, department, queue_table_name) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, email, hashedPassword, position, department, queueTableName]
+      'INSERT INTO users (name, email, password, position, department) VALUES (?, ?, ?, ?, ?)',
+      [name, email, hashedPassword, position, department]
     );
 
     const insertId = result.insertId;
