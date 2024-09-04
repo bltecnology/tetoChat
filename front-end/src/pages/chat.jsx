@@ -150,10 +150,10 @@ const Chat = () => {
         message_timestamp: Math.floor(Date.now() / 1000).toString(),
         contact_id: selectedContact.id,
       };
-
+  
       // Adiciona a mensagem imediatamente ao estado
       setMessages((prevMessages) => [...prevMessages, sentMessage]);
-
+  
       try {
         const response = await axios.post('https://tetochat-8m0r.onrender.com/send', {
           toPhone: selectedContact.phone,
@@ -163,11 +163,22 @@ const Chat = () => {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
-
+  
         if (response.status === 200) {
-          // Se necessário, você pode atualizar o estado com a resposta do servidor aqui
+          // Remove da fila e adiciona ao chat do usuário
+          await axios.post('https://tetochat-8m0r.onrender.com/updateQueueStatus', {
+            contactId: selectedContact.id,
+            userId: loggedUser.id
+          }, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+  
+          fetchQueue(); // Atualizar a fila
+          fetchChats(); // Atualizar os chats do usuário
         }
-
+  
         setNewMessage(''); // Limpar o campo de nova mensagem
       } catch (error) {
         console.error('Erro ao enviar mensagem:', error);

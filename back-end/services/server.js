@@ -408,12 +408,29 @@ app.post('/departments', async (req, res) => {
   try {
     const [result] = await pool.query("INSERT INTO departments (name) VALUES (?)", [name]);
     const insertId = result.insertId;
+
+    // Criar a tabela para o departamento
+    const tableName = `queueOf${name}`;
+    const createTableQuery = `
+      CREATE TABLE IF NOT EXISTS ${tableName} (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        contact_id INT,
+        message_body TEXT,
+        message_from VARCHAR(255),
+        message_timestamp BIGINT,
+        status ENUM('fila', 'respondida') DEFAULT 'fila',
+        FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+      )
+    `;
+    await pool.query(createTableQuery);
+
     res.status(201).json({ id: insertId, name });
   } catch (error) {
     console.error("Erro ao salvar departamento:", error);
     res.status(500).send("Erro ao salvar departamento");
   }
 });
+
 
 app.get('/departments', async (req, res) => {
   try {
@@ -443,10 +460,22 @@ app.post('/transfer', async (req, res) => {
   }
 
   try {
-    await pool.query(
-      "UPDATE queue SET department_atual = ?, status = 'fila', user_id = NULL WHERE contact_id = ?",
-      [departmentId, contactId]
-    );
+    const [department] = await pool.query("SELECT name FROM departments WHERE id = ?", [departmentId]);
+
+    if (!department.length) {
+      return res.status(404).send("Departamento não encontrado");
+    }
+
+    const tableName = `queueOf${department[0].name}`;
+    const transferQuery = `
+      INSERT INTO ${tableName} (contact_id, message_body, message_from, message_timestamp)
+      SELECT contact_id, message_body, message_from, message_timestamp
+      FROM whatsapp_messages
+      WHERE contact_id = ?
+    `;
+    await pool.query(transferQuery, [contactId]);
+
+    await pool.query("DELETE FROM queue WHERE contact_id = ?", [contactId]);
 
     res.status(200).send("Atendimento transferido com sucesso para a fila");
   } catch (error) {
@@ -454,6 +483,7 @@ app.post('/transfer', async (req, res) => {
     res.status(500).send("Erro ao transferir atendimento");
   }
 });
+
 
 app.post('/updateQueueStatus', async (req, res) => {
   const { contactId, userId } = req.body;
