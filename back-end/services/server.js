@@ -308,18 +308,19 @@ app.get("/chats", authenticateJWT, async (req, res) => {
   const chatTableName = `chat_user_${userId}`;
 
   try {
-      const [rows] = await pool.query(`
-          SELECT c.*
-          FROM contacts c
-          JOIN ${chatTableName} cu ON c.id = cu.contact_id
-      `);
+    const [rows] = await pool.query(`
+      SELECT c.*
+      FROM contacts c
+      JOIN ${chatTableName} cu ON c.id = cu.contact_id
+    `);
 
-      res.json(rows);
+    res.json(rows);
   } catch (error) {
-      console.error("Erro ao buscar conversas:", error);
-      res.status(500).send("Erro ao buscar conversas");
+    console.error("Erro ao buscar conversas:", error);
+    res.status(500).send("Erro ao buscar conversas");
   }
 });
+
 
 app.get("/messages", async (req, res) => {
   const contactId = req.query.contact;
@@ -643,6 +644,7 @@ app.post('/saveMessage', authenticateJWT, async (req, res) => {
     res.status(500).send('Erro ao salvar mensagem');
   }
 });
+
 
 
 
