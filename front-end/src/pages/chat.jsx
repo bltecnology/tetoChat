@@ -55,56 +55,28 @@ const Chat = () => {
   };
 
   // Carregar as conversas (chats) na aba "Chat"
-  const fetchChats = async () => {
-    try {
-        const response = await axios.get(`https://tetochat-8m0r.onrender.com/chats`, {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`
-            }
-        });
+// Função para carregar conversas na aba "Chat"
+const fetchChats = async () => {
+  try {
+    const response = await axios.get(`https://tetochat-8m0r.onrender.com/chats`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    });
 
-        const fetchedChats = response.data;
+    const fetchedChats = response.data;
 
-        // Filtrar para evitar duplicações
-        const uniqueChats = fetchedChats.filter(chat =>
-            !chatContacts.some(c => c.id === chat.id)
-        );
+    // Filtrar apenas as conversas iniciadas pelo usuário
+    const uniqueChats = fetchedChats.filter(chat =>
+      chat.user_id === loggedUser.id // Filtra as conversas em que o usuário atual participou
+    );
 
-        setChatContacts(prevChats => [...prevChats, ...uniqueChats]);
-    } catch (error) {
-        console.error('Erro ao buscar chats:', error);
-    }
+    setChatContacts(prevChats => [...prevChats, ...uniqueChats]);
+  } catch (error) {
+    console.error('Erro ao buscar chats:', error);
+  }
 };
 
-
-  // Carregar a fila de contatos na aba "Fila"
-  const fetchQueue = async () => {
-    try {
-        const response = await axios.get(`/queue?userId=${loggedUser.id}`, {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`
-            }
-        });
-        setQueueContacts(response.data); // Atualiza contatos na aba "Fila"
-    } catch (error) {
-        console.error('Erro ao buscar fila:', error);
-    }
-};
-
-
-  // Carregar a lista de contatos na aba "Contatos"
-  const fetchContacts = async () => {
-    try {
-      const response = await axios.get('https://tetochat-8m0r.onrender.com/contacts', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      setContacts(response.data); // Atualiza contatos na aba "Contatos"
-    } catch (error) {
-      console.error('Erro ao buscar contatos:', error);
-    }
-  };
 
   // UseEffect para carregar a lista de contatos conforme a aba ativa
   useEffect(() => {
