@@ -54,29 +54,55 @@ const Chat = () => {
     }
   };
 
-  // Carregar as conversas (chats) na aba "Chat"
-// Função para carregar conversas na aba "Chat"
-const fetchChats = async () => {
-  try {
-    const response = await axios.get(`https://tetochat-8m0r.onrender.com/chats`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    });
+  // Função para carregar conversas na aba "Chat"
+  const fetchChats = async () => {
+    try {
+      const response = await axios.get(`https://tetochat-8m0r.onrender.com/getUserChats?userId=${loggedUser.id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+  
+      const fetchedChats = response.data;
+  
+      // Filtrar apenas as conversas iniciadas pelo usuário
+      const uniqueChats = fetchedChats.filter(chat =>
+        chat.user_id === loggedUser.id // Filtra as conversas em que o usuário atual participou
+      );
+  
+      setChatContacts(prevChats => [...prevChats, ...uniqueChats]);
+    } catch (error) {
+      console.error('Erro ao buscar chats:', error);
+    }
+  };
 
-    const fetchedChats = response.data;
+  // Função para carregar a fila de contatos
+  const fetchQueue = async () => {
+    try {
+      const response = await axios.get(`/queue?userId=${loggedUser.id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      setQueueContacts(response.data); // Atualiza contatos na aba "Fila"
+    } catch (error) {
+      console.error('Erro ao buscar fila:', error);
+    }
+  };
 
-    // Filtrar apenas as conversas iniciadas pelo usuário
-    const uniqueChats = fetchedChats.filter(chat =>
-      chat.user_id === loggedUser.id // Filtra as conversas em que o usuário atual participou
-    );
-
-    setChatContacts(prevChats => [...prevChats, ...uniqueChats]);
-  } catch (error) {
-    console.error('Erro ao buscar chats:', error);
-  }
-};
-
+  // Função para carregar a lista de contatos
+  const fetchContacts = async () => {
+    try {
+      const response = await axios.get('https://tetochat-8m0r.onrender.com/contacts', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      setContacts(response.data); // Atualiza contatos na aba "Contatos"
+    } catch (error) {
+      console.error('Erro ao buscar contatos:', error);
+    }
+  };
 
   // UseEffect para carregar a lista de contatos conforme a aba ativa
   useEffect(() => {
@@ -99,26 +125,23 @@ const fetchChats = async () => {
   // UseEffect para escutar novos eventos de mensagens
   useEffect(() => {
     socket.on('new_message', (message) => {
-        if (message.contact_id === selectedContact?.id) {
-            setMessages((prevMessages) => [...prevMessages, message]);
-        }
+      if (message.contact_id === selectedContact?.id) {
+        setMessages((prevMessages) => [...prevMessages, message]);
+      }
 
-        // Verificar diretamente se o contato já existe na aba "Chat"
-        if (!chatContacts.some(c => c.id === message.contact_id)) {
-            const updatedContact = contacts.find(contact => contact.id === message.contact_id);
-            if (updatedContact) {
-                setChatContacts((prevChats) => [...prevChats, updatedContact]);
-            }
+      // Verificar diretamente se o contato já existe na aba "Chat"
+      if (!chatContacts.some(c => c.id === message.contact_id)) {
+        const updatedContact = contacts.find(contact => contact.id === message.contact_id);
+        if (updatedContact) {
+          setChatContacts((prevChats) => [...prevChats, updatedContact]);
         }
+      }
     });
 
     return () => {
-        socket.off('new_message');
+      socket.off('new_message');
     };
-}, [selectedContact, chatContacts, contacts]);
-
-
-  
+  }, [selectedContact, chatContacts, contacts]);
 
   const handleSendMessage = async () => {
     if (selectedContact && newMessage.trim() !== '') {
@@ -148,6 +171,18 @@ const fetchChats = async () => {
           await axios.post('https://tetochat-8m0r.onrender.com/updateQueueStatus', {
             contactId: selectedContact.id,
             userId: loggedUser.id
+          }, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+  
+          // **Salvar na tabela de chat do usuário**
+          await axios.post('https://tetochat-8m0r.onrender.com/saveMessage', {
+            userId: loggedUser.id,
+            contactId: selectedContact.id,
+            message: newMessage,
+            message_from: 'me'
           }, {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('token')}`

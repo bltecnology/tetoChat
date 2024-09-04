@@ -604,6 +604,24 @@ app.delete('/users/:id', authenticateJWT, async (rec, res) => {
   }
 })
 
+app.post('/saveMessage', authenticateJWT, async (req, res) => {
+  const { userId, contactId, message, message_from } = req.body;
+  const chatTableName = `chat_user_${userId}`;
+
+  try {
+    await pool.query(`
+      INSERT INTO ${chatTableName} (contact_id, message_body, message_from, message_timestamp)
+      VALUES (?, ?, ?, ?)`,
+      [contactId, message, message_from, Math.floor(Date.now() / 1000)]
+    );
+    res.status(200).send('Mensagem salva com sucesso');
+  } catch (error) {
+    console.error('Erro ao salvar mensagem:', error);
+    res.status(500).send('Erro ao salvar mensagem');
+  }
+});
+
+
 app.get('/test', (req, res) => {
   res.json({ message: 'Hello World' });
 });
