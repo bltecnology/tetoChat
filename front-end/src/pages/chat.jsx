@@ -17,28 +17,38 @@ const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [contacts, setContacts] = useState([]);
-  const [chatContacts, setChatContacts] = useState([]); // Contatos da aba "Chat"
-  const [queueContacts, setQueueContacts] = useState([]); // Contatos da aba "Fila"
+  const [contacts, setContacts] = useState([]); // Inicializado como array vazio
+  const [chatContacts, setChatContacts] = useState([]); // Inicializado como array vazio
+  const [queueContacts, setQueueContacts] = useState([]); // Inicializado como array vazio
   const [selectedContact, setSelectedContact] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState('contatos');
   const navigate = useNavigate(); // Inicializando useNavigate
-  const loggedUser = JSON.parse(localStorage.getItem('user'));
+  const [loggedUser, setLoggedUser] = useState(null); // Estado para o usuário logado
 
+  // Consolidação da verificação de token e navegação
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login'); // Redireciona para a página de login se o token não estiver presente
-    }
+    const validateToken = async () => {
+      const token = localStorage.getItem('token');
+  
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+  
+      try {
+        const response = await axios.get('https://tetochat-8m0r.onrender.com/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setLoggedUser(response.data); // Armazenar o usuário logado
+      } catch (error) {
+        console.error('Erro na validação do token:', error);
+        navigate('/login'); // Redireciona se o token for inválido
+      }
+    };
+  
+    validateToken();
   }, [navigate]);
-
-  const handleEmojiClick = (event, emojiObject) => {
-    if (emojiObject && emojiObject.emoji) {
-      setNewMessage(prevInput => prevInput + emojiObject.emoji);
-    }
-    setShowEmojiPicker(false);
-  };
 
   // Função para carregar mensagens ao clicar em um contato
   const loadMessages = async (contactId) => {
@@ -56,18 +66,22 @@ const Chat = () => {
 
   // Função para carregar conversas na aba "Chat"
   const fetchChats = async () => {
+    if (!loggedUser || !loggedUser.id) {
+      console.error('Usuário não está logado ou o id não está disponível.');
+      return;
+    }
+  
     try {
       const response = await axios.get(`https://tetochat-8m0r.onrender.com/getUserChats?userId=${loggedUser.id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
+      
+      const fetchedChats = Array.isArray(response.data) ? response.data : [];
   
-      const fetchedChats = response.data;
-  
-      // Filtrar apenas as conversas iniciadas pelo usuário
       const uniqueChats = fetchedChats.filter(chat =>
-        chat.user_id === loggedUser.id // Filtra as conversas em que o usuário atual participou
+        chat.user_id === loggedUser.id
       );
   
       setChatContacts(prevChats => [...prevChats, ...uniqueChats]);
@@ -75,7 +89,7 @@ const Chat = () => {
       console.error('Erro ao buscar chats:', error);
     }
   };
-
+  
   // Função para carregar a fila de contatos
   const fetchQueue = async () => {
     try {
@@ -84,7 +98,7 @@ const Chat = () => {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
-      setQueueContacts(response.data); // Atualiza contatos na aba "Fila"
+      setQueueContacts(Array.isArray(response.data) ? response.data : []); // Atualiza contatos na aba "Fila"
     } catch (error) {
       console.error('Erro ao buscar fila:', error);
     }
@@ -98,9 +112,10 @@ const Chat = () => {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
-      setContacts(response.data); // Atualiza contatos na aba "Contatos"
+      setContacts(Array.isArray(response.data) ? response.data : []); // Atualiza contatos na aba "Contatos"
     } catch (error) {
       console.error('Erro ao buscar contatos:', error);
+      setContacts([]); // Garantia de que contatos será um array
     }
   };
 
@@ -113,7 +128,7 @@ const Chat = () => {
     } else if (activeTab === 'contatos') {
       fetchContacts();
     }
-  }, [activeTab]);
+  }, [activeTab, loggedUser]);
 
   // UseEffect para carregar mensagens ao selecionar um contato
   useEffect(() => {
@@ -187,7 +202,6 @@ const Chat = () => {
       }
     }
   };
-  
 
   const handleKeyPress = (event) => {
     if (event.key === 'Enter') {
@@ -249,7 +263,10 @@ const Chat = () => {
           </div>
           <div className="flex-grow p-2 overflow-y-auto">
             <ul>
-              {(activeTab === 'chat' ? chatContacts : activeTab === 'fila' ? queueContacts : contacts).map((contact) => (
+              {(Array.isArray(activeTab === 'chat' ? chatContacts : activeTab === 'fila' ? queueContacts : contacts) 
+                ? (activeTab === 'chat' ? chatContacts : activeTab === 'fila' ? queueContacts : contacts) 
+                : []
+              ).map((contact) => (
                 <li
                   key={contact.id}
                   className="flex items-center p-2 cursor-pointer hover:bg-gray-100"

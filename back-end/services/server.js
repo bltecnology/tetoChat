@@ -29,6 +29,26 @@ const io = new Server(server, {
   }
 });
 
+export const authenticateJWT = (req, res, next) => {
+  const token = req.headers.authorization && req.headers.authorization.split(' ')[1]; // Extrai o token do cabeçalho
+
+  if (!token) {
+    return res.status(401).send("Token de acesso é necessário");
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).send("Token inválido ou expirado");
+    }
+
+    req.user = user; // Anexa o usuário decodificado à requisição
+    next();
+  });
+};
+
+const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' }); // 1 hora de expiração
+
+
 app.use(bodyParser.json());
 
 // Configuração de CORS
@@ -507,21 +527,32 @@ app.get('/queue', authenticateJWT, async (req, res) => {
   const userId = req.user.id;
 
   try {
+      console.log('Buscando departamento do usuário...');
       const [userRow] = await pool.query("SELECT department FROM users WHERE id = ?", [userId]);
-      if (userRow.length === 0) {
+      if (!userRow || userRow.length === 0) {
+          console.log('Usuário não encontrado');
           return res.status(404).send('Usuário não encontrado');
       }
 
       const departmentName = userRow[0].department;
+      console.log(`Usuário está no departamento: ${departmentName}`);
+
       const queueTableName = `queueOf${departmentName}`;
+      console.log(`Buscando fila na tabela: ${queueTableName}`);
 
       const [rows] = await pool.query(`SELECT * FROM ${queueTableName} WHERE status = 'fila'`);
+      console.log('Fila encontrada:', rows);
       res.json(rows);
   } catch (error) {
+      if (error.code === 'ER_NO_SUCH_TABLE') {
+          console.error(`Tabela ${queueTableName} não encontrada`);
+          return res.status(500).send(`Tabela ${queueTableName} não encontrada`);
+      }
       console.error('Erro ao buscar fila:', error);
       res.status(500).send('Erro ao buscar fila');
   }
 });
+
 
 app.post('/quickResponses', (req, res) => {
   const { text, department } = req.body;
