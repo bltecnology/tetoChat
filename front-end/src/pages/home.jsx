@@ -9,21 +9,20 @@ const Home = () => {
         <div>
             <Header />
             <div className="bg-pink-100 min-h-screen flex flex-col justify-center items-center">
-                <div className="grid grid-cols-3 gap-6">
-                    <div className="flex justify-between gap-24 col-span-3 w-full max-w-md">
+                <div className="flex justify-center items-center flex-col">
+                    <div className="flex justify-center gap-24 col-span-3 w-full max-w-md mb-12">
                         <Link to="/chat">
                             <ButtonCard icon={<FaComments />} text="Conversas" />
                         </Link>
                         <Link to="/contacts">
                             <ButtonCard icon={<FaUserAlt />} text="Contatos" />
                         </Link>
-                    </div>
-                    <div className="col-span-3 flex justify-center my-6">
+                
                         <Link to="/departments">
                             <ButtonCard icon={<FaTags />} text="Departamentos" />
                         </Link>
                     </div>
-                    <div className="flex justify-between gap-24 col-span-3">
+                    <div className="flex justify-center gap-24 items-center">
                         <Link to="/statistics" className="flex-1 mx-2">
                             <ButtonCard icon={<FaChartBar />} text="Estatísticas de Atendimento" />
                         </Link>
