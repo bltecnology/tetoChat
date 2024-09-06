@@ -27,7 +27,7 @@ const Departments = () => {
         try {
             const response = await axios.post('https://tetochat-8m0r.onrender.com/departments', { name });
             setDepartments([...departments, response.data]);
-            setIsModalOpen(false);
+            setIsModalOpen(false); // Fecha o modal após salvar
         } catch (error) {
             console.error('Erro ao salvar departamento:', error);
         }
@@ -38,7 +38,12 @@ const Departments = () => {
             <Header />
             <Background
                 text="Departamentos"
-                btn1={<GrAdd onClick={() => setIsModalOpen(true)} />}
+                btn1={
+                    <GrAdd
+                        className="rounded-full hover:bg-gray-400 hover:scale-110 transition-transform transition-colors duration-300"
+                        onClick={() => setIsModalOpen(true)}
+                    />
+                }
             >
                 <MainContainer
                     p1="Nome"

@@ -38,7 +38,7 @@ const Contacts = () => {
             <Header />
             <Background
                 text="Contatos"
-                btn1={<GrAdd onClick={() => setIsModalOpen(true)} />}
+                btn1={<GrAdd className='rounded-full hover:bg-gray-400 hover:scale-110 transition-transform transition-colors duration-300' onClick={() => setIsModalOpen(true)} />}
             >
                 <MainContainer
                     p1="Nome"

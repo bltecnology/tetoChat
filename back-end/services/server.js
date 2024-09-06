@@ -286,7 +286,8 @@ app.post('/login', async (req, res) => {
 
 app.post('/send', authenticateJWT, async (req, res) => {
   const { toPhone, text } = req.body;
-  const userId = req.user.userId; // Usando a variável `userId` extraída do token
+  const userId = req.user.userId; // Usando a variável `userId` extraída do tokenat
+  
 
   if (!toPhone || !text) {
     return res.status(400).send("Número de telefone e texto são obrigatórios.");
