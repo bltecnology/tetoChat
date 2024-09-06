@@ -32,6 +32,9 @@ const LoginPage = () => {
 
   return (
     <div className="flex h-screen bg-white">
+      <h1 className="absolute top-4 left-14 text-2xl font-bold text-red-800">
+        TetoChat
+      </h1>
       <div className="flex justify-center items-center flex-1">
         <div className="bg-white rounded-lg p-8 w-96" style={{ boxShadow: '10px 10px 20px rgba(0, 0, 0, 0.25), 0 10px 20px rgba(0, 0, 0, 0.25)' }}>
           <h2 className="text-center text-2xl font-semibold text-red-700 mb-6">Olá novamente!</h2>

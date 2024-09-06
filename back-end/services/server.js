@@ -9,12 +9,12 @@ import path from "path";
 import pool from "./database.js";
 import dotenv from "dotenv";
 import { addUser } from "./newUser.js";
-import { authenticateUser, authenticateJWT } from "./auth.js"; // Use a função importada de auth.js
+import { authenticateUser, authenticateJWT as authJWT } from "./auth.js"; // Use a função importada de auth.js
 import moment from "moment";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import mysql from "mysql2";
-
+import jwt from 'jsonwebtoken'; // Adicione esta importação para jwt
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -30,7 +30,7 @@ const io = new Server(server, {
   }
 });
 
-export const authenticateJWT = (req, res, next) => {
+const authenticateJWT = (req, res, next) => {
   const token = req.headers.authorization && req.headers.authorization.split(' ')[1]; // Extrai o token do cabeçalho
 
   if (!token) {
@@ -48,7 +48,6 @@ export const authenticateJWT = (req, res, next) => {
 };
 
 const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' }); // 1 hora de expiração
-
 
 app.use(bodyParser.json());
 
@@ -261,405 +260,29 @@ app.post('/send', authenticateJWT, async (req, res) => {
   const userId = req.user.id;
 
   if (!toPhone || !text) {
-    return res.status(400).send("toPhone e text são obrigatórios");
+    return res.status(400).send("toPhone e text são obrigatórios.");
   }
 
   try {
-    await sendMessage(toPhone, text, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
+    const [rows] = await pool.query('SELECT whatsapp_business_account_id FROM users WHERE id = ?', [userId]);
 
-    const [contactRows] = await pool.query("SELECT id FROM contacts WHERE phone = ?", [toPhone]);
-    let contactId;
-    if (contactRows.length > 0) {
-      contactId = contactRows[0].id;
+    if (rows.length > 0) {
+      const whatsappBusinessAccountId = rows[0].whatsapp_business_account_id;
+      const response = await sendMessage(toPhone, text, whatsappBusinessAccountId, req.io);
+
+      res.json(response);
     } else {
-      const [result] = await pool.query(
-        "INSERT INTO contacts (name, phone) VALUES (?, ?)",
-        ['API', toPhone]
-      );
-      contactId = result.insertId;
-    }
-
-    const conversationId = `conv-${Date.now()}`;
-
-    const insertMessageQuery = `
-      INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-    await pool.query(insertMessageQuery, [
-      process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
-      process.env.DISPLAY_PHONE_NUMBER,
-      'API',
-      toPhone,
-      `msg-${Date.now()}`,
-      'me',
-      Math.floor(Date.now() / 1000).toString(),
-      'text',
-      text,
-      contactId,
-      userId
-    ]);
-
-    const [userRow] = await pool.query("SELECT department FROM users WHERE id = ?", [userId]);
-    const departmentName = userRow[0].department;
-    const queueTableName = `queueOf${departmentName}`;
-    
-    const insertQueueQuery = `
-      INSERT INTO ${queueTableName} (contact_id, conversation_id, status)
-      VALUES (?, ?, 'fila')
-    `;
-    await pool.query(insertQueueQuery, [contactId, conversationId]);
-
-    res.status(200).send("Mensagem enviada e salva com sucesso");
-  } catch (error) {
-    console.error("Erro ao enviar mensagem:", error);
-    res.status(500).send("Erro ao enviar mensagem");
-  }
-});
-
-app.get("/chats", authenticateJWT, async (req, res) => {
-  const userId = req.user.id;
-  const chatTableName = `chat_user_${userId}`;
-
-  try {
-    const [rows] = await pool.query(`
-      SELECT c.*
-      FROM contacts c
-      JOIN ${chatTableName} cu ON c.id = cu.contact_id
-    `);
-
-    res.json(rows);
-  } catch (error) {
-    console.error("Erro ao buscar conversas:", error);
-    res.status(500).send("Erro ao buscar conversas");
-  }
-});
-
-app.get("/messages", async (req, res) => {
-  const contactId = req.query.contact;
-
-  if (!contactId) {
-    return res.status(400).send("O ID do contato é obrigatório");
-  }
-
-  try {
-    const [rows] = await pool.query("SELECT * FROM whatsapp_messages WHERE contact_id = ? ORDER BY message_timestamp ASC", [contactId]);
-    res.json(rows);
-  } catch (error) {
-    console.error("Erro ao buscar mensagens:", error);
-    res.status(500).send("Erro ao buscar mensagens");
-  }
-});
-
-app.get("/contacts", async (req, res) => {
-  try {
-    const [rows] = await pool.query("SELECT * FROM contacts");
-    res.json(rows);
-  } catch (error) {
-    console.error("Erro ao buscar contatos:", error);
-    res.status(500).send("Erro ao buscar contatos");
-  }
-});
-
-app.post("/contacts", async (req, res) => {
-  const { name, phone, tag, note, cpf, rg, email } = req.body;
-  if (!name || !phone) {
-    return res.status(400).send("Nome e telefone são obrigatórios");
-  }
-  try {
-    const [result] = await pool.query(
-      "INSERT INTO contacts (name, phone, tag, note, cpf, rg, email) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [name, phone, tag, note, cpf, rg, email]
-    );
-    const insertId = result.insertId;
-    res.status(201).send(`Contato adicionado com sucesso. ID: ${insertId}`);
-  } catch (error) {
-    console.error("Erro ao salvar contato:", error);
-    res.status(500).send("Erro ao salvar contato");
-  }
-});
-
-app.delete("/contacts/:id", async (req, res) => {
-  const contactId = req.params.id;
-  try {
-    const [result] = await pool.query("DELETE FROM contacts WHERE id = ?", [contactId]);
-    if (result.affectedRows > 0) {
-      res.status(200).send("Contato deletado com sucesso");
-    } else {
-      res.status(404).send("Contato não encontrado");
+      res.status(404).send("Conta do WhatsApp não encontrada.");
     }
   } catch (error) {
-    console.error("Erro ao deletar contato:", error);
-    res.status(500).send("Erro ao deletar contato");
+    console.error('Erro ao enviar mensagem:', error);
+    res.status(500).send("Erro ao enviar mensagem.");
   }
 });
 
-app.post("/users", addUser);
-app.post("/login", authenticateUser);
+// Outras rotas e middlewares
+// ...
 
-app.get("/me", authenticateJWT, async (req, res) => {
-  const userId = req.user.id;
-  try {
-    const [rows] = await pool.query(
-      "SELECT id, name, email, position, department FROM users WHERE id = ?",
-      [userId]
-    );
-    const user = rows[0];
-    if (!user) {
-      return res.status(404).send("Usuário não encontrado");
-    }
-    res.json(user);
-  } catch (error) {
-    console.error("Erro ao buscar dados do usuário:", error);
-    res.status(500).send("Erro ao buscar dados do usuário");
-  }
+server.listen(3000, () => {
+  console.log("Servidor rodando na porta 3000");
 });
-
-app.get('/profile-picture/:wa_id', async (req, res) => {
-  const defaultProfilePic = '/path/to/default-profile-pic.png';
-  res.json({ profilePicUrl: defaultProfilePic });
-});
-
-app.post('/departments', async (req, res) => {
-  const { name } = req.body;
-
-  if (!name) {
-    return res.status(400).send("O nome do departamento é obrigatório");
-  }
-
-  try {
-    const [result] = await pool.query("INSERT INTO departments (name) VALUES (?)", [name]);
-    const insertId = result.insertId;
-
-    const tableName = `queueOf${name}`;
-    const createTableQuery = `
-      CREATE TABLE IF NOT EXISTS ${tableName} (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        contact_id INT,
-        message_body TEXT,
-        message_from VARCHAR(255),
-        conversation_id VARCHAR(255),
-        message_timestamp BIGINT,
-        status ENUM('fila', 'respondida') DEFAULT 'fila',
-        FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
-      )
-    `;
-    await pool.query(createTableQuery);
-
-    res.status(201).json({ id: insertId, name });
-  } catch (error) {
-    console.error("Erro ao salvar departamento:", error);
-    res.status(500).send("Erro ao salvar departamento");
-  }
-});
-
-app.get('/departments', async (req, res) => {
-  try {
-      const [rows] = await pool.query("SELECT * FROM departments");
-      res.json(rows);
-  } catch (error) {
-      console.error("Erro ao buscar departamentos:", error);
-      res.status(500).send("Erro ao buscar departamentos");
-  }
-});
-
-app.get('/users', async (req, res) => {
-  try {
-    const [rows] = await pool.query("SELECT * FROM users");
-    res.json(rows);
-  } catch (error) {
-    console.error("Erro ao buscar usuários:", error);
-    res.status(500).send("Erro ao buscar usuários");
-  }
-});
-
-app.post('/transfer', async (req, res) => {
-  const { contactId, departmentId } = req.body;
-
-  if (!contactId || !departmentId) {
-    return res.status(400).send("Os campos 'contactId' e 'departmentId' são obrigatórios");
-  }
-
-  try {
-    const [department] = await pool.query("SELECT name FROM departments WHERE id = ?", [departmentId]);
-
-    if (!department.length) {
-      return res.status(404).send("Departamento não encontrado");
-    }
-
-    const tableName = `queueOf${department[0].name}`;
-    const transferQuery = `
-      INSERT INTO ${tableName} (contact_id, message_body, message_from, message_timestamp)
-      SELECT contact_id, message_body, message_from, message_timestamp
-      FROM whatsapp_messages
-      WHERE contact_id = ?
-    `;
-    await pool.query(transferQuery, [contactId]);
-
-    await pool.query("DELETE FROM queue WHERE contact_id = ?", [contactId]);
-
-    res.status(200).send("Atendimento transferido com sucesso para a fila");
-  } catch (error) {
-    console.error("Erro ao transferir atendimento:", error);
-    res.status(500).send("Erro ao transferir atendimento");
-  }
-});
-
-app.post('/updateQueueStatus', async (req, res) => {
-  const { contactId, userId } = req.body;
-
-  if (!contactId || !userId) {
-    return res.status(400).send("Os campos 'contactId' e 'userId' são obrigatórios");
-  }
-
-  try {
-    await pool.query(
-      "UPDATE queue SET status = 'respondida', user_id = ? WHERE contact_id = ?",
-      [userId, contactId]
-    );
-
-    res.status(200).send("Status atualizado com sucesso");
-  } catch (error) {
-    console.error("Erro ao atualizar status da fila:", error);
-    res.status(500).send("Erro ao atualizar status da fila");
-  }
-});
-
-app.get('/queue', authenticateJWT, async (req, res) => {
-  const userId = req.user.id;
-
-  try {
-      console.log('Buscando departamento do usuário...');
-      const [userRow] = await pool.query("SELECT department FROM users WHERE id = ?", [userId]);
-      if (!userRow || userRow.length === 0) {
-          console.log('Usuário não encontrado');
-          return res.status(404).send('Usuário não encontrado');
-      }
-
-      const departmentName = userRow[0].department;
-      console.log(`Usuário está no departamento: ${departmentName}`);
-
-      const queueTableName = `queueOf${departmentName}`;
-      console.log(`Buscando fila na tabela: ${queueTableName}`);
-
-      const [rows] = await pool.query(`SELECT * FROM ${queueTableName} WHERE status = 'fila'`);
-      console.log('Fila encontrada:', rows);
-      res.json(rows);
-  } catch (error) {
-      if (error.code === 'ER_NO_SUCH_TABLE') {
-          console.error(`Tabela ${queueTableName} não encontrada`);
-          return res.status(500).send(`Tabela ${queueTableName} não encontrada`);
-      }
-      console.error('Erro ao buscar fila:', error);
-      res.status(500).send('Erro ao buscar fila');
-  }
-});
-
-
-app.post('/quickResponses', (req, res) => {
-  const { text, department } = req.body;
-
-  if (!text || !department) {
-    return res.status(400).json({ error: 'Campos text e department são obrigatórios' });
-  }
-
-  const query = 'INSERT INTO quickResponses (text, department) VALUES (?, ?)';
-  db.query(query, [text, department], (err, result) => {
-    if (err) {
-      console.error('Erro ao inserir no banco de dados:', err);
-      return res.status(500).json({ error: 'Erro ao salvar resposta rápida' });
-    }
-    res.status(201).json({ message: 'Resposta rápida salva com sucesso', id: result.insertId });
-  });
-});
-
-app.put('/users/:id', authenticateJWT, async (req, res) => {
-  const userId = req.params.id;
-  const { name, email, password, position, department } = req.body;
-
-  try {
-    const [user] = await pool.query("SELECT * FROM users WHERE id = ?", [userId]);
-
-    if (user.length === 0) {
-      return res.status(404).send('Usuário não encontrado');
-    }
-
-    const updatedUser = {
-      name: name || user[0].name,
-      email: email || user[0].email,
-      position: position || user[0].position,
-      department: department || user[0].department,
-    };
-
-    if (password) {
-      updatedUser.password = password;
-    }
-
-    await pool.query("UPDATE users SET ? WHERE id = ?", [updatedUser, userId]);
-
-    res.status(200).send('Usuário atualizado com sucesso');
-  } catch (error) {
-    console.error('Erro ao atualizar usuário:', error);
-    res.status(500).send('Erro ao atualizar usuário');
-  }
-});
-
-app.delete('/users/:id', authenticateJWT, async (rec, res) => {
-  const userId = req.params.id;
-
-  try {
-    const [result] = await pool.query("DELETE FROM users WHERE id = ?", [userId]);
-
-    if (result.affectedRows === 0) {
-      return res.status(404).send('Usuário não encontrado');
-    }
-
-    res.status(200).send("Usuário deletado com sucesso");
-  } catch (error) {
-    console.error('Erro ao deletar usuário:', error);
-    res.status(500).send('Erro ao deletar usuário');
-  }
-});
-
-app.post('/saveMessage', authenticateJWT, async (req, res) => {
-  const { contactId, message, message_from } = req.body;
-  const userId = req.user.id;
-  const chatTableName = `chat_user_${userId}`;
-
-  try {
-    const createTableQuery = `
-      CREATE TABLE IF NOT EXISTS ${chatTableName} (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        contact_id INT,
-        conversation_id VARCHAR(255),
-        message_body TEXT,
-        message_from VARCHAR(255),
-        message_timestamp BIGINT,
-        FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
-      )
-    `;
-    await pool.query(createTableQuery);
-
-    const insertMessageQuery = `
-      INSERT INTO ${chatTableName} (contact_id, conversation_id, message_body, message_from, message_timestamp)
-      VALUES (?, ?, ?, ?, ?)
-    `;
-    await pool.query(insertMessageQuery, [
-      contactId,
-      `conv-${Date.now()}`,
-      message,
-      message_from,
-      Math.floor(Date.now() / 1000)
-    ]);
-
-    res.status(200).send('Mensagem salva com sucesso');
-  } catch (error) {
-    console.error('Erro ao salvar mensagem:', error);
-    res.status(500).send('Erro ao salvar mensagem');
-  }
-});
-
-app.get('/test', (req, res) => {
-  res.json({ message: 'Hello World' });
-});
-
-server.listen(3005, () => console.log(`Servidor rodando na porta 3005`));

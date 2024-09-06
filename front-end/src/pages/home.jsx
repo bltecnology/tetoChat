@@ -8,7 +8,7 @@ const Home = () => {
     return (
         <div>
             <Header />
-            <div className="bg-pink-100 min-h-screen flex flex-col justify-center items-center">
+            <div className="bg-white min-h-screen flex flex-col justify-center items-center">
                 <div className="flex justify-center items-center flex-col">
                     <div className="flex justify-center gap-24 col-span-3 w-full max-w-md mb-12">
                         <Link to="/chat">
