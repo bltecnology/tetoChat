@@ -9,12 +9,12 @@ import path from "path";
 import pool from "./database.js";
 import dotenv from "dotenv";
 import { addUser } from "./newUser.js";
-import { authenticateUser, authenticateJWT as authJWT } from "./auth.js"; // Use a função importada de auth.js
+import { authenticateUser, authenticateJWT as authJWT } from "./auth.js";
 import moment from "moment";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import mysql from "mysql2";
-import jwt from 'jsonwebtoken'; // Adicione esta importação para jwt
+import jwt from 'jsonwebtoken'; // Importar jsonwebtoken
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -46,8 +46,6 @@ const authenticateJWT = (req, res, next) => {
     next();
   });
 };
-
-const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' }); // 1 hora de expiração
 
 app.use(bodyParser.json());
 
@@ -250,17 +248,48 @@ app.post('/webhook', async (request, response) => {
       response.sendStatus(500);
     }
   } else {
-    console.error('Estrutura do webhook não corresponde ao esperado:', JSON.stringify(request.body));
     response.sendStatus(400);
+  }
+});
+
+// Rotas de autenticação e envio de mensagem
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).send('Email e senha são obrigatórios');
+  }
+
+  try {
+    const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+
+    if (rows.length > 0) {
+      const user = rows[0];
+
+      // Aqui você pode adicionar a lógica para verificar a senha do usuário, por exemplo:
+      // const isPasswordValid = await bcrypt.compare(password, user.password);
+
+      if (password === user.password) { // Substitua isso pela verificação real
+        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        res.json({ token });
+      } else {
+        res.status(401).send('Credenciais inválidas');
+      }
+    } else {
+      res.status(401).send('Usuário não encontrado');
+    }
+  } catch (error) {
+    console.error('Erro ao autenticar usuário:', error);
+    res.status(500).send('Erro ao autenticar usuário');
   }
 });
 
 app.post('/send', authenticateJWT, async (req, res) => {
   const { toPhone, text } = req.body;
-  const userId = req.user.id;
+  const userId = req.user.userId; // Usando a variável `userId` extraída do token
 
   if (!toPhone || !text) {
-    return res.status(400).send("toPhone e text são obrigatórios.");
+    return res.status(400).send("Número de telefone e texto são obrigatórios.");
   }
 
   try {
