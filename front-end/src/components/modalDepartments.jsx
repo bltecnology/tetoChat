@@ -23,13 +23,13 @@ const ModalDepartments = ({ isOpen, onClose, onSave }) => {
                 />
                 <div className="flex items-bottom justify-center mt-10">
                     <button
-                        className="bg-gray-200 px-4 py-2 mr-2"
+                        className="bg-gray-200 rounded-full px-4 py-2 mr-2"
                         onClick={onClose}
                     >
                         Cancelar
                     </button>
                     <button
-                        className="bg-blue-500 text-white px-4 py-2 mr-3"
+                        className="bg-blue-500 text-white rounded-full px-4 py-2 mr-3"
                         onClick={handleSave}
                     >
                         Salvar

@@ -65,8 +65,8 @@
             <input type="text" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-2 border rounded" />
           </div>
           <div className="flex justify-end">
-            <button onClick={onClose} className="p-2 bg-gray-500 text-white rounded mr-2">Cancelar</button>
-            <button onClick={handleSave} className="p-2 bg-blue-500 text-white rounded">Salvar</button>
+            <button onClick={onClose} className="p-2 bg-gray-500 text-white rounded-full w-24 mr-2">Cancelar</button>
+            <button onClick={handleSave} className="p-2 bg-blue-500 text-white rounded-full w-24">Salvar</button>
           </div>
         </div>
       </div>

@@ -54,13 +54,13 @@ const ModalQuickResponses = ({ isOpen, onClose, onSave }) => {
                 </select>
                 <div className="flex justify-end">
                     <button
-                        className="bg-gray-200 px-4 py-2 mr-2"
+                        className="bg-gray-200 rounded-full px-4 py-2 mr-2"
                         onClick={onClose}
                     >
                         Cancelar
                     </button>
                     <button
-                        className="bg-blue-500 text-white px-4 py-2 mr-3"
+                        className="bg-blue-500 rounded-full text-white px-4 py-2 mr-3"
                         onClick={handleSave}
                     >
                         Salvar
