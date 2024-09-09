@@ -5,12 +5,11 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import axios from "axios";
 import multer from "multer";
-import path from "path";
 import pool from "./database.js";
 import dotenv from "dotenv";
 import { addUser } from "./newUser.js";
 import { authenticateUser, authenticateJWT } from "./auth.js"; // Use a função importada de auth.js
-import moment from "moment";
+import jwt from "jsonwebtoken";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import mysql from "mysql2";
