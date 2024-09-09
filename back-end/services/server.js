@@ -29,8 +29,6 @@ const io = new Server(server, {
   }
 });
 
-const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' }); // 1 hora de expiração
-
 
 app.use(bodyParser.json());
 
