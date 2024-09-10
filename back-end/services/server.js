@@ -582,10 +582,6 @@ app.put('/users/:id', authenticateJWT, async (req, res) => {
 });
 
 app.delete('/users/:id', authenticateJWT, async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*'); // Permitir requisições de qualquer origem
-  res.setHeader('Access-Control-Allow-Methods', 'DELETE'); // Métodos permitidos
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Cabeçalhos permitidos
-
   const userId = req.params.id;
 
   try {
@@ -597,7 +593,7 @@ app.delete('/users/:id', authenticateJWT, async (req, res) => {
 
     res.status(200).send("Usuário deletado com sucesso");
   } catch (error) {
-    console.error('Erro ao deletar usuário:', error);
+    console.error('Erro ao deletar usuário:', error.message);
     res.status(500).send('Erro ao deletar usuário');
   }
 });
