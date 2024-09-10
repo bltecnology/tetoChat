@@ -605,15 +605,17 @@ app.delete('/contacts/:id', authenticateJWT, async (req, res) => {
     const [result] = await pool.query("DELETE FROM contacts WHERE id = ?", [contactId]);
 
     if (result.affectedRows === 0) {
-      return res.status(404).send('Usuário não encontrado');
+      return res.status(404).send('Contato não encontrado');
+    } if (isNaN(contactId)) {
+      return res.status(400).send('ID inválido');
     }
-
     res.status(200).send("Contato deletado com sucesso");
   } catch (error) {
-    console.error('Erro ao deletar contato:', error.message);
-    res.status(500).send('Erro ao deletar contato');
+    console.error('Erro ao deletar contato:', error); // Mostra o erro completo no console
+    res.status(500).send(`Erro ao deletar contato: ${error.message}`); // Envia a mensagem completa do erro
   }
-});
+} );
+
 
 
 app.post('/saveMessage', authenticateJWT, async (req, res) => {

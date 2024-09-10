@@ -52,7 +52,7 @@ const Contacts = () => {
         await axios.delete(
           `https://tetochat-8m0r.onrender.com/contacts/${contactId}`
         );
-        setUsers(contacts.filter((contact) => contact.id !== userId));
+        setContacts(contacts.filter((contact) => contact.id !== contactId));
       } catch (error) {
         console.error("Erro ao excluir contato:", error.message);
         alert(
@@ -102,7 +102,7 @@ const Contacts = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="bg-white text-black mt-2 w-48">
                         <DropdownMenuItem className="hover:bg-gray-200 text-center">
-                          <button onClick={() => handleEditContact(user)}>
+                          <button onClick={() => handleEditContact(contact)}>
                             Editar
                           </button>
                         </DropdownMenuItem>
