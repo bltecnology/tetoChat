@@ -34,10 +34,12 @@ const Users = () => {
         await axios.delete(`https://tetochat-8m0r.onrender.com/users/${userId}`);
         setUsers(users.filter(user => user.id !== userId));
       } catch (error) {
-        console.error('Erro ao excluir usuário:', error);
+        console.error('Erro ao excluir usuário:', error.message); // Exibe a mensagem do erro
+        alert('Erro ao excluir o usuário. Verifique o console para mais detalhes.');
       }
     }
   };
+  
 
   useEffect(() => {
     const fetchUsers = async () => {

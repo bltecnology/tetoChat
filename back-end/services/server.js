@@ -9,14 +9,12 @@ import pool from "./database.js";
 import dotenv from "dotenv";
 import { addUser } from "./newUser.js";
 import { authenticateUser, authenticateJWT } from "./auth.js"; // Use a função importada de auth.js
-import jwt from "jsonwebtoken";
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import mysql from "mysql2";
 
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+
 
 dotenv.config();
 const app = express();
@@ -29,15 +27,15 @@ const io = new Server(server, {
   }
 });
 
+const corsOptions = {
+  origin: ["http://localhost:5173", "https://tetochat-8m0r.onrender.com"],
+  methods: ["GET", "POST", "DELETE", "PATCH"],
+  credentials: true
+};
+app.use(cors(corsOptions));
+
 
 app.use(bodyParser.json());
-
-// Configuração de CORS
-app.use(cors({
-  origin: ['http://localhost:5173', 'https://tetochat-8m0r.onrender.com'],
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true
-}));
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
@@ -583,7 +581,11 @@ app.put('/users/:id', authenticateJWT, async (req, res) => {
   }
 });
 
-app.delete('/users/:id', authenticateJWT, async (rec, res) => {
+app.delete('/users/:id', authenticateJWT, async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*'); // Permitir requisições de qualquer origem
+  res.setHeader('Access-Control-Allow-Methods', 'DELETE'); // Métodos permitidos
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Cabeçalhos permitidos
+
   const userId = req.params.id;
 
   try {
@@ -599,6 +601,7 @@ app.delete('/users/:id', authenticateJWT, async (rec, res) => {
     res.status(500).send('Erro ao deletar usuário');
   }
 });
+
 
 app.post('/saveMessage', authenticateJWT, async (req, res) => {
   const { contactId, message, message_from } = req.body;

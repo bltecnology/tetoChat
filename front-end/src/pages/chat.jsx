@@ -161,7 +161,7 @@ const Chat = () => {
   const handleSendMessage = async () => {
     if (selectedContact && newMessage.trim() !== '') {
       const sentMessage = {
-        id: `msg-${Date.now()}`, // Gerar um ID temporário para a mensagem
+        id: `msg-${Date.now()}`,
         message_body: newMessage,
         message_from: 'me',
         message_timestamp: Math.floor(Date.now() / 1000).toString(),
@@ -192,16 +192,21 @@ const Chat = () => {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('token')}`
             }
-          });
+          },
+          setNewMessage('') // Isso limpa o campo de texto após o envio
+        )
   
           fetchChats(); // Atualizar os chats do usuário
-          setNewMessage(''); // Limpar o campo de nova mensagem
         }
       } catch (error) {
         console.error('Erro ao enviar mensagem:', error);
       }
+  
+      // Limpar o campo de nova mensagem
+      setNewMessage(''); // Isso limpa o campo de texto após o envio
     }
   };
+  
 
   const handleKeyPress = (event) => {
     if (event.key === 'Enter') {
