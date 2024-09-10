@@ -598,6 +598,23 @@ app.delete('/users/:id', authenticateJWT, async (req, res) => {
   }
 });
 
+app.delete('/contacts/:id', authenticateJWT, async (req, res) => {
+  const contactId = req.params.id;
+
+  try {
+    const [result] = await pool.query("DELETE FROM contacts WHERE id = ?", [contactId]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).send('Usuário não encontrado');
+    }
+
+    res.status(200).send("Contato deletado com sucesso");
+  } catch (error) {
+    console.error('Erro ao deletar contato:', error.message);
+    res.status(500).send('Erro ao deletar contato');
+  }
+});
+
 
 app.post('/saveMessage', authenticateJWT, async (req, res) => {
   const { contactId, message, message_from } = req.body;
