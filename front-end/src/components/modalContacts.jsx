@@ -3,7 +3,7 @@
 
   const ModalContacts = ({ isOpen, onClose, onSave }) => {
     const [name, setName] = useState('');
-    const [phone, setPhone] = useState('');
+    const [phone, setPhone] = useState('55');
     const [tags, setTags] = useState('');
     const [observation, setObservation] = useState('');
     const [cpf, setCpf] = useState('');
@@ -42,7 +42,7 @@
           </div>
           <div className="mb-2">
             <label className="block mb-1">Número</label>
-            <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full p-2 border rounded" />
+            <input type="text" value={phone} placeholder='O código do país é obrigatório' onChange={(e) => setPhone(e.target.value)} className="w-full p-2 border rounded" />
           </div>
           <div className="mb-2">
             <label className="block mb-1">Tags</label>

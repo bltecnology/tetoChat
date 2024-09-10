@@ -440,6 +440,16 @@ app.get('/departments', async (req, res) => {
   }
 });
 
+app.get('/positions', async (req, res) => {
+  try {
+      const [rows] = await pool.query("SELECT * FROM positions");
+      res.json(rows);
+  } catch (error) {
+      console.error("Erro ao buscar cargos:", error);
+      res.status(500).send("Erro ao buscar cargos");
+  }
+});
+
 app.get('/users', async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT * FROM users");
@@ -532,6 +542,9 @@ app.get('/queue', authenticateJWT, async (req, res) => {
   }
 });
 
+app.post('/positions', (req, res) => {
+  
+})
 
 app.post('/quickResponses', (req, res) => {
   const { text, department } = req.body;
@@ -639,6 +652,20 @@ app.delete('/departments/:id', authenticateJWT, async (req, res) => {
     res.status(500).send('Erro ao departamento usuário');
   }
 });
+
+app.get('/queue/:departmentTable', async (req, res) => {
+  const { departmentTable } = req.params;
+
+  try {
+    const query = `SELECT * FROM ?? WHERE status = 'pendente'`;
+    const [results] = await db.execute(query, [departmentTable]);
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar fila:', error);
+    res.status(500).json({ error: 'Erro ao buscar fila.' });
+  }
+});
+
 
 
 app.post('/saveMessage', authenticateJWT, async (req, res) => {

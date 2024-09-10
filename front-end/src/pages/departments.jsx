@@ -5,6 +5,8 @@ import Background from "../components/background";
 import { GrAdd, GrMoreVertical } from "react-icons/gr";
 import MainContainer from "../components/mainContainer";
 import ModalDepartments from "../components/modalDepartments";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@radix-ui/react-dropdown-menu';
+
 
 const Departments = () => {
   const [departments, setDepartments] = useState([]);
@@ -94,7 +96,7 @@ const Departments = () => {
                           </button>
                         </DropdownMenuItem>
                         <DropdownMenuItem className="hover:bg-gray-200 text-center">
-                          <button onClick={() => handleDeleteDepartment(user.id)}>
+                          <button onClick={() => handleDeleteDepartment(department.id)}>
                             Excluir
                           </button>
                         </DropdownMenuItem>

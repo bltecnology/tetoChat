@@ -9,7 +9,7 @@ import backgroundImage from '../assets/image.png';
 import EmojiPicker from 'emoji-picker-react';
 import { format } from 'date-fns';
 import defaultProfilePic from '../assets/defaultProfile.png';
-import { useNavigate } from 'react-router-dom'; // Importando useNavigate
+import { useNavigate } from 'react-router-dom';
 
 const socket = io('https://tetochat-8m0r.onrender.com');
 
@@ -17,16 +17,15 @@ const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [contacts, setContacts] = useState([]); // Inicializado como array vazio
-  const [chatContacts, setChatContacts] = useState([]); // Inicializado como array vazio
-  const [queueContacts, setQueueContacts] = useState([]); // Inicializado como array vazio
+  const [contacts, setContacts] = useState([]);
+  const [chatContacts, setChatContacts] = useState([]);
+  const [queueContacts, setQueueContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState('contatos');
-  const navigate = useNavigate(); // Inicializando useNavigate
-  const [loggedUser, setLoggedUser] = useState(null); // Estado para o usuário logado
+  const navigate = useNavigate();
+  const [loggedUser, setLoggedUser] = useState(null);
 
-  // Consolidação da verificação de token e navegação
   useEffect(() => {
     const validateToken = async () => {
       const token = localStorage.getItem('token');
@@ -40,17 +39,16 @@ const Chat = () => {
         const response = await axios.get('https://tetochat-8m0r.onrender.com/me', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setLoggedUser(response.data); // Armazenar o usuário logado
+        setLoggedUser(response.data);
       } catch (error) {
         console.error('Erro na validação do token:', error);
-        navigate('/login'); // Redireciona se o token for inválido
+        navigate('/login');
       }
     };
   
     validateToken();
   }, [navigate]);
 
-  // Função para carregar mensagens ao clicar em um contato
   const loadMessages = async (contactId) => {
     try {
       const response = await axios.get(`https://tetochat-8m0r.onrender.com/messages?contact=${contactId}`, {
@@ -64,7 +62,6 @@ const Chat = () => {
     }
   };
 
-  // Função para carregar conversas na aba "Chat"
   const fetchChats = async () => {
     if (!loggedUser || !loggedUser.id) {
       console.error('Usuário não está logado ou o id não está disponível.');
@@ -89,22 +86,27 @@ const Chat = () => {
       console.error('Erro ao buscar chats:', error);
     }
   };
-  
-  // Função para carregar a fila de contatos
+
   const fetchQueue = async () => {
+    if (!loggedUser || !loggedUser.department) {
+      console.error('Usuário não está logado ou o departamento não está disponível.');
+      return;
+    }
+  
     try {
-      const response = await axios.get(`/queue?userId=${loggedUser.id}`, {
+      const departmentTable = `queueOf${loggedUser.department}`;
+      const response = await axios.get(`https://tetochat-8m0r.onrender.com/queue/${departmentTable}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
-      setQueueContacts(Array.isArray(response.data) ? response.data : []); // Atualiza contatos na aba "Fila"
+      setQueueContacts(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Erro ao buscar fila:', error);
+      setQueueContacts([]);
     }
   };
 
-  // Função para carregar a lista de contatos
   const fetchContacts = async () => {
     try {
       const response = await axios.get('https://tetochat-8m0r.onrender.com/contacts', {
@@ -112,14 +114,13 @@ const Chat = () => {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
-      setContacts(Array.isArray(response.data) ? response.data : []); // Atualiza contatos na aba "Contatos"
+      setContacts(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Erro ao buscar contatos:', error);
-      setContacts([]); // Garantia de que contatos será um array
+      setContacts([]);
     }
   };
 
-  // UseEffect para carregar a lista de contatos conforme a aba ativa
   useEffect(() => {
     if (activeTab === 'chat') {
       fetchChats();
@@ -130,21 +131,18 @@ const Chat = () => {
     }
   }, [activeTab, loggedUser]);
 
-  // UseEffect para carregar mensagens ao selecionar um contato
   useEffect(() => {
     if (selectedContact) {
       loadMessages(selectedContact.id);
     }
   }, [selectedContact]);
 
-  // UseEffect para escutar novos eventos de mensagens
   useEffect(() => {
     socket.on('new_message', (message) => {
       if (message.contact_id === selectedContact?.id) {
         setMessages((prevMessages) => [...prevMessages, message]);
       }
 
-      // Verificar diretamente se o contato já existe na aba "Chat"
       if (!chatContacts.some(c => c.id === message.contact_id)) {
         const updatedContact = contacts.find(contact => contact.id === message.contact_id);
         if (updatedContact) {
@@ -168,11 +166,9 @@ const Chat = () => {
         contact_id: selectedContact.id,
       };
   
-      // Adiciona a mensagem imediatamente ao estado
       setMessages((prevMessages) => [...prevMessages, sentMessage]);
   
       try {
-        // Enviar a mensagem para o backend
         const response = await axios.post('https://tetochat-8m0r.onrender.com/send', {
           toPhone: selectedContact.phone,
           text: newMessage,
@@ -183,7 +179,6 @@ const Chat = () => {
         });
   
         if (response.status === 200) {
-          // Salvar a mensagem na tabela correta de chat do usuário logado
           await axios.post('https://tetochat-8m0r.onrender.com/saveMessage', {
             contactId: selectedContact.id,
             message: newMessage,
@@ -192,21 +187,17 @@ const Chat = () => {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('token')}`
             }
-          },
-          setNewMessage('') // Isso limpa o campo de texto após o envio
-        )
-  
-          fetchChats(); // Atualizar os chats do usuário
+          });
+          setNewMessage('');
+          fetchChats();
         }
       } catch (error) {
         console.error('Erro ao enviar mensagem:', error);
       }
   
-      // Limpar o campo de nova mensagem
-      setNewMessage(''); // Isso limpa o campo de texto após o envio
+      setNewMessage('');
     }
   };
-  
 
   const handleKeyPress = (event) => {
     if (event.key === 'Enter') {
@@ -228,11 +219,8 @@ const Chat = () => {
   const handleContactClick = async (contact) => {
     setSelectedContact(contact);
     setShowModal(false);
-
-    // Carrega as mensagens do contato ao clicar em "Contatos"
     await loadMessages(contact.id);
 
-    // Garante que o contato será adicionado na aba "Chat" apenas se não estiver lá
     if (!chatContacts.some(c => c.id === contact.id)) {
       setChatContacts((prevChats) => [...prevChats, contact]);
     }
@@ -266,85 +254,99 @@ const Chat = () => {
               {activeTab === 'contatos' && <div className="absolute bottom-0 left-0 w-full h-1 bg-red-500" />}
             </button>
           </div>
+
           <div className="flex-grow p-2 overflow-y-auto">
             <ul>
-              {(Array.isArray(activeTab === 'chat' ? chatContacts : activeTab === 'fila' ? queueContacts : contacts) 
-                ? (activeTab === 'chat' ? chatContacts : activeTab === 'fila' ? queueContacts : contacts) 
-                : []
-              ).map((contact) => (
+              {(activeTab === 'chat' ? chatContacts : activeTab === 'fila' ? queueContacts : contacts).map((contact) => (
                 <li
-                  key={contact.id}
+                  key={contact.contact_id}
                   className="flex items-center p-2 cursor-pointer hover:bg-gray-100"
                   onClick={() => handleContactClick(contact)}
                 >
-                  <img src={contact.profilePic || defaultProfilePic} alt={contact.name} className="w-10 h-10 rounded-full mr-2" />
+                  <img src={contact.profilePic || defaultProfilePic} alt={contact.contact_id} className="w-10 h-10 rounded-full mr-2" />
                   <div>
-                    <div className="font-bold">{contact.name}</div>
-                    <div className="text-sm text-gray-600">{contact.lastMessage}</div>
+                    <div className="font-bold">ID Contato: {contact.contact_id}</div>
+                    {activeTab === 'fila' && (
+                      <div className="text-sm text-gray-600">Última mensagem: {contact.message_body}</div>
+                    )}
                   </div>
                 </li>
               ))}
             </ul>
           </div>
         </div>
-        <div className="flex-grow flex flex-col" style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover' }}>
-          {selectedContact && (
-            <div className="w-full p-2 bg-white border-b border-gray-200 flex items-center justify-between">
-              <div className="text-lg ml-10 font-bold">{selectedContact.name}</div>
-              <div className="flex items-center mr-6 space-x-4">
-                <FiPhoneForwarded size={20} onClick={() => handleTransferClick(selectedContact)} />
-                <FiMoreVertical size={20} />
-              </div>
-            </div>
-          )}
-          <div className="flex-grow p-2 overflow-y-auto">
-            {messages.map((message) => (
-              <div key={message.id} className={`max-w-xs px-2 py-1 my-1 rounded-lg ${message.message_from === 'me' ? 'ml-auto bg-green-200 text-black' : 'mr-auto bg-blue-200 text-black'}`}>
-                <div>{message.message_body}</div>
-                <div className="text-[10px] text-gray-500 text-right">
-                  {format(new Date(message.message_timestamp * 1000), 'HH:mm')}
+
+        <div className="flex flex-col flex-grow">
+          {selectedContact ? (
+            <div className="flex flex-col h-full">
+              <div className="bg-white shadow p-4 flex justify-between items-center">
+                <div className="flex items-center">
+                  <img src={selectedContact.profilePic || defaultProfilePic} alt={selectedContact.contact_id} className="w-10 h-10 rounded-full mr-2" />
+                  <div className="font-bold">{selectedContact.name}</div>
+                </div>
+                <div className="flex space-x-2">
+                  <button className="p-2 rounded-full hover:bg-gray-200">
+                    <FiPhoneForwarded size={24} />
+                  </button>
+                  <button className="p-2 rounded-full hover:bg-gray-200" onClick={() => setShowModal(true)}>
+                    <AiOutlineThunderbolt size={24} />
+                  </button>
+                  <button className="p-2 rounded-full hover:bg-gray-200">
+                    <FiMoreVertical size={24} />
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
-          <div className="flex items-center p-4 bg-white border-t border-gray-200 relative">
-            <button 
-              className="p-2 text-gray-500"
-              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-            >
-              <FiSmile size={24} />
-            </button>
-            {showEmojiPicker && (
-              <div className="absolute bottom-14">
-                <EmojiPicker onEmojiClick={(event, emojiObject) => handleEmojiClick(event, emojiObject)} />
+
+              <div className="flex-grow overflow-y-auto p-4 bg-gray-50" style={{ backgroundImage: `url(${backgroundImage})` }}>
+                <ul>
+                  {messages.map((message) => (
+                    <li key={message.id} className={`mb-4 ${message.message_from === 'me' ? 'text-right' : 'text-left'}`}>
+                      <div className={`inline-block p-2 rounded-lg ${message.message_from === 'me' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-black'}`}>
+                        {message.message_body}
+                      </div>
+                      <div className="text-xs text-gray-500">{format(new Date(message.message_timestamp * 1000), 'HH:mm')}</div>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            )}
-            <button className="p-2 text-gray-500">
-              <AiOutlineThunderbolt size={24} />
-            </button>
-            <button className="p-2 text-gray-500">
-              <FiPaperclip size={24} />
-            </button>
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Digite uma mensagem"
-              className="flex-grow p-2 mx-2 border rounded-full"
-            />
-            <button className="p-2 text-gray-500">
-              <FiMic size={24} />
-            </button>
-          </div>
+
+              <div className="bg-white p-4 flex items-center">
+                <button className="p-2 rounded-full hover:bg-gray-200" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
+                  <FiSmile size={24} />
+                </button>
+                {showEmojiPicker && (
+                  <div className="absolute bottom-16 left-4">
+                    <EmojiPicker onEmojiClick={(event, emojiObject) => setNewMessage(newMessage + emojiObject.emoji)} />
+                  </div>
+                )}
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  className="flex-grow mx-4 p-2 border rounded-full"
+                  placeholder="Digite uma mensagem..."
+                />
+                <button className="p-2 rounded-full hover:bg-gray-200" onClick={() => alert('Em desenvolvimento')}>
+                  <FiPaperclip size={24} />
+                </button>
+                <button className="p-2 rounded-full hover:bg-gray-200" onClick={handleSendMessage}>
+                  <FiMic size={24} />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-500">Selecione um contato para iniciar a conversa.</div>
+          )}
         </div>
       </div>
-      {selectedContact && (
+
+      {showModal && (
         <TransferModal
           isOpen={showModal}
           onClose={() => setShowModal(false)}
-          onTransfer={handleTransferComplete}
-          contactId={selectedContact.id}
+          onComplete={handleTransferComplete}
+          contact={selectedContact}
         />
       )}
     </div>
