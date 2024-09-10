@@ -623,7 +623,22 @@ app.delete('/contacts/:id', authenticateJWT, async (req, res) => {
   }
 });
 
+app.delete('/departments/:id', authenticateJWT, async (req, res) => {
+  const departmentId = req.params.id;
 
+  try {
+    const [result] = await pool.query("DELETE FROM departments WHERE id = ?", [departmentId]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).send('Departamento não encontrado');
+    }
+
+    res.status(200).send("Departamento deletado com sucesso");
+  } catch (error) {
+    console.error('Erro ao deletar Departamento:', error.message);
+    res.status(500).send('Erro ao departamento usuário');
+  }
+});
 
 
 app.post('/saveMessage', authenticateJWT, async (req, res) => {
