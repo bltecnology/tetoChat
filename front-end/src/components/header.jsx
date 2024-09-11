@@ -1,9 +1,26 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { FiEye, FiMenu, FiBell, FiUser } from 'react-icons/fi';
-  import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@radix-ui/react-dropdown-menu';
+import React from "react";
+import { Link } from "react-router-dom";
+import { FiEye, FiMenu, FiBell, FiUser } from "react-icons/fi";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@radix-ui/react-dropdown-menu";
+import axios from "axios";
+
+import { useEffect } from "react";
+
 
 const Header = () => {
+  useEffect(() => {
+  axios.get("verifyToken", {
+    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+  }).then(res=>console.log(res)).catch((err)=>{
+    console.log(err)
+  }
+  )
+}, []);
   return (
     <div className="flex items-center justify-between p-1 bg-red-700 text-white">
       <div className="flex items-center">

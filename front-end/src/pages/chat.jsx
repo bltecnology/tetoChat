@@ -217,13 +217,15 @@ const Chat = () => {
   };
 
   const handleTransferComplete = async (selectedDepartmentId) => {
+    console.log(selectedDepartmentId);
+  
     try {
       // Chama o endpoint de transferência
       await axios.post(
         "https://tetochat-8m0r.onrender.com/transfer",
         {
           contactId: selectedContact.id,
-          departmentId: selectedDepartmentId, // Supondo que você tenha o id do departamento no modal
+          departmentId: selectedDepartmentId.selectedDepartment, // Supondo que você tenha o id do departamento no modal
         },
         {
           headers: {
@@ -231,17 +233,15 @@ const Chat = () => {
           },
         }
       );
-      console.log(aaa);
       // Remove o contato da fila e do chat localmente
       setQueueContacts((prevQueue) =>
         prevQueue.filter((contact) => contact.id !== selectedContact.id)
       );
-      console.log(bbb);
 
       setChatContacts((prevChats) =>
         prevChats.filter((contact) => contact.id !== selectedContact.id)
       );
-      console.log(aaa);
+      console.log("aaa");
 
       // Reseta a seleção e fecha o modal
       setSelectedContact(null);
@@ -509,13 +509,13 @@ const Chat = () => {
 
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        onTransferComplete={handleTransferComplete}
+        onTransfer={handleTransferComplete}
       />
     :
     <TransferModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        onTransferComplete={handleTransferComplete}
+        onTransfer={handleTransferComplete}
       />}
     </div>
   );

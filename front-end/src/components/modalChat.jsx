@@ -25,9 +25,11 @@
             contactId: contactId,
             departmentId: selectedDepartment,
             });
-            console.log("aaaaa");
-            
-            onTransfer(); // Chama a função de callback para atualizar a lista de contatos no componente pai
+            const departmentId= {
+                contactId,
+                selectedDepartment
+            }
+            onTransfer(departmentId); // Chama a função de callback para atualizar a lista de contatos no componente pai
             onClose(); // Fecha o modal após a transferência
         } catch (error) {
             console.error('Erro ao transferir atendimento:', error);

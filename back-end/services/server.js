@@ -658,6 +658,21 @@ app.post('/saveMessage', authenticateJWT, async (req, res) => {
   }
 });
 
+app.get("/verifyToken",authenticateJWT, async (req,res)=>{
+  console.log(req);
+  
+  
+const user = req.user
+
+try {
+res.status(201).send(user)
+  
+} catch (error) {
+  
+}
+res.status(401).send(error)
+})
+
 app.get('/test', (req, res) => {
   res.json({ message: 'Hello World' });
 });
