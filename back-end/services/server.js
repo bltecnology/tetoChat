@@ -665,7 +665,7 @@ app.get("/verifyToken",authenticateJWT, async (req,res)=>{
 const user = req.user
 
 try {
-res.status(201).send(user)
+res.status(201).json({user})
   
 } catch (error) {
   
