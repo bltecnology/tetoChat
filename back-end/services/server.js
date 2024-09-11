@@ -418,7 +418,8 @@ app.get('/profile-picture/:wa_id', async (req, res) => {
 
 app.post('/departments', async (req, res) => {
   const { name } = req.body;
-
+  console.log("aaa");
+  
   if (!name) {
     return res.status(400).send("O nome do departamento é obrigatório");
   }
@@ -441,12 +442,15 @@ app.post('/departments', async (req, res) => {
       )
     `;
     await pool.query(createTableQuery);
+    console.log("bbb");
 
     res.status(201).json({ id: insertId, name });
   } catch (error) {
     console.error("Erro ao salvar departamento:", error);
     res.status(500).send("Erro ao salvar departamento");
   }
+  console.log("ccc");
+
 });
 
 app.get('/departments', async (req, res) => {
