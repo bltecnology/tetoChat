@@ -4,19 +4,17 @@ CREATE TABLE IF NOT EXISTS whatsapp_messages (
     display_phone_number VARCHAR(20),
     contact_name VARCHAR(100),
     wa_id VARCHAR(20),
-    status VARCHAR(50) NOT NULL,
     message_id VARCHAR(280),
     message_from VARCHAR(20),
     message_timestamp VARCHAR(20),
     message_type VARCHAR(20),
-    message_body VARCHAR(16383),
-    contact_id INT,  
+    message_body TEXT,  -- Mudado para TEXT
+    contact_id INT,
     FOREIGN KEY (contact_id) REFERENCES contacts(id),
     user_id INT,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    department_id INT,  -- Adicionando a coluna department_id
-    FOREIGN KEY (department_id) REFERENCES departments(id)  -- Adicionando a chave estrangeira corretamente
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
 
 CREATE TABLE transfers (
   id INT AUTO_INCREMENT PRIMARY KEY,

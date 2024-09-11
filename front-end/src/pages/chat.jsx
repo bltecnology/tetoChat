@@ -30,34 +30,6 @@ const Chat = () => {
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState("contatos");
   const navigate = useNavigate();
-  const [loggedUser, setLoggedUser] = useState(null);
-
-  useEffect(() => {
-    const validateToken = async () => {
-      const token = localStorage.getItem("token");
-    
-      if (!token) {
-        navigate("/login");
-        return;
-      }
-    
-      try {
-        const response = await axios.get("https://tetochat-8m0r.onrender.com/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setLoggedUser(response.data);
-      } catch (error) {
-        console.error("Erro na validação do token:", error);
-        if (error.response) {
-          console.error("Dados da resposta do servidor:", error.response.data);
-        }
-        navigate("/login");
-      }
-    };
-    
-
-    validateToken();
-  }, [navigate]);
 
   useEffect(() => {
     socket.on('update_queue', (data) => {
@@ -67,9 +39,8 @@ const Chat = () => {
     return () => {
       socket.off('update_queue');
     };
-  }, [loggedUser]);
+  }, []);
   
-
   const loadMessages = async (contactId) => {
     try {
       const response = await axios.get(
@@ -87,14 +58,9 @@ const Chat = () => {
   };
 
   const fetchChats = async () => {
-    if (!loggedUser || !loggedUser.id) {
-      console.error("Usuário não está logado ou o id não está disponível.");
-      return;
-    }
-
     try {
       const response = await axios.get(
-        `https://tetochat-8m0r.onrender.com/getUserChats?userId=${loggedUser.id}`,
+        `https://tetochat-8m0r.onrender.com/getUserChats?userId=${localStorage.getItem("userId")}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -105,7 +71,7 @@ const Chat = () => {
       const fetchedChats = Array.isArray(response.data) ? response.data : [];
 
       const uniqueChats = fetchedChats.filter(
-        (chat) => chat.user_id === loggedUser.id
+        (chat) => chat.user_id === localStorage.getItem("userId")
       );
 
       setChatContacts((prevChats) => [...prevChats, ...uniqueChats]);
@@ -115,13 +81,8 @@ const Chat = () => {
   };
 
   const fetchQueue = async () => {
-    if (!loggedUser || !loggedUser.department) {
-      console.error("Usuário não está logado ou o departamento não está disponível.");
-      return;
-    }
-  
     try {
-      const departmentTable = `queueOf${loggedUser.department}`;
+      const departmentTable = `queueOf${localStorage.getItem("department")}`;
       const response = await axios.get(
         `https://tetochat-8m0r.onrender.com/queue/${departmentTable}`,
         {
@@ -163,7 +124,7 @@ const Chat = () => {
     } else if (activeTab === "contatos") {
       fetchContacts();
     }
-  }, [activeTab, loggedUser]);
+  }, [activeTab]);
 
   useEffect(() => {
     if (selectedContact) {
@@ -285,9 +246,7 @@ const Chat = () => {
     } catch (error) {
         console.error("Erro ao transferir contato:", error);
     }
-};
-
-  
+  };
 
   const handleContactClick = async (contact) => {
     setSelectedContact(contact);
@@ -339,146 +298,157 @@ const Chat = () => {
               )}
             </button>
           </div>
-
-          <div className="flex-grow p-2 overflow-y-auto">
-            <ul>
-              {(activeTab === "chat"
-                ? chatContacts
-                : activeTab === "fila"
-                ? queueContacts
-                : contacts
-              ).map((contact) => (
-                <li
-                  key={contact.contact_id}
-                  className="flex items-center p-2 cursor-pointer hover:bg-gray-100"
+          <div className="flex-grow overflow-y-auto">
+            {activeTab === "chat" &&
+              chatContacts.map((contact) => (
+                <div
+                  key={contact.id}
                   onClick={() => handleContactClick(contact)}
+                  className={`flex items-center p-3 border-b border-gray-200 cursor-pointer hover:bg-gray-100`}
                 >
                   <img
-                    src={contact.profilePic || defaultProfilePic}
-                    alt={contact.contact_id}
+                    src={defaultProfilePic}
+                    alt="Profile"
                     className="w-10 h-10 rounded-full mr-2"
                   />
-                  <div>
-                    <div className="font-bold">{contact.name}</div>
-                    {activeTab === "fila" && (
-                      <div className="text-sm text-gray-600">
-                        Última mensagem: {contact.message_body}
-                      </div>
-                    )}
+                  <div className="flex-grow">
+                    <div className="font-semibold">{contact.name}</div>
+                    <div className="text-sm text-gray-600">{contact.phone}</div>
                   </div>
-                </li>
+                </div>
               ))}
-            </ul>
+            {activeTab === "fila" &&
+              queueContacts.map((contact) => (
+                <div
+                  key={contact.id}
+                  className={`flex items-center p-3 border-b border-gray-200 cursor-pointer hover:bg-gray-100`}
+                >
+                  <img
+                    src={defaultProfilePic}
+                    alt="Profile"
+                    className="w-10 h-10 rounded-full mr-2"
+                  />
+                  <div className="flex-grow">
+                    <div className="font-semibold">{contact.name}</div>
+                    <div className="text-sm text-gray-600">{contact.phone}</div>
+                  </div>
+                  <button
+                    onClick={() => handleTransferClick(contact)}
+                    className="text-blue-500 hover:underline"
+                  >
+                    Transferir
+                  </button>
+                </div>
+              ))}
+            {activeTab === "contatos" &&
+              contacts.map((contact) => (
+                <div
+                  key={contact.id}
+                  onClick={() => handleContactClick(contact)}
+                  className={`flex items-center p-3 border-b border-gray-200 cursor-pointer hover:bg-gray-100`}
+                >
+                  <img
+                    src={defaultProfilePic}
+                    alt="Profile"
+                    className="w-10 h-10 rounded-full mr-2"
+                  />
+                  <div className="flex-grow">
+                    <div className="font-semibold">{contact.name}</div>
+                    <div className="text-sm text-gray-600">{contact.phone}</div>
+                  </div>
+                </div>
+              ))}
           </div>
         </div>
-
-        <div className="flex flex-col flex-grow">
+        <div className="flex-grow bg-gray-50 p-4 flex flex-col">
           {selectedContact ? (
-            <div className="flex flex-col h-full">
-              <div className="bg-white shadow p-4 flex justify-between items-center h-12">
-                <div className="flex items-center">
-                  <img
-                    src={selectedContact.profilePic || defaultProfilePic}
-                    alt={selectedContact.contact_id}
-                    className="w-10 h-10 rounded-full mr-2"
-                  />
-                  <div className="font-bold">{selectedContact.name}</div>
-                </div>
-                <div className="flex space-x-2">
-                  <button className="p-2 rounded-full hover:bg-gray-200"
-                  onClick={() => setShowModal(true)}
-                  >
-                    <FiPhoneForwarded size={24} />
-                  </button>
-                  <button className="p-2 rounded-full hover:bg-gray-200">
-                    <FiMoreVertical size={24} />
-                  </button>
-                </div>
-              </div>
-
-              <div
-                className="flex-grow p-2 overflow-y-auto"
-                style={{ backgroundImage: `url(${backgroundImage})` }}
-              >
-                {messages.map((message) => (
+            <>
+              <div className="flex-grow overflow-y-auto">
+                {messages.map((msg) => (
                   <div
-                    key={message.id}
-                    className={`max-w-xs px-2 py-1 my-1 rounded-lg break-words ${
-                      message.message_from === "me"
-                        ? "ml-auto bg-green-200 text-black"
-                        : "mr-auto bg-blue-200 text-black"
+                    key={msg.id}
+                    className={`mb-2 ${
+                      msg.message_from === "me" ? "text-right" : "text-left"
                     }`}
                   >
-                    <div>{message.message_body}</div>
-                    <div className="text-[10px] text-gray-500 text-right">
-                      {format(
-                        new Date(message.message_timestamp * 1000),
-                        "HH:mm"
-                      )}
+                    <div
+                      className={`inline-block px-3 py-1 rounded-full ${
+                        msg.message_from === "me"
+                          ? "bg-blue-500 text-white"
+                          : "bg-gray-300 text-black"
+                      }`}
+                    >
+                      {msg.message_body}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {format(new Date(msg.message_timestamp * 1000), "HH:mm")}
                     </div>
                   </div>
                 ))}
               </div>
-
-              <div className="bg-white p-4 flex items-center">
-                  <button
-                    className="p-2 rounded-full hover:bg-gray-200"
-                  >
-                    <AiOutlineThunderbolt size={24} />
-                  </button>
+              <div className="flex items-center border-t border-gray-200 pt-4">
                 <button
-                  className="p-2 rounded-full hover:bg-gray-200"
-                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  onClick={() => setShowEmojiPicker((prev) => !prev)}
+                  className="p-2 text-gray-500"
                 >
-                  <FiSmile size={24} />
+                  <FiSmile />
                 </button>
                 {showEmojiPicker && (
-                  <div className="absolute bottom-16 left-4">
-                    <EmojiPicker
-                      onEmojiClick={(event, emojiObject) =>
-                        setNewMessage(newMessage + emojiObject.emoji)
-                      }
-                    />
-                  </div>
+                  <EmojiPicker
+                    onEmojiClick={(emoji) => {
+                      setNewMessage((prev) => prev + emoji.emoji);
+                      setShowEmojiPicker(false);
+                    }}
+                    className="absolute z-10"
+                  />
                 )}
                 <input
                   type="text"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="flex-grow mx-4 p-2 border rounded-full"
+                  className="flex-grow p-2 border border-gray-300 rounded"
                   placeholder="Digite uma mensagem..."
                 />
                 <button
-                  className="p-2 rounded-full hover:bg-gray-200"
-                  onClick={() => alert("Em desenvolvimento")}
+                  onClick={handleSendMessage}
+                  className="p-2 text-gray-500"
                 >
-                  <FiPaperclip size={24} />
+                  <FiPaperclip />
                 </button>
                 <button
-                  className="p-2 rounded-full hover:bg-gray-200"
                   onClick={handleSendMessage}
+                  className="p-2 text-gray-500"
                 >
-                  <FiMic size={24} />
+                  <FiMic />
+                </button>
+                <button
+                  onClick={handleSendMessage}
+                  className="p-2 text-gray-500"
+                >
+                  <AiOutlineThunderbolt />
+                </button>
+                <button
+                  onClick={handleSendMessage}
+                  className="p-2 text-gray-500"
+                >
+                  <FiMoreVertical />
                 </button>
               </div>
-            </div>
+            </>
           ) : (
-            <div className="flex items-center justify-center h-full text-gray-500">
-              Selecione um contato para iniciar a conversa.
+            <div className="flex-grow flex items-center justify-center">
+              <p className="text-gray-500">Selecione um contato para iniciar o chat.</p>
             </div>
           )}
         </div>
       </div>
-
-      {showModal && (
-        <TransferModal
-          isOpen={showModal}
-          onClose={() => setShowModal(false)}
-          onComplete={handleTransferComplete}
-          contact={selectedContact}
-        />
-      )}
+      <TransferModal
+        showModal={showModal}
+        setShowModal={setShowModal}
+        onTransferComplete={handleTransferComplete}
+        selectedContact={selectedContact}
+      />
     </div>
   );
 };
