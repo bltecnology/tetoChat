@@ -464,39 +464,54 @@
     const { contactId, departmentId } = req.body;
 
     if (!contactId || !departmentId) {
-      return res.status(400).send("Os campos 'contactId' e 'departmentId' são obrigatórios");
+        return res.status(400).send("Os campos 'contactId' e 'departmentId' são obrigatórios");
     }
 
     try {
-      // Verifica se o departamento existe
-      const [department] = await pool.query("SELECT name FROM departments WHERE id = ?", [departmentId]);
-      if (!department.length) {
-        return res.status(404).send("Departamento não encontrado");
-      }
+        // Verifica se o departamento existe
+        const [department] = await pool.query("SELECT id, name FROM departments WHERE id = ?", [departmentId]);
+        if (!department.length) {
+            return res.status(404).send("Departamento não encontrado");
+        }
 
-      const tableName = `queueOf${department[0].name}`;
-      
-      // Insere na fila do novo departamento
-      const transferQuery = `
-        INSERT INTO ${tableName} (contact_id, message_body, message_from, conversation_id, message_timestamp)
-        SELECT contact_id, message_body, message_from, conversation_id, message_timestamp
-        FROM whatsapp_messages
-        WHERE contact_id = ?
-      `;
-      await pool.query(transferQuery, [contactId]);
+        // Obtém o departamento de origem
+        const [currentMessage] = await pool.query("SELECT department_id FROM whatsapp_messages WHERE contact_id = ?", [contactId]);
+        if (!currentMessage.length) {
+            return res.status(404).send("Mensagem não encontrada");
+        }
+        const departmentOriginId = currentMessage[0].department_id;
 
-      // Remove da fila atual
-      await pool.query("DELETE FROM queue WHERE contact_id = ?", [contactId]);
+        // Insere na fila do novo departamento
+        const transferQuery = `
+            INSERT INTO queueOf${department[0].name} (contact_id, message_body, message_from, conversation_id, message_timestamp)
+            SELECT contact_id, message_body, message_from, conversation_id, message_timestamp
+            FROM whatsapp_messages
+            WHERE contact_id = ?
+        `;
+        await pool.query(transferQuery, [contactId]);
 
-      // Emite um evento via WebSocket para atualizar a fila dos usuários do novo departamento
-      io.to(`department-${departmentId}`).emit('update_queue', { contactId });
+        // Atualiza o status da mensagem para 'transferida'
+        await pool.query("UPDATE whatsapp_messages SET department_id = ?, status = 'transferida' WHERE contact_id = ?", [departmentId, contactId]);
 
-      res.status(200).send("Atendimento transferido com sucesso para a fila");
+        // Remove da fila atual
+        await pool.query("DELETE FROM queue WHERE contact_id = ?", [contactId]);
+
+        // Registra a transferência
+        await pool.query(`
+            INSERT INTO transfers (whatsapp_message_id, department_origin_id, department_destination_id, transfer_date)
+            VALUES (?, ?, ?, NOW())
+        `, [contactId, departmentOriginId, departmentId]);
+
+        // Emite um evento via WebSocket para atualizar a fila dos usuários do novo departamento
+        io.to(`department-${departmentId}`).emit('update_queue', { contactId });
+
+        res.status(200).send("Atendimento transferido com sucesso para a fila");
     } catch (error) {
-      console.error("Erro ao transferir atendimento:", error);
-      res.status(500).send("Erro ao transferir atendimento");
+        console.error("Erro ao transferir atendimento:", error);
+        res.status(500).send("Erro ao transferir atendimento");
     }
 });
+
 
 
   app.post('/updateQueueStatus', async (req, res) => {

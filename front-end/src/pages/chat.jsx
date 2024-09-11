@@ -253,18 +253,39 @@ const Chat = () => {
     setShowModal(true);
   };
 
-  const handleTransferComplete = () => {
-    setQueueContacts(
-      queueContacts.filter((contact) => contact.id !== selectedContact.id)
-    );
-  
-    setChatContacts(
-      chatContacts.filter((contact) => contact.id !== selectedContact.id)
-    );
-  
-    setSelectedContact(null);
-    setShowModal(false);
-  };
+  const handleTransferComplete = async (selectedDepartmentId) => {
+    try {
+        // Chama o endpoint de transferência
+        await axios.post(
+            "https://tetochat-8m0r.onrender.com/transfer",
+            {
+                contactId: selectedContact.id,
+                departmentId: selectedDepartmentId, // Supondo que você tenha o id do departamento no modal
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            }
+        );
+
+        // Remove o contato da fila e do chat localmente
+        setQueueContacts((prevQueue) => 
+            prevQueue.filter((contact) => contact.id !== selectedContact.id)
+        );
+
+        setChatContacts((prevChats) => 
+            prevChats.filter((contact) => contact.id !== selectedContact.id)
+        );
+
+        // Reseta a seleção e fecha o modal
+        setSelectedContact(null);
+        setShowModal(false);
+    } catch (error) {
+        console.error("Erro ao transferir contato:", error);
+    }
+};
+
   
 
   const handleContactClick = async (contact) => {
