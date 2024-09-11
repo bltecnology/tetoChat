@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FiEye, FiMenu, FiBell, FiUser } from "react-icons/fi";
 import {
   DropdownMenu,
@@ -13,11 +13,15 @@ import { useEffect } from "react";
 
 
 const Header = () => {
+const navigate = useNavigate()
+
   useEffect(() => {
   axios.get("https://tetochat-8m0r.onrender.com/verifyToken", {
     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
   }).then(res=>console.log(res)).catch((err)=>{
-    console.log(err)
+    navigate("/Login")
+    console.log(err);
+    
   }
   )
 }, []);

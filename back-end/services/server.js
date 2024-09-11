@@ -53,11 +53,8 @@ export const authenticateJWTRoute = (req, res, next) => {
 app.use(bodyParser.json());
 
 // Configuração de CORS
-app.use(cors({
-  origin: ['http://localhost:5173', 'https://tetochat-8m0r.onrender.com'],
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true
-}));
+app.use(cors());
+
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),

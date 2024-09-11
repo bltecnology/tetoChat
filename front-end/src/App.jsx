@@ -5,7 +5,6 @@ import AppRoutes from './routes';
 const App = () => {
   useEffect(() => {
     const handleUnload = () => {
-      localStorage.removeItem('token'); // Remove o token do localStorage ao fechar a aba
     };
 
     window.addEventListener('beforeunload', handleUnload);
