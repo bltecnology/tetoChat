@@ -45,7 +45,6 @@ export const authenticateJWT = (req, res, next) => {
 
       req.user = user;
 
-    //  res.json({ user });
 
     next();
   });
