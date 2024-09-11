@@ -564,9 +564,28 @@
     }
   });
 
-  app.post('/positions', (req, res) => {
-    
-  })
+  app.post('/positions', async (req, res) => {
+    const { name } = req.body; // Desestruture o nome da posição do corpo da requisição
+  
+    // Verifique se o campo 'name' está presente
+    if (!name) {
+      return res.status(400).send('O campo nome é obrigatório');
+    }
+  
+    try {
+      // Insira a nova posição na tabela
+      const [result] = await pool.execute(
+        'INSERT INTO positions (name) VALUES (?)',
+        [name]
+      );
+  
+      const insertId = result.insertId; // ID da nova posição inserida
+      res.status(201).send(`Posição adicionada com sucesso. ID: ${insertId}`);
+    } catch (error) {
+      console.error('Erro ao salvar posição:', error);
+      res.status(500).send('Erro ao salvar posição');
+    }
+  });
 
   app.post('/quickResponses', (req, res) => {
     const { text, department } = req.body;

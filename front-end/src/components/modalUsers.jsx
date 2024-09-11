@@ -6,9 +6,10 @@ const ModalUsers = ({ isOpen, onClose, onSave, user }) => {
   const [email, setEmail] = useState(user?.email || '');
   const [password, setPassword] = useState(''); // Campo de senha para edição e criação
   const [confirmPassword, setConfirmPassword] = useState(''); // Campo para confirmar a senha
-  const [position, setPosition] = useState(user?.position || '');
-  const [department, setDepartment] = useState(user?.department || '');
+  const [positionId, setPositionId] = useState(user?.position_id || ''); // Alterado para position_id
+  const [departmentId, setDepartmentId] = useState(user?.department_id || ''); // Alterado para department_id
   const [departments, setDepartments] = useState([]);
+  const [positions, setPositions] = useState([]); // Para armazenar posições
 
   useEffect(() => {
     if (isOpen) {
@@ -20,7 +21,18 @@ const ModalUsers = ({ isOpen, onClose, onSave, user }) => {
           console.error('Erro ao buscar departamentos:', error);
         }
       };
+
+      const fetchPositions = async () => {
+        try {
+          const response = await axios.get('https://tetochat-8m0r.onrender.com/positions'); // Endpoint para posições
+          setPositions(response.data);
+        } catch (error) {
+          console.error('Erro ao buscar posições:', error);
+        }
+      };
+
       fetchDepartments();
+      fetchPositions();
     }
   }, [isOpen]);
 
@@ -28,8 +40,8 @@ const ModalUsers = ({ isOpen, onClose, onSave, user }) => {
     if (user) {
       setName(user.name);
       setEmail(user.email);
-      setPosition(user.position);
-      setDepartment(user.department);
+      setPositionId(user.position_id); // Atualizado para position_id
+      setDepartmentId(user.department_id); // Atualizado para department_id
     }
   }, [user]);
 
@@ -39,7 +51,14 @@ const ModalUsers = ({ isOpen, onClose, onSave, user }) => {
       return;
     }
 
-    const updatedUser = { id: user?.id, name, email, password, position, department };
+    const updatedUser = {
+      id: user?.id,
+      name,
+      email,
+      password,
+      position_id: positionId, // Alterado para position_id
+      department_id: departmentId // Alterado para department_id
+    };
 
     try {
       if (user) {
@@ -51,12 +70,13 @@ const ModalUsers = ({ isOpen, onClose, onSave, user }) => {
         updatedUser.id = response.data.id;
       }
       onSave(updatedUser);
+      // Limpar campos
       setName('');
       setEmail('');
       setPassword('');
       setConfirmPassword('');
-      setPosition('');
-      setDepartment('');
+      setPositionId('');
+      setDepartmentId('');
       onClose();
     } catch (error) {
       console.error('Erro ao salvar usuário:', error);
@@ -97,21 +117,26 @@ const ModalUsers = ({ isOpen, onClose, onSave, user }) => {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
         />
-        <input
-          type="text"
-          className="border p-2 mb-4 w-full"
-          placeholder="Cargo"
-          value={position}
-          onChange={(e) => setPosition(e.target.value)}
-        />
         <select
           className="border p-2 mb-4 w-full"
-          value={department}
-          onChange={(e) => setDepartment(e.target.value)}
+          value={positionId}
+          onChange={(e) => setPositionId(e.target.value)}
+        >
+          <option value="">Selecione o Cargo</option>
+          {positions.map((pos) => (
+            <option key={pos.id} value={pos.id}>
+              {pos.name} {/* Supondo que você tenha um campo name na tabela positions */}
+            </option>
+          ))}
+        </select>
+        <select
+          className="border p-2 mb-4 w-full"
+          value={departmentId}
+          onChange={(e) => setDepartmentId(e.target.value)}
         >
           <option value="">Selecione o Departamento</option>
           {departments.map((dept) => (
-            <option key={dept.id} value={dept.name}>
+            <option key={dept.id} value={dept.id}>
               {dept.name}
             </option>
           ))}
@@ -136,4 +161,3 @@ const ModalUsers = ({ isOpen, onClose, onSave, user }) => {
 };
 
 export default ModalUsers;
-
