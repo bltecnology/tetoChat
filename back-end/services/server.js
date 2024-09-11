@@ -377,17 +377,21 @@
   app.get('/me', authenticateJWT, async (req, res) => {
     try {
       const userId = req.user.id; // Obtém o ID do usuário do token
+      console.log("User ID obtido:", userId); // Adicione este log
+  
       const user = await getUserById(userId); // Sua lógica para buscar o usuário
+      console.log("Usuário encontrado:", user); // Adicione este log
   
       if (!user) {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }
       res.json(user);
     } catch (error) {
-      console.error("Erro ao buscar dados do usuário:", error);
+      console.error("Erro ao buscar dados do usuário:", error); // Mantenha este log
       res.status(500).json({ message: "Erro ao buscar dados do usuário" });
     }
   });
+  
   
   
 
