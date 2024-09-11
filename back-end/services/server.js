@@ -47,7 +47,7 @@ export const authenticateJWTRoute = (req, res, next) => {
   });
 };
 
-const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' }); // 1 hora de expiração
+// const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' }); // 1 hora de expiração
 
 
 app.use(bodyParser.json());
