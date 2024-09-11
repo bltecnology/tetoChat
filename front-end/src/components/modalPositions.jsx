@@ -72,18 +72,7 @@ const Modal = ({ isOpen, onClose, onSave }) => {
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                 />
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                    <label><input type="checkbox" checked={permissions.accessChat} onChange={() => handlePermissionChange('accessChat')} /> Acessar Chat</label>
-                    <label><input type="checkbox" checked={permissions.createContacts} onChange={() => handlePermissionChange('createContacts')} /> Criar Contatos</label>
-                    <label><input type="checkbox" checked={permissions.accessDepartments} onChange={() => handlePermissionChange('accessDepartments')} /> Acessar Departamentos</label>
-                    <label><input type="checkbox" checked={permissions.accessStats} onChange={() => handlePermissionChange('accessStats')} /> Acessar Estatísticas</label>
-                    <label><input type="checkbox" checked={permissions.accessDevices} onChange={() => handlePermissionChange('accessDevices')} /> Dispositivos Conectados</label>
-                    <label><input type="checkbox" checked={permissions.accessUsers} onChange={() => handlePermissionChange('accessUsers')} /> Usuários</label>
-                    <label><input type="checkbox" checked={permissions.accessPositions} onChange={() => handlePermissionChange('accessPositions')} /> Cargos</label>
-                    <label><input type="checkbox" checked={permissions.accessBots} onChange={() => handlePermissionChange('accessBots')} /> Robôs</label>
-                    <label><input type="checkbox" checked={permissions.accessQuickResponses} onChange={() => handlePermissionChange('accessQuickResponses')} /> Respostas Rápidas</label>
-                </div>
-                <div className="flex justify-end">
+                <div className="flex justify-center items-center justify-end">
                     <button
                         className="bg-gray-200 rounded-full px-4 py-2 mr-2"
                         onClick={onClose}

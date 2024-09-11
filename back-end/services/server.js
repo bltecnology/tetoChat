@@ -565,21 +565,18 @@
   });
 
   app.post('/positions', async (req, res) => {
-    const { name } = req.body; // Desestruture o nome da posição do corpo da requisição
-  
-    // Verifique se o campo 'name' está presente
+    const { name } = req.body; 
     if (!name) {
       return res.status(400).send('O campo nome é obrigatório');
     }
   
     try {
-      // Insira a nova posição na tabela
       const [result] = await pool.execute(
         'INSERT INTO positions (name) VALUES (?)',
         [name]
       );
   
-      const insertId = result.insertId; // ID da nova posição inserida
+      const insertId = result.insertId; 
       res.status(201).send(`Posição adicionada com sucesso. ID: ${insertId}`);
     } catch (error) {
       console.error('Erro ao salvar posição:', error);
