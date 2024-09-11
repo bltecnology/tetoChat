@@ -18,6 +18,47 @@ const Modal = ({ isOpen, onClose, onSave }) => {
         setPermissions(prev => ({ ...prev, [perm]: !prev[perm] }));
     };
 
+    const handleSave = async () => {
+        try {
+            const response = await fetch('/positions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name: text, permissions }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao salvar a posição');
+            }
+
+            const result = await response.text(); // ou `await response.json();` se você retornar um JSON
+            console.log(result); // Exibe o resultado no console
+
+            // Chama a função onSave para atualizar o estado no componente pai, se necessário
+            onSave({ name: text, permissions });
+
+            // Limpa os campos do modal
+            setText('');
+            setPermissions({
+                accessChat: false,
+                createContacts: false,
+                accessDepartments: false,
+                accessStats: false,
+                accessDevices: false,
+                accessUsers: false,
+                accessPositions: false,
+                accessBots: false,
+                accessQuickResponses: false
+            });
+
+            onClose(); // Fecha o modal após salvar
+        } catch (error) {
+            console.error(error);
+            alert('Erro ao salvar a posição. Tente novamente.');
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -51,21 +92,7 @@ const Modal = ({ isOpen, onClose, onSave }) => {
                     </button>
                     <button
                         className="bg-blue-500 rounded-full text-white px-4 py-2"
-                        onClick={() => {
-                            onSave({ name: text, permissions });
-                            setText('');
-                            setPermissions({
-                                accessChat: false,
-                                createContacts: false,
-                                accessDepartments: false,
-                                accessStats: false,
-                                accessDevices: false,
-                                accessUsers: false,
-                                accessPositions: false,
-                                accessBots: false,
-                                accessQuickResponses: false
-                            });
-                        }}
+                        onClick={handleSave} // Chama a função handleSave ao clicar
                     >
                         Salvar
                     </button>
