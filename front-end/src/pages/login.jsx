@@ -21,7 +21,6 @@ const LoginPage = () => {
       localStorage.setItem('token', token);
 
       // Configura o token em todas as requisições Axios
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       navigate('/home');
     } catch (error) {

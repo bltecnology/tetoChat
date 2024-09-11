@@ -18,8 +18,10 @@ const navigate = useNavigate()
   useEffect(() => {
   axios.get("https://tetochat-8m0r.onrender.com/verifyToken", {
     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-  }).then(res=>console.log(res)).catch((err)=>{
-    navigate("/Login")
+  }).then((res)=>{
+    localStorage.setItem("userId",res.data.user.id)
+  }).catch((err)=>{
+    // navigate("/Login")
     console.log(err);
     
   }
