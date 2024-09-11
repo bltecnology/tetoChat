@@ -495,7 +495,7 @@ const id = departmentId
     `;
     await pool.query(transferQuery, [contactId]);
 
-    await pool.query("DELETE FROM queue WHERE contact_id = ?", [contactId]);
+    // await pool.query("DELETE FROM queue WHERE contact_id = ?", [contactId]);
 
     res.status(200).send("Atendimento transferido com sucesso para a fila");
   } catch (error) {
