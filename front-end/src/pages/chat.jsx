@@ -35,25 +35,26 @@ const Chat = () => {
   useEffect(() => {
     const validateToken = async () => {
       const token = localStorage.getItem("token");
-
+    
       if (!token) {
         navigate("/login");
         return;
       }
-
+    
       try {
-        const response = await axios.get(
-          "https://tetochat-8m0r.onrender.com/me",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const response = await axios.get("https://tetochat-8m0r.onrender.com/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setLoggedUser(response.data);
       } catch (error) {
         console.error("Erro na validação do token:", error);
+        if (error.response) {
+          console.error("Dados da resposta do servidor:", error.response.data);
+        }
         navigate("/login");
       }
     };
+    
 
     validateToken();
   }, [navigate]);

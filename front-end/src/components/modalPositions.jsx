@@ -20,7 +20,8 @@ const Modal = ({ isOpen, onClose, onSave }) => {
 
     const handleSave = async () => {
         try {
-            const response = await fetch('/positions', {
+            const response = await fetch('https://tetochat-8m0r.onrender.com/positions', {
+
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

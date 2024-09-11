@@ -374,23 +374,21 @@
   app.post("/users", addUser);
   app.post("/login", authenticateUser);
 
-  app.get("/me", authenticateJWT, async (req, res) => {
-    const userId = req.user.id;
+  app.get('/me', authenticateToken, async (req, res) => {
     try {
-      const [rows] = await pool.query(
-        "SELECT id, name, email, position, department FROM users WHERE id = ?",
-        [userId]
-      );
-      const user = rows[0];
+      const userId = req.user.id; // Ou como você está obtendo o ID do usuário
+      const user = await getUserById(userId); // Sua lógica para buscar o usuário
+  
       if (!user) {
-        return res.status(404).send("Usuário não encontrado");
+        return res.status(404).json({ message: "Usuário não encontrado" });
       }
       res.json(user);
     } catch (error) {
       console.error("Erro ao buscar dados do usuário:", error);
-      res.status(500).send("Erro ao buscar dados do usuário");
+      res.status(500).json({ message: "Erro ao buscar dados do usuário" });
     }
   });
+  
 
   app.get('/profile-picture/:wa_id', async (req, res) => {
     const defaultProfilePic = '/path/to/default-profile-pic.png';
@@ -688,6 +686,23 @@
     } catch (error) {
       console.error('Erro ao deletar Departamento:', error.message);
       res.status(500).send('Erro ao departamento usuário');
+    }
+  });
+
+  app.delete('/positions/:id', authenticateJWT, async (req, res) => {
+    const positionId = req.params.id;
+
+    try {
+      const [result] = await pool.query("DELETE FROM positions WHERE id = ?", [positionId]);
+
+      if (result.affectedRows === 0) {
+        return res.status(404).send('Cargo não encontrado');
+      }
+
+      res.status(200).send("Cargo deletado com sucesso");
+    } catch (error) {
+      console.error('Erro ao deletar Cargo:', error.message);
+      res.status(500).send('Erro ao cargo usuário');
     }
   });
 
