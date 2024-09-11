@@ -4,24 +4,33 @@ import pool from './database.js';
 const saltRounds = 10;
 
 export const addUser = async (req, res) => {
-  const { name, email, password, position, department } = req.body;
+  const { name, email, password, position_id, department_id } = req.body;
 
-  if (!name || !email || !password || !position || !department) {
+  // Verifique se todos os campos obrigatórios estão presentes
+  if (!name || !email || !password || !position_id || !department_id) {
     return res.status(400).send('Todos os campos são obrigatórios');
   }
 
   try {
+    // Criptografe a senha
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Verifique se o departamento existe pelo nome
-    const [departmentRow] = await pool.query("SELECT name FROM departments WHERE name = ?", [department]);
+    // Verifique se o departamento existe
+    const [departmentRow] = await pool.query("SELECT id FROM departments WHERE id = ?", [department_id]);
     if (departmentRow.length === 0) {
       return res.status(404).send('Departamento não encontrado');
     }
 
+    // Verifique se a posição existe
+    const [positionRow] = await pool.query("SELECT id FROM positions WHERE id = ?", [position_id]);
+    if (positionRow.length === 0) {
+      return res.status(404).send('Posição não encontrada');
+    }
+
+    // Insira o usuário na tabela
     const [result] = await pool.execute(
-      'INSERT INTO users (name, email, password, position, department) VALUES (?, ?, ?, ?, ?)',
-      [name, email, hashedPassword, position, department]
+      'INSERT INTO users (name, email, password, position_id, department_id) VALUES (?, ?, ?, ?, ?)',
+      [name, email, hashedPassword, position_id, department_id]
     );
 
     const insertId = result.insertId;
