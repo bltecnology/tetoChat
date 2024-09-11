@@ -374,9 +374,9 @@
   app.post("/users", addUser);
   app.post("/login", authenticateUser);
 
-  app.get('/me', authenticateToken, async (req, res) => {
+  app.get('/me', authenticateJWT, async (req, res) => {
     try {
-      const userId = req.user.id; // Ou como você está obtendo o ID do usuário
+      const userId = req.user.id; // Obtém o ID do usuário do token
       const user = await getUserById(userId); // Sua lógica para buscar o usuário
   
       if (!user) {
@@ -388,6 +388,7 @@
       res.status(500).json({ message: "Erro ao buscar dados do usuário" });
     }
   });
+  
   
 
   app.get('/profile-picture/:wa_id', async (req, res) => {
