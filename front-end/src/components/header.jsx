@@ -14,7 +14,7 @@ import { useEffect } from "react";
 
 const Header = () => {
   useEffect(() => {
-  axios.get("verifyToken", {
+  axios.get("https://tetochat-8m0r.onrender.com/verifyToken", {
     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
   }).then(res=>console.log(res)).catch((err)=>{
     console.log(err)
