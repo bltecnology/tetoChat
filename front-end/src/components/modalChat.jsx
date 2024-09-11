@@ -25,11 +25,16 @@
             contactId: contactId,
             departmentId: selectedDepartment,
             });
+            console.log("aaaaa");
+            
             onTransfer(); // Chama a função de callback para atualizar a lista de contatos no componente pai
             onClose(); // Fecha o modal após a transferência
         } catch (error) {
             console.error('Erro ao transferir atendimento:', error);
         }
+        }else{
+            console.log("data undefined");
+            
         }
     };
 
@@ -41,7 +46,10 @@
             <h2 className="text-xl mb-4">Transferir Atendimento</h2>
             <div className="mb-2">
             <label className="block mb-1">Selecione o Departamento</label>
-            <select value={selectedDepartment} onChange={(e) => setSelectedDepartment(e.target.value)} className="w-full p-2 border rounded">
+            <select value={selectedDepartment} onChange={(e) => {
+                console.log(e.target.value, contactId) ;
+                
+                setSelectedDepartment(e.target.value)}} className="w-full p-2 border rounded">
                 <option value="">Selecione</option>
                 {departments.map((dept) => (
                 <option key={dept.id} value={dept.id}>

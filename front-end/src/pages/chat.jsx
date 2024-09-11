@@ -32,15 +32,15 @@ const Chat = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    socket.on('update_queue', (data) => {
+    socket.on("update_queue", (data) => {
       fetchQueue(); // Atualiza a fila
     });
-  
+
     return () => {
-      socket.off('update_queue');
+      socket.off("update_queue");
     };
   }, []);
-  
+
   const loadMessages = async (contactId) => {
     try {
       const response = await axios.get(
@@ -60,7 +60,9 @@ const Chat = () => {
   const fetchChats = async () => {
     try {
       const response = await axios.get(
-        `https://tetochat-8m0r.onrender.com/getUserChats?userId=${localStorage.getItem("userId")}`,
+        `https://tetochat-8m0r.onrender.com/getUserChats?userId=${localStorage.getItem(
+          "userId"
+        )}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -97,7 +99,6 @@ const Chat = () => {
       setQueueContacts([]);
     }
   };
-  
 
   const fetchContacts = async () => {
     try {
@@ -217,34 +218,36 @@ const Chat = () => {
 
   const handleTransferComplete = async (selectedDepartmentId) => {
     try {
-        // Chama o endpoint de transferência
-        await axios.post(
-            "https://tetochat-8m0r.onrender.com/transfer",
-            {
-                contactId: selectedContact.id,
-                departmentId: selectedDepartmentId, // Supondo que você tenha o id do departamento no modal
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("token")}`,
-                },
-            }
-        );
+      // Chama o endpoint de transferência
+      await axios.post(
+        "https://tetochat-8m0r.onrender.com/transfer",
+        {
+          contactId: selectedContact.id,
+          departmentId: selectedDepartmentId, // Supondo que você tenha o id do departamento no modal
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      console.log(aaa);
+      // Remove o contato da fila e do chat localmente
+      setQueueContacts((prevQueue) =>
+        prevQueue.filter((contact) => contact.id !== selectedContact.id)
+      );
+      console.log(bbb);
 
-        // Remove o contato da fila e do chat localmente
-        setQueueContacts((prevQueue) => 
-            prevQueue.filter((contact) => contact.id !== selectedContact.id)
-        );
+      setChatContacts((prevChats) =>
+        prevChats.filter((contact) => contact.id !== selectedContact.id)
+      );
+      console.log(aaa);
 
-        setChatContacts((prevChats) => 
-            prevChats.filter((contact) => contact.id !== selectedContact.id)
-        );
-
-        // Reseta a seleção e fecha o modal
-        setSelectedContact(null);
-        setShowModal(false);
+      // Reseta a seleção e fecha o modal
+      setSelectedContact(null);
+      setShowModal(false);
     } catch (error) {
-        console.error("Erro ao transferir contato:", error);
+      console.error("Erro ao transferir contato:", error);
     }
   };
 
@@ -298,157 +301,222 @@ const Chat = () => {
               )}
             </button>
           </div>
-          <div className="flex-grow overflow-y-auto">
-            {activeTab === "chat" &&
-              chatContacts.map((contact) => (
-                <div
-                  key={contact.id}
-                  onClick={() => handleContactClick(contact)}
-                  className={`flex items-center p-3 border-b border-gray-200 cursor-pointer hover:bg-gray-100`}
-                >
-                  <img
-                    src={defaultProfilePic}
-                    alt="Profile"
-                    className="w-10 h-10 rounded-full mr-2"
-                  />
-                  <div className="flex-grow">
-                    <div className="font-semibold">{contact.name}</div>
-                    <div className="text-sm text-gray-600">{contact.phone}</div>
-                  </div>
-                </div>
-              ))}
-            {activeTab === "fila" &&
-              queueContacts.map((contact) => (
-                <div
-                  key={contact.id}
-                  className={`flex items-center p-3 border-b border-gray-200 cursor-pointer hover:bg-gray-100`}
-                >
-                  <img
-                    src={defaultProfilePic}
-                    alt="Profile"
-                    className="w-10 h-10 rounded-full mr-2"
-                  />
-                  <div className="flex-grow">
-                    <div className="font-semibold">{contact.name}</div>
-                    <div className="text-sm text-gray-600">{contact.phone}</div>
-                  </div>
-                  <button
-                    onClick={() => handleTransferClick(contact)}
-                    className="text-blue-500 hover:underline"
-                  >
-                    Transferir
-                  </button>
-                </div>
-              ))}
-            {activeTab === "contatos" &&
-              contacts.map((contact) => (
-                <div
-                  key={contact.id}
-                  onClick={() => handleContactClick(contact)}
-                  className={`flex items-center p-3 border-b border-gray-200 cursor-pointer hover:bg-gray-100`}
-                >
-                  <img
-                    src={defaultProfilePic}
-                    alt="Profile"
-                    className="w-10 h-10 rounded-full mr-2"
-                  />
-                  <div className="flex-grow">
-                    <div className="font-semibold">{contact.name}</div>
-                    <div className="text-sm text-gray-600">{contact.phone}</div>
-                  </div>
-                </div>
-              ))}
-          </div>
-        </div>
-        <div className="flex-grow bg-gray-50 p-4 flex flex-col">
-          {selectedContact ? (
-            <>
-              <div className="flex-grow overflow-y-auto">
-                {messages.map((msg) => (
+
+          <div className="overflow-y-auto flex-grow">
+            {activeTab === "chat" && (
+              <div>
+                {chatContacts.map((contact) => (
                   <div
-                    key={msg.id}
-                    className={`mb-2 ${
-                      msg.message_from === "me" ? "text-right" : "text-left"
+                    key={contact.id}
+                    onClick={() => handleContactClick(contact)}
+                    className={`p-4 cursor-pointer border-b border-gray-200 hover:bg-gray-100 flex ${
+                      selectedContact?.id === contact.id
+                        ? "bg-gray-200"
+                        : "bg-white"
                     }`}
                   >
-                    <div
-                      className={`inline-block px-3 py-1 rounded-full ${
-                        msg.message_from === "me"
-                          ? "bg-blue-500 text-white"
-                          : "bg-gray-300 text-black"
-                      }`}
-                    >
-                      {msg.message_body}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {format(new Date(msg.message_timestamp * 1000), "HH:mm")}
+                    <img
+                      src={defaultProfilePic}
+                      alt="Profile"
+                      className="h-10 w-10 rounded-full mr-3"
+                    />
+                    <div className="flex flex-col">
+                      <span className="font-medium text-gray-800">
+                        {contact.name}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {contact.phone}
+                      </span>
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="flex items-center border-t border-gray-200 pt-4">
+            )}
+            {activeTab === "fila" && (
+              <div>
+                {queueContacts.map((contact) => (
+                  <div
+                    key={contact.id}
+                    onClick={() => handleContactClick(contact)}
+                    className={`p-4 cursor-pointer border-b border-gray-200 hover:bg-gray-100 flex ${
+                      selectedContact?.id === contact.id
+                        ? "bg-gray-200"
+                        : "bg-white"
+                    }`}
+                  >
+                    <img
+                      src={defaultProfilePic}
+                      alt="Profile"
+                      className="h-10 w-10 rounded-full mr-3"
+                    />
+                    <div className="flex flex-col">
+                      <span className="font-medium text-gray-800">
+                        {contact.name}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {contact.phone}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {activeTab === "contatos" && (
+              <div>
+                {contacts.map((contact) => (
+                  <div
+                    key={contact.id}
+                    onClick={() => handleContactClick(contact)}
+                    className={`p-4 cursor-pointer border-b border-gray-200 hover:bg-gray-100 flex ${
+                      selectedContact?.id === contact.id
+                        ? "bg-gray-200"
+                        : "bg-white"
+                    }`}
+                  >
+                    <img
+                      src={defaultProfilePic}
+                      alt="Profile"
+                      className="h-10 w-10 rounded-full mr-3"
+                    />
+                    <div className="flex flex-col">
+                      <span className="font-medium text-gray-800">
+                        {contact.name}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {contact.phone}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col w-full bg-gray-100 relative">
+          {selectedContact ? (
+            <>
+              <div className="p-4 border-b border-gray-200 bg-white h-14 flex items-center justify-between">
+                <div className="flex items-center">
+                  <img
+                    src={defaultProfilePic}
+                    alt="Profile"
+                    className="h-10 w-10 rounded-full mr-3"
+                  />
+                  <div className="flex flex-col">
+                    <span className="font-medium text-gray-800">
+                      {selectedContact.name}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex space-x-3">
+                  <button
+                    className="text-gray-500 hover:text-gray-700"
+                    onClick={() => handleTransferClick(selectedContact)}
+                  >
+                    <FiPhoneForwarded size={24} />
+                  </button>
+                  <button className="text-gray-500 hover:text-gray-700">
+                    <FiMoreVertical size={24} />
+                  </button>
+                </div>
+              </div>
+
+              <div
+                className="flex-grow p-4 overflow-y-auto bg-white"
+                style={{
+                  backgroundImage: `url(${backgroundImage})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
+              >
+                <div className="flex flex-col space-y-4 ">
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`${
+                        message.message_from === "me"
+                          ? "self-end bg-blue-100"
+                          : "self-start bg-gray-200"
+                      } p-2 rounded-md max-w-xs`}
+                    >
+                      <span className="text-sm">{message.message_body}</span>
+                      <span className="text-xs text-gray-500 block mt-1">
+                        {format(
+                          new Date(parseInt(message.message_timestamp) * 1000),
+                          "HH:mm"
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center p-4 bg-white border-t border-gray-200">
                 <button
-                  onClick={() => setShowEmojiPicker((prev) => !prev)}
-                  className="p-2 text-gray-500"
+                  className="text-gray-500 hover:text-gray-700 mr-3"
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                 >
-                  <FiSmile />
+                  <FiSmile size={24} />
                 </button>
                 {showEmojiPicker && (
-                  <EmojiPicker
-                    onEmojiClick={(emoji) => {
-                      setNewMessage((prev) => prev + emoji.emoji);
-                      setShowEmojiPicker(false);
-                    }}
-                    className="absolute z-10"
-                  />
+                  <div className="absolute bottom-20 left-10 z-50">
+                    <EmojiPicker
+                      onEmojiClick={(event, emojiObject) =>
+                        setNewMessage(newMessage + emojiObject.emoji)
+                      }
+                    />
+                  </div>
                 )}
+
                 <input
                   type="text"
+                  placeholder="Digite uma mensagem..."
+                  className="flex-grow p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="flex-grow p-2 border border-gray-300 rounded"
-                  placeholder="Digite uma mensagem..."
                 />
+
                 <button
+                  className="text-gray-500 hover:text-gray-700 ml-3"
                   onClick={handleSendMessage}
-                  className="p-2 text-gray-500"
                 >
-                  <FiPaperclip />
+                  <FiPaperclip size={24} />
                 </button>
+
                 <button
+                  className="text-gray-500 hover:text-gray-700 ml-3"
                   onClick={handleSendMessage}
-                  className="p-2 text-gray-500"
                 >
-                  <FiMic />
-                </button>
-                <button
-                  onClick={handleSendMessage}
-                  className="p-2 text-gray-500"
-                >
-                  <AiOutlineThunderbolt />
-                </button>
-                <button
-                  onClick={handleSendMessage}
-                  className="p-2 text-gray-500"
-                >
-                  <FiMoreVertical />
+                  <FiMic size={24} />
                 </button>
               </div>
             </>
           ) : (
-            <div className="flex-grow flex items-center justify-center">
-              <p className="text-gray-500">Selecione um contato para iniciar o chat.</p>
+            <div className="flex items-center justify-center h-full">
+              <span className="text-gray-500">
+                Selecione um contato para começar a conversar
+              </span>
             </div>
           )}
         </div>
       </div>
+      {selectedContact? 
       <TransferModal
-        showModal={showModal}
-        setShowModal={setShowModal}
+        contactId={selectedContact.id}
+
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
         onTransferComplete={handleTransferComplete}
-        selectedContact={selectedContact}
       />
+    :
+    <TransferModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onTransferComplete={handleTransferComplete}
+      />}
     </div>
   );
 };
