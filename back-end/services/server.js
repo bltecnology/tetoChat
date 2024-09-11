@@ -30,22 +30,22 @@ const io = new Server(server, {
   }
 });
 
-export const authenticateJWT = (req, res, next) => {
-  const token = req.headers.authorization && req.headers.authorization.split(' ')[1]; // Extrai o token do cabeçalho
+// export const authenticateJWT = (req, res, next) => {
+//   const token = req.headers.authorization && req.headers.authorization.split(' ')[1]; // Extrai o token do cabeçalho
 
-  if (!token) {
-    return res.status(401).send("Token de acesso é necessário");
-  }
+//   if (!token) {
+//     return res.status(401).send("Token de acesso é necessário");
+//   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      return res.status(403).send("Token inválido ou expirado");
-    }
+//   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+//     if (err) {
+//       return res.status(403).send("Token inválido ou expirado");
+//     }
 
-    req.user = user; // Anexa o usuário decodificado à requisição
-    next();
-  });
-};
+//     req.user = user; // Anexa o usuário decodificado à requisição
+//     next();
+//   });
+// };
 
 const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' }); // 1 hora de expiração
 
@@ -480,7 +480,7 @@ const id = departmentId
   }
 
   try {
-    const [department] = await pool.query("SELECT name FROM departments WHERE id = ?", [id]);
+    const [department] = await pool.query("SELECT name FROM departments WHERE id = ?", [departmentId]);
 
     if (!department.length) {
       return res.status(404).send("Departamento não encontrado");
