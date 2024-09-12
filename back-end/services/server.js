@@ -5,12 +5,10 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import axios from "axios";
 import multer from "multer";
-import path from "path";
 import pool from "./database.js";
 import dotenv from "dotenv";
 import { addUser } from "./newUser.js";
 import { authenticateUser, authenticateJWT } from "./auth.js"; // Use a função importada de auth.js
-import moment from "moment";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import mysql from "mysql2";
@@ -22,13 +20,7 @@ const __dirname = dirname(__filename);
 dotenv.config();
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: ["https://tetochat.netlify.app", "https://tetochat-8m0r.onrender.com"],
-    methods: ["GET", "POST", "DELETE", "PATCH"],
-    credentials: true
-  }
-});
+const io = new Server(server);
 
 export const authenticateJWTRoute = (req, res, next) => {
   const token = req.headers.authorization && req.headers.authorization.split(' ')[1]; // Extrai o token do cabeçalho
@@ -55,7 +47,9 @@ app.use(bodyParser.json());
 // Configuração de CORS
 const cors = require('cors');
 app.use(cors({
-  origin: 'https://tetochat.netlify.app' // Especifique seu domínio
+  origin: ['https://tetochat.netlify.app', 'https://tetochat-8m0r.onrender.com'],
+  methods: ["GET", "POST", "DELETE", "PATCH"],
+  credentials: true
 }));
 
 
