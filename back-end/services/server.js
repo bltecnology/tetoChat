@@ -522,7 +522,7 @@ app.post('/updateQueueStatus', async (req, res) => {
   }
 });
 
-app.get('/queue', authenticateJWT, async (req, res) => {
+app.get('/queue', async (req, res) => {
   const userId = req.user.id;
 
   try {
