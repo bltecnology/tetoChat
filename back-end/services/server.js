@@ -2,6 +2,7 @@ import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import bodyParser from "body-parser";
+import cors from "cors";
 import axios from "axios";
 import multer from "multer";
 import pool from "./database.js";
@@ -44,7 +45,6 @@ export const authenticateJWTRoute = (req, res, next) => {
 app.use(bodyParser.json());
 
 // Configuração de CORS
-const cors = require('cors');
 app.use(cors({
   origin: ['https://tetochat.netlify.app', 'https://tetochat-8m0r.onrender.com'],
   methods: ["GET", "POST", "DELETE", "PATCH"],
