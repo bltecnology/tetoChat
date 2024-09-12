@@ -14,5 +14,12 @@ export default defineConfig({
   server: {
     port: 5173,
     historyApiFallback: true,
+    proxy: {
+      '/socket.io': {
+        target: 'https://tetochat-8m0r.onrender.com',
+        changeOrigin: true,
+        ws: true
+      }
+    }
   }
 });
