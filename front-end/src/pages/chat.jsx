@@ -442,7 +442,7 @@ const Chat = () => {
                       } p-2 rounded-md max-w-xs`}
                     >
                       <span className="text-sm">{message.message_body}</span>
-                      <span className="text-xs text-gray-500 block ml-6 mt-1">
+                      <span className="text-xs text-gray-500 block memt-1">
                         {format(
                           new Date(parseInt(message.message_timestamp) * 1000),
                           "HH:mm"
