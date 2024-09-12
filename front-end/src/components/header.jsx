@@ -13,20 +13,7 @@ import { useEffect } from "react";
 
 
 const Header = () => {
-const navigate = useNavigate()
 
-  useEffect(() => {
-  axios.get("https://tetochat-8m0r.onrender.com/verifyToken", {
-    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-  }).then((res)=>{
-    localStorage.setItem("userId",res.data.user.id)
-  }).catch((err)=>{
-    // navigate("/Login")
-    console.log(err);
-    
-  }
-  )
-}, []);
   return (
     <div className="flex items-center justify-between p-1 bg-red-700 text-white">
       <div className="flex items-center">

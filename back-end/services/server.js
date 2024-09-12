@@ -250,7 +250,7 @@ app.post('/webhook', async (request, response) => {
   }
 });
 
-app.post('/send', authenticateJWT, async (req, res) => {
+app.post('/send', async (req, res) => {
   const { toPhone, text } = req.body;
   const userId = req.user.id;
 
@@ -310,7 +310,7 @@ app.post('/send', authenticateJWT, async (req, res) => {
   }
 });
 
-app.get("/chats", authenticateJWT, async (req, res) => {
+app.get("/chats", async (req, res) => {
   const userId = req.user.id;
   const chatTableName = `chat_user_${userId}`;
 
@@ -390,7 +390,7 @@ app.delete("/contacts/:id", async (req, res) => {
 app.post("/users", addUser);
 app.post("/login", authenticateUser);
 
-app.get("/me", authenticateJWT, async (req, res) => {
+app.get("/me", async (req, res) => {
   const userId = req.user.id;
   try {
     const [rows] = await pool.query(
@@ -570,7 +570,7 @@ app.post('/quickResponses', (req, res) => {
   });
 });
 
-app.put('/users/:id', authenticateJWT, async (req, res) => {
+app.put('/users/:id', async (req, res) => {
   const userId = req.params.id;
   const { name, email, password, position, department } = req.body;
 
@@ -601,7 +601,7 @@ app.put('/users/:id', authenticateJWT, async (req, res) => {
   }
 });
 
-app.delete('/users/:id', authenticateJWT, async (rec, res) => {
+app.delete('/users/:id', async (rec, res) => {
   const userId = req.params.id;
 
   try {
@@ -618,7 +618,7 @@ app.delete('/users/:id', authenticateJWT, async (rec, res) => {
   }
 });
 
-app.post('/saveMessage', authenticateJWT, async (req, res) => {
+app.post('/saveMessage', async (req, res) => {
   const { contactId, message, message_from } = req.body;
   const userId = req.user.id;
   const chatTableName = `chat_user_${userId}`;
@@ -656,7 +656,7 @@ app.post('/saveMessage', authenticateJWT, async (req, res) => {
   }
 });
 
-app.get("/verifyToken",authenticateJWT, async (req,res)=>{
+app.get("/verifyToken", async (req,res)=>{
   console.log(req);
   
   
