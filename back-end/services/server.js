@@ -2,7 +2,6 @@ import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import bodyParser from "body-parser";
-import cors from "cors";
 import axios from "axios";
 import multer from "multer";
 import pool from "./database.js";
