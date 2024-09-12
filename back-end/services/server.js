@@ -9,10 +9,9 @@ import pool from "./database.js";
 import dotenv from "dotenv";
 import { addUser } from "./newUser.js";
 import { authenticateUser, authenticateJWT } from "./auth.js"; // Use a função importada de auth.js
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 import mysql from "mysql2";
-
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -23,7 +22,8 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 export const authenticateJWTRoute = (req, res, next) => {
-  const token = req.headers.authorization && req.headers.authorization.split(' ')[1]; // Extrai o token do cabeçalho
+  const token =
+    req.headers.authorization && req.headers.authorization.split(" ")[1]; // Extrai o token do cabeçalho
 
   if (!token) {
     return res.status(401).send("Token de acesso é necessário");
@@ -41,21 +41,23 @@ export const authenticateJWTRoute = (req, res, next) => {
 
 // const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' }); // 1 hora de expiração
 
-
 app.use(bodyParser.json());
 
 // Configuração de CORS
-app.use(cors({
-  origin: ['https://teto-chat.vercel.app', 'https://tetochat-8m0r.onrender.com'],
-  methods: ["GET", "POST", "DELETE", "PATCH"],
-  credentials: true
-}));
-
-
+app.use(
+  cors({
+    origin: [
+      "https://teto-chat.vercel.app",
+      "https://tetochat-8m0r.onrender.com",
+    ],
+    methods: ["GET", "POST", "DELETE", "PATCH"],
+    credentials: true,
+  })
+);
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
 });
 const upload = multer({ storage });
 
@@ -64,15 +66,15 @@ const connection = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME
+  database: process.env.DB_NAME,
 });
 
 connection.connect((err) => {
   if (err) {
-    console.error('Erro ao conectar ao banco de dados:', err);
+    console.error("Erro ao conectar ao banco de dados:", err);
     process.exit(1);
   }
-  console.log('Conectado ao banco de dados MySQL.');
+  console.log("Conectado ao banco de dados MySQL.");
 
   const checkColumnQuery = `
     SELECT COLUMN_NAME 
@@ -83,12 +85,14 @@ connection.connect((err) => {
     if (err) {
       console.error('Erro ao verificar coluna "tag":', err);
     } else if (results.length === 0) {
-      const addColumnQuery = 'ALTER TABLE contacts ADD COLUMN tag VARCHAR(20)';
+      const addColumnQuery = "ALTER TABLE contacts ADD COLUMN tag VARCHAR(20)";
       connection.query(addColumnQuery, (err, results) => {
         if (err) {
           console.error('Erro ao adicionar a coluna "tag":', err);
         } else {
-          console.log('Coluna "tag" adicionada com sucesso à tabela "contacts".');
+          console.log(
+            'Coluna "tag" adicionada com sucesso à tabela "contacts".'
+          );
         }
       });
     } else {
@@ -97,29 +101,29 @@ connection.connect((err) => {
   });
 });
 
-io.on('connection', (socket) => {
+io.on("connection", (socket) => {
   const userId = socket.handshake.query.userId;
 
-  socket.on('disconnect', () => {
-    console.log('User disconnected');
+  socket.on("disconnect", () => {
+    console.log("User disconnected");
   });
 
-  socket.on('new_message', (message) => {
+  socket.on("new_message", (message) => {
     if (message.user_id === userId) {
-      socket.emit('new_message', message);
+      socket.emit("new_message", message);
 
       // Emitir um evento adicional para atualizar a aba de "Chat"
-      socket.broadcast.emit('update_chat_contacts', {
+      socket.broadcast.emit("update_chat_contacts", {
         contact_id: message.contact_id,
-        user_id: message.user_id
+        user_id: message.user_id,
       });
     }
   });
 });
 
 async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
-  console.log('Enviando mensagem para:', toPhone);
-  console.log('Conteúdo da mensagem:', text);
+  console.log("Enviando mensagem para:", toPhone);
+  console.log("Conteúdo da mensagem:", text);
 
   const url = `https://graph.facebook.com/v20.0/${whatsappBusinessAccountId}/messages`;
   const data = {
@@ -127,43 +131,45 @@ async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
     recipient_type: "individual",
     to: toPhone,
     type: "text",
-    text: { body: text }
+    text: { body: text },
   };
-  const headers = { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}` };
+  const headers = {
+    Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+  };
 
   try {
     const response = await axios.post(url, data, { headers });
-    console.log('Resposta da API do WhatsApp:', response.data);
+    console.log("Resposta da API do WhatsApp:", response.data);
 
     if (socket) {
-      socket.emit('new_message', {
+      socket.emit("new_message", {
         phone_number_id: whatsappBusinessAccountId,
         to: toPhone,
         message_body: text,
-        timestamp: new Date().getTime()
+        timestamp: new Date().getTime(),
       });
     }
 
     return response.data;
   } catch (error) {
-    console.error('Erro ao enviar mensagem para o WhatsApp:', error);
+    console.error("Erro ao enviar mensagem para o WhatsApp:", error);
     throw error;
   }
 }
 
-app.get('/webhook', function (req, res) {
+app.get("/webhook", function (req, res) {
   if (
-    req.query['hub.mode'] == 'subscribe' &&
-    req.query['hub.verify_token'] == process.env.WEBHOOK_VERIFY_TOKEN
+    req.query["hub.mode"] == "subscribe" &&
+    req.query["hub.verify_token"] == process.env.WEBHOOK_VERIFY_TOKEN
   ) {
-    res.send(req.query['hub.challenge']);
+    res.send(req.query["hub.challenge"]);
   } else {
     res.sendStatus(400);
   }
 });
 
-app.post('/webhook', async (request, response) => {
-  console.log('Incoming webhook: ' + JSON.stringify(request.body));
+app.post("/webhook", async (request, response) => {
+  console.log("Incoming webhook: " + JSON.stringify(request.body));
 
   const entries = request.body.entry;
 
@@ -176,17 +182,31 @@ app.post('/webhook', async (request, response) => {
         const data = change.value;
         if (data && data.messages && data.messages.length > 0) {
           const message = data.messages[0];
-          const contact = data.contacts && data.contacts.length > 0 ? data.contacts[0] : null;
+          const contact =
+            data.contacts && data.contacts.length > 0 ? data.contacts[0] : null;
 
-          if (!contact || !contact.profile || !contact.wa_id || !message || !message.text || !message.text.body) {
-            console.error('Dados inválidos recebidos:', JSON.stringify(request.body));
+          if (
+            !contact ||
+            !contact.profile ||
+            !contact.wa_id ||
+            !message ||
+            !message.text ||
+            !message.text.body
+          ) {
+            console.error(
+              "Dados inválidos recebidos:",
+              JSON.stringify(request.body)
+            );
             allEntriesProcessed = false;
             continue;
           }
 
           let contactId;
           try {
-            const [contactRows] = await pool.query("SELECT id FROM contacts WHERE phone = ?", [contact.wa_id]);
+            const [contactRows] = await pool.query(
+              "SELECT id FROM contacts WHERE phone = ?",
+              [contact.wa_id]
+            );
             if (contactRows.length > 0) {
               contactId = contactRows[0].id;
             } else {
@@ -197,12 +217,13 @@ app.post('/webhook', async (request, response) => {
               contactId = result.insertId;
             }
           } catch (err) {
-            console.error('Erro ao buscar ou criar contato:', err);
+            console.error("Erro ao buscar ou criar contato:", err);
             allEntriesProcessed = false;
             continue;
           }
 
-          const sql = 'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+          const sql =
+            "INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
           const values = [
             data.metadata.phone_number_id,
             data.metadata.display_phone_number,
@@ -213,12 +234,12 @@ app.post('/webhook', async (request, response) => {
             message.timestamp,
             message.type,
             message.text.body,
-            contactId
+            contactId,
           ];
 
           try {
             await pool.query(sql, values);
-            io.emit('new_message', {
+            io.emit("new_message", {
               phone_number_id: data.metadata.phone_number_id,
               display_phone_number: data.metadata.display_phone_number,
               contact_name: contact.profile.name,
@@ -228,11 +249,11 @@ app.post('/webhook', async (request, response) => {
               message_timestamp: message.timestamp,
               message_type: message.type,
               message_body: message.text.body,
-              contact_id: contactId
+              contact_id: contactId,
             });
-            console.log('Dados inseridos com sucesso');
+            console.log("Dados inseridos com sucesso");
           } catch (err) {
-            console.error('Erro ao inserir dados no banco de dados:', err);
+            console.error("Erro ao inserir dados no banco de dados:", err);
             allEntriesProcessed = false;
           }
         }
@@ -245,12 +266,15 @@ app.post('/webhook', async (request, response) => {
       response.sendStatus(500);
     }
   } else {
-    console.error('Estrutura do webhook não corresponde ao esperado:', JSON.stringify(request.body));
+    console.error(
+      "Estrutura do webhook não corresponde ao esperado:",
+      JSON.stringify(request.body)
+    );
     response.sendStatus(400);
   }
 });
 
-app.post('/send', async (req, res) => {
+app.post("/send", async (req, res) => {
   const { toPhone, text } = req.body;
   const userId = req.user.id;
 
@@ -261,14 +285,17 @@ app.post('/send', async (req, res) => {
   try {
     await sendMessage(toPhone, text, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
 
-    const [contactRows] = await pool.query("SELECT id FROM contacts WHERE phone = ?", [toPhone]);
+    const [contactRows] = await pool.query(
+      "SELECT id FROM contacts WHERE phone = ?",
+      [toPhone]
+    );
     let contactId;
     if (contactRows.length > 0) {
       contactId = contactRows[0].id;
     } else {
       const [result] = await pool.query(
         "INSERT INTO contacts (name, phone) VALUES (?, ?)",
-        ['API', toPhone]
+        ["API", toPhone]
       );
       contactId = result.insertId;
     }
@@ -282,21 +309,24 @@ app.post('/send', async (req, res) => {
     await pool.query(insertMessageQuery, [
       process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
       process.env.DISPLAY_PHONE_NUMBER,
-      'API',
+      "API",
       toPhone,
       `msg-${Date.now()}`,
-      'me',
+      "me",
       Math.floor(Date.now() / 1000).toString(),
-      'text',
+      "text",
       text,
       contactId,
-      userId
+      userId,
     ]);
 
-    const [userRow] = await pool.query("SELECT department FROM users WHERE id = ?", [userId]);
+    const [userRow] = await pool.query(
+      "SELECT department FROM users WHERE id = ?",
+      [userId]
+    );
     const departmentName = userRow[0].department;
     const queueTableName = `queueOf${departmentName}`;
-    
+
     const insertQueueQuery = `
       INSERT INTO ${queueTableName} (contact_id, conversation_id, status)
       VALUES (?, ?, 'fila')
@@ -336,7 +366,10 @@ app.get("/messages", async (req, res) => {
   }
 
   try {
-    const [rows] = await pool.query("SELECT * FROM whatsapp_messages WHERE contact_id = ? ORDER BY message_timestamp ASC", [contactId]);
+    const [rows] = await pool.query(
+      "SELECT * FROM whatsapp_messages WHERE contact_id = ? ORDER BY message_timestamp ASC",
+      [contactId]
+    );
     res.json(rows);
   } catch (error) {
     console.error("Erro ao buscar mensagens:", error);
@@ -375,7 +408,9 @@ app.post("/contacts", async (req, res) => {
 app.delete("/contacts/:id", async (req, res) => {
   const contactId = req.params.id;
   try {
-    const [result] = await pool.query("DELETE FROM contacts WHERE id = ?", [contactId]);
+    const [result] = await pool.query("DELETE FROM contacts WHERE id = ?", [
+      contactId,
+    ]);
     if (result.affectedRows > 0) {
       res.status(200).send("Contato deletado com sucesso");
     } else {
@@ -408,21 +443,24 @@ app.get("/me", async (req, res) => {
   }
 });
 
-app.get('/profile-picture/:wa_id', async (req, res) => {
-  const defaultProfilePic = '/path/to/default-profile-pic.png';
+app.get("/profile-picture/:wa_id", async (req, res) => {
+  const defaultProfilePic = "/path/to/default-profile-pic.png";
   res.json({ profilePicUrl: defaultProfilePic });
 });
 
-app.post('/departments', async (req, res) => {
+app.post("/departments", async (req, res) => {
   const { name } = req.body;
   console.log("aaa");
-  
+
   if (!name) {
     return res.status(400).send("O nome do departamento é obrigatório");
   }
 
   try {
-    const [result] = await pool.query("INSERT INTO departments (name) VALUES (?)", [name]);
+    const [result] = await pool.query(
+      "INSERT INTO departments (name) VALUES (?)",
+      [name]
+    );
     const insertId = result.insertId;
 
     const tableName = `queueOf${name}`;
@@ -447,20 +485,19 @@ app.post('/departments', async (req, res) => {
     res.status(500).send("Erro ao salvar departamento");
   }
   console.log("ccc");
-
 });
 
-app.get('/departments', async (req, res) => {
+app.get("/departments", async (req, res) => {
   try {
-      const [rows] = await pool.query("SELECT * FROM departments");
-      res.json(rows);
+    const [rows] = await pool.query("SELECT * FROM departments");
+    res.json(rows);
   } catch (error) {
-      console.error("Erro ao buscar departamentos:", error);
-      res.status(500).send("Erro ao buscar departamentos");
+    console.error("Erro ao buscar departamentos:", error);
+    res.status(500).send("Erro ao buscar departamentos");
   }
 });
 
-app.get('/users', async (req, res) => {
+app.get("/users", async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT * FROM users");
     res.json(rows);
@@ -470,15 +507,20 @@ app.get('/users', async (req, res) => {
   }
 });
 
-app.post('/transfer', async (req, res) => {
+app.post("/transfer", async (req, res) => {
   const { contactId, departmentId } = req.body;
-const id = departmentId
+  const id = departmentId;
   if (!contactId || !departmentId) {
-    return res.status(400).send("Os campos 'contactId' e 'departmentId' são obrigatórios");
+    return res
+      .status(400)
+      .send("Os campos 'contactId' e 'departmentId' são obrigatórios");
   }
 
   try {
-    const [department] = await pool.query("SELECT name FROM departments WHERE id = ?", [departmentId]);
+    const [department] = await pool.query(
+      "SELECT name FROM departments WHERE id = ?",
+      [departmentId]
+    );
 
     if (!department.length) {
       return res.status(404).send("Departamento não encontrado");
@@ -502,11 +544,13 @@ const id = departmentId
   }
 });
 
-app.post('/updateQueueStatus', async (req, res) => {
+app.post("/updateQueueStatus", async (req, res) => {
   const { contactId, userId } = req.body;
 
   if (!contactId || !userId) {
-    return res.status(400).send("Os campos 'contactId' e 'userId' são obrigatórios");
+    return res
+      .status(400)
+      .send("Os campos 'contactId' e 'userId' são obrigatórios");
   }
 
   try {
@@ -522,63 +566,97 @@ app.post('/updateQueueStatus', async (req, res) => {
   }
 });
 
-app.get('/queue', async (req, res) => {
+app.post("/positions", async (req, res) => {
+  const { name } = req.body;
+
+  if (!name) {
+    return res.status(400).send("Nome obrigatório");
+  }
+
+  try {
+    const [result] = await pool.query(
+      "INSERT INTO positions (name) VALUES (?)",
+      [name]
+    );
+    const insertId = result.insertId;
+    res.status(201).json({ id: insertId, name });
+  } catch (error) {
+    console.error("Erro ao salvar cargo:", error);
+    res.status(500).send("Erro ao salvar cargo");
+  }
+  console.log("ccc");
+});
+
+app.get("/queue", async (req, res) => {
   const userId = req.user.id;
 
   try {
-      console.log('Buscando departamento do usuário...');
-      const [userRow] = await pool.query("SELECT department FROM users WHERE id = ?", [userId]);
-      if (!userRow || userRow.length === 0) {
-          console.log('Usuário não encontrado');
-          return res.status(404).send('Usuário não encontrado');
-      }
+    console.log("Buscando departamento do usuário...");
+    const [userRow] = await pool.query(
+      "SELECT department FROM users WHERE id = ?",
+      [userId]
+    );
+    if (!userRow || userRow.length === 0) {
+      console.log("Usuário não encontrado");
+      return res.status(404).send("Usuário não encontrado");
+    }
 
-      const departmentName = userRow[0].department;
-      console.log(`Usuário está no departamento: ${departmentName}`);
+    const departmentName = userRow[0].department;
+    console.log(`Usuário está no departamento: ${departmentName}`);
 
-      const queueTableName = `queueOf${departmentName}`;
-      console.log(`Buscando fila na tabela: ${queueTableName}`);
+    const queueTableName = `queueOf${departmentName}`;
+    console.log(`Buscando fila na tabela: ${queueTableName}`);
 
-      const [rows] = await pool.query(`SELECT * FROM ${queueTableName} WHERE status = 'fila'`);
-      console.log('Fila encontrada:', rows);
-      res.json(rows);
+    const [rows] = await pool.query(
+      `SELECT * FROM ${queueTableName} WHERE status = 'fila'`
+    );
+    console.log("Fila encontrada:", rows);
+    res.json(rows);
   } catch (error) {
-      if (error.code === 'ER_NO_SUCH_TABLE') {
-          console.error(`Tabela ${queueTableName} não encontrada`);
-          return res.status(500).send(`Tabela ${queueTableName} não encontrada`);
-      }
-      console.error('Erro ao buscar fila:', error);
-      res.status(500).send('Erro ao buscar fila');
+    if (error.code === "ER_NO_SUCH_TABLE") {
+      console.error(`Tabela ${queueTableName} não encontrada`);
+      return res.status(500).send(`Tabela ${queueTableName} não encontrada`);
+    }
+    console.error("Erro ao buscar fila:", error);
+    res.status(500).send("Erro ao buscar fila");
   }
 });
 
-
-app.post('/quickResponses', (req, res) => {
+app.post("/quickResponses", (req, res) => {
   const { text, department } = req.body;
 
   if (!text || !department) {
-    return res.status(400).json({ error: 'Campos text e department são obrigatórios' });
+    return res
+      .status(400)
+      .json({ error: "Campos text e department são obrigatórios" });
   }
 
-  const query = 'INSERT INTO quickResponses (text, department) VALUES (?, ?)';
+  const query = "INSERT INTO quickResponses (text, department) VALUES (?, ?)";
   db.query(query, [text, department], (err, result) => {
     if (err) {
-      console.error('Erro ao inserir no banco de dados:', err);
-      return res.status(500).json({ error: 'Erro ao salvar resposta rápida' });
+      console.error("Erro ao inserir no banco de dados:", err);
+      return res.status(500).json({ error: "Erro ao salvar resposta rápida" });
     }
-    res.status(201).json({ message: 'Resposta rápida salva com sucesso', id: result.insertId });
+    res
+      .status(201)
+      .json({
+        message: "Resposta rápida salva com sucesso",
+        id: result.insertId,
+      });
   });
 });
 
-app.put('/users/:id', async (req, res) => {
+app.put("/users/:id", async (req, res) => {
   const userId = req.params.id;
   const { name, email, password, position, department } = req.body;
 
   try {
-    const [user] = await pool.query("SELECT * FROM users WHERE id = ?", [userId]);
+    const [user] = await pool.query("SELECT * FROM users WHERE id = ?", [
+      userId,
+    ]);
 
     if (user.length === 0) {
-      return res.status(404).send('Usuário não encontrado');
+      return res.status(404).send("Usuário não encontrado");
     }
 
     const updatedUser = {
@@ -594,31 +672,33 @@ app.put('/users/:id', async (req, res) => {
 
     await pool.query("UPDATE users SET ? WHERE id = ?", [updatedUser, userId]);
 
-    res.status(200).send('Usuário atualizado com sucesso');
+    res.status(200).send("Usuário atualizado com sucesso");
   } catch (error) {
-    console.error('Erro ao atualizar usuário:', error);
-    res.status(500).send('Erro ao atualizar usuário');
+    console.error("Erro ao atualizar usuário:", error);
+    res.status(500).send("Erro ao atualizar usuário");
   }
 });
 
-app.delete('/users/:id', async (rec, res) => {
+app.delete("/users/:id", async (rec, res) => {
   const userId = req.params.id;
 
   try {
-    const [result] = await pool.query("DELETE FROM users WHERE id = ?", [userId]);
+    const [result] = await pool.query("DELETE FROM users WHERE id = ?", [
+      userId,
+    ]);
 
     if (result.affectedRows === 0) {
-      return res.status(404).send('Usuário não encontrado');
+      return res.status(404).send("Usuário não encontrado");
     }
 
     res.status(200).send("Usuário deletado com sucesso");
   } catch (error) {
-    console.error('Erro ao deletar usuário:', error);
-    res.status(500).send('Erro ao deletar usuário');
+    console.error("Erro ao deletar usuário:", error);
+    res.status(500).send("Erro ao deletar usuário");
   }
 });
 
-app.post('/saveMessage', async (req, res) => {
+app.post("/saveMessage", async (req, res) => {
   const { contactId, message, message_from } = req.body;
   const userId = req.user.id;
   const chatTableName = `chat_user_${userId}`;
@@ -646,33 +726,29 @@ app.post('/saveMessage', async (req, res) => {
       `conv-${Date.now()}`,
       message,
       message_from,
-      Math.floor(Date.now() / 1000)
+      Math.floor(Date.now() / 1000),
     ]);
 
-    res.status(200).send('Mensagem salva com sucesso');
+    res.status(200).send("Mensagem salva com sucesso");
   } catch (error) {
-    console.error('Erro ao salvar mensagem:', error);
-    res.status(500).send('Erro ao salvar mensagem');
+    console.error("Erro ao salvar mensagem:", error);
+    res.status(500).send("Erro ao salvar mensagem");
   }
 });
 
-app.get("/verifyToken", async (req,res)=>{
+app.get("/verifyToken", async (req, res) => {
   console.log(req);
-  
-  
-const user = req.user
 
-try {
-  res.json({ message: 'You are authenticated', user: req.user });
-  
-} catch (error) {
-  
-}
-res.status(401).send(error)
-})
+  const user = req.user;
 
-app.get('/test', (req, res) => {
-  res.json({ message: 'Hello World' });
+  try {
+    res.json({ message: "You are authenticated", user: req.user });
+  } catch (error) {}
+  res.status(401).send(error);
+});
+
+app.get("/test", (req, res) => {
+  res.json({ message: "Hello World" });
 });
 
 server.listen(3005, () => console.log(`Servidor rodando na porta 3005`));
