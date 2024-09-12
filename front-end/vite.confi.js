@@ -12,6 +12,7 @@ export default defineConfig({
     extensions: ['.js', '.jsx']
   },
   server: {
-    port: 5173
+    port: 5173,
+    historyApiFallback: true,
   }
 });
