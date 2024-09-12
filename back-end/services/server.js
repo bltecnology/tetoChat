@@ -46,7 +46,7 @@ app.use(bodyParser.json());
 
 // Configuração de CORS
 app.use(cors({
-  origin: ['https://tetochat.netlify.app', 'https://tetochat-8m0r.onrender.com'],
+  origin: ['https://teto-chat.vercel.app', 'https://tetochat-8m0r.onrender.com'],
   methods: ["GET", "POST", "DELETE", "PATCH"],
   credentials: true
 }));
