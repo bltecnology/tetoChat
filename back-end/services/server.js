@@ -584,7 +584,16 @@ app.post("/positions", async (req, res) => {
     console.error("Erro ao salvar cargo:", error);
     res.status(500).send("Erro ao salvar cargo");
   }
-  console.log("ccc");
+});
+
+app.get("/positions", async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT * FROM positions");
+    res.json(rows);
+  } catch (error) {
+    console.error("Erro ao buscar positions:", error);
+    res.status(500).send("Erro ao buscar positions");
+  }
 });
 
 app.get("/queue", async (req, res) => {
@@ -637,12 +646,10 @@ app.post("/quickResponses", (req, res) => {
       console.error("Erro ao inserir no banco de dados:", err);
       return res.status(500).json({ error: "Erro ao salvar resposta rápida" });
     }
-    res
-      .status(201)
-      .json({
-        message: "Resposta rápida salva com sucesso",
-        id: result.insertId,
-      });
+    res.status(201).json({
+      message: "Resposta rápida salva com sucesso",
+      id: result.insertId,
+    });
   });
 });
 
