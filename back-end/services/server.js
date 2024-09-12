@@ -426,10 +426,10 @@ app.post("/users", addUser);
 app.post("/login", authenticateUser);
 
 app.get("/me", async (req, res) => {
-  const userId = req.user.id;
+  const userId = 1; // Suponha que você sempre retorne dados do usuário com ID 1 ou personalize para o seu caso
   try {
     const [rows] = await pool.query(
-      "SELECT id, name, email, position, department FROM users WHERE id = ?",
+      "SELECT id, name, email FROM users WHERE id = ?",
       [userId]
     );
     const user = rows[0];
@@ -442,6 +442,7 @@ app.get("/me", async (req, res) => {
     res.status(500).send("Erro ao buscar dados do usuário");
   }
 });
+
 
 app.get("/profile-picture/:wa_id", async (req, res) => {
   const defaultProfilePic = "/path/to/default-profile-pic.png";

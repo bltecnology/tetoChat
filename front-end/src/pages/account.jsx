@@ -13,12 +13,7 @@ const Account = () => {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const token = localStorage.getItem('token'); // Supondo que você armazene o token no localStorage
-                const response = await axios.get('https://tetochat-8m0r.onrender.com/me', {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
+                const response = await axios.get('https://tetochat-8m0r.onrender.com/me');
                 setUser(response.data);
             } catch (error) {
                 console.error('Erro ao buscar dados do usuário:', error);
@@ -35,13 +30,8 @@ const Account = () => {
         }
 
         try {
-            const token = localStorage.getItem('token'); // Supondo que você armazene o token no localStorage
             await axios.put('https://tetochat-8m0r.onrender.com/update-password', {
                 password: newPassword
-            }, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
             });
             setMessage('Senha alterada com sucesso');
             setNewPassword('');
