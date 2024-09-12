@@ -218,7 +218,7 @@ const Chat = () => {
 
   const handleTransferComplete = async (selectedDepartmentId) => {
     console.log(selectedDepartmentId);
-  
+
     try {
       // Chama o endpoint de transferência
       await axios.post(
@@ -431,7 +431,7 @@ const Chat = () => {
                   backgroundPosition: "center",
                 }}
               >
-                <div className="flex flex-col space-y-4 ">
+                <div className="flex flex-col space-y-4">
                   {messages.map((message) => (
                     <div
                       key={message.id}
@@ -439,10 +439,13 @@ const Chat = () => {
                         message.message_from === "me"
                           ? "self-end bg-blue-100"
                           : "self-start bg-gray-200"
-                      } p-2 rounded-md max-w-xs`}
+                      } p-3 rounded-md max-w-xs relative`} // Adicionei um padding maior
                     >
-                      <span className="text-sm">{message.message_body}</span>
-                      <span className="text-xs text-gray-500 block mt-1">
+                      <span className="text-base">{message.message_body}</span>{" "}
+                      {/* Tamanho de fonte maior */}
+                      <span className="text-xs text-gray-500 absolute bottom-1 right-2">
+                        {" "}
+                        {/* Posicionamento absoluto da hora */}
                         {format(
                           new Date(parseInt(message.message_timestamp) * 1000),
                           "HH:mm"
@@ -503,20 +506,20 @@ const Chat = () => {
           )}
         </div>
       </div>
-      {selectedContact? 
-      <TransferModal
-        contactId={selectedContact.id}
-
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onTransfer={handleTransferComplete}
-      />
-    :
-    <TransferModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onTransfer={handleTransferComplete}
-      />}
+      {selectedContact ? (
+        <TransferModal
+          contactId={selectedContact.id}
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onTransfer={handleTransferComplete}
+        />
+      ) : (
+        <TransferModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onTransfer={handleTransferComplete}
+        />
+      )}
     </div>
   );
 };
