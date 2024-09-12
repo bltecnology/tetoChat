@@ -53,7 +53,11 @@ export const authenticateJWTRoute = (req, res, next) => {
 app.use(bodyParser.json());
 
 // Configuração de CORS
-app.use(cors());
+const cors = require('cors');
+app.use(cors({
+  origin: 'https://tetochat.netlify.app' // Especifique seu domínio
+}));
+
 
 
 const storage = multer.diskStorage({
