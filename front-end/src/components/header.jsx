@@ -29,10 +29,10 @@ const Header = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className=" p-2 rounded">
-                <FiMenu size={24} className="hover:rotate-y-360" />
+                <FiMenu size={24} className="hover:rotate-y-360 " />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-white text-black mt-2 w-48">
+            <DropdownMenuContent className="bg-slate-100 rounded-lg text-black mt-2 w-48">
               <DropdownMenuItem className="hover:bg-gray-200 text-center">
                 <Link to="/users">Usuários</Link>
               </DropdownMenuItem>
