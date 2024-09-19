@@ -36,7 +36,7 @@ const executeSQLFile = async (filePath) => {
 
 const initDB = async () => {
   try {
-    const schemaPath = path.join(__dirname, 'schemas.sql'); // Caminho absoluto para o arquivo de esquema
+    const schemaPath = path.join(__dirname, 'schemas.sql');
     await executeSQLFile(schemaPath);
     console.log('Tabelas criadas ou já existentes.');
   } catch (error) {
@@ -48,7 +48,7 @@ pool.getConnection()
   .then(conn => {
     console.log('Conexão ao banco de dados bem-sucedida');
     conn.release();
-    return initDB(); // Inicializa o banco de dados após a conexão ser estabelecida
+    return initDB(); 
   })
   .catch(err => {
     console.error('Erro ao conectar ao banco de dados:', err);
