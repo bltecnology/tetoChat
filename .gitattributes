@@ -1,0 +1,4 @@
+mysql-data/auto.cnf text eol=lf
+mysql-data/binlog.index text eol=lf
+mysql-data/ib_buffer_pool text eol=lf
+mysql-data/mysql.sock text eol=lf

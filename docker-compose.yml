@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./front-end
+    ports:
+      - "80:80"
+    networks:
+      - teto-network
+
+  backend:
+    build:
+      context: ./api
+    ports:
+      - "3005:3005"
+    networks:
+      - teto-network
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: tetoChat
+
+  db:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: tetoChat
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+      - ./schemas.sql:/docker-entrypoint-initdb.d/schemas.sql
+    ports:
+      - "3307:3307"  # Porta externa 3307 mapeada para a interna 3306
+    networks:
+      - teto-network
+
+networks:
+  teto-network:
+    driver: bridge

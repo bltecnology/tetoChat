@@ -5,7 +5,7 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import axios from "axios";
 import multer from "multer";
-import pool from "./database.js";
+import pool from "../database.js";
 import dotenv from "dotenv";
 import { addUser } from "./newUser.js";
 import { authenticateUser, authenticateJWT } from "./auth.js"; // Use a função importada de auth.js
