@@ -13,12 +13,10 @@ import QuickResponses from './pages/quickResponses';
 
 const AppRoutes = () => {
   return (
-    <Router>
+    
       <Routes>
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/login" element={<LoginPage />} />
-        
-        {/* Rotas acessíveis sem proteção */}
         <Route path="/home" element={<Home />} />
         <Route path="/contacts" element={<Contacts />} />
         <Route path="/departments" element={<Departments />} />
@@ -29,7 +27,6 @@ const AppRoutes = () => {
         <Route path="/positions" element={<Positions />} />
         <Route path="/quickResponses" element={<QuickResponses />} />
       </Routes>
-    </Router>
   );
 };
 

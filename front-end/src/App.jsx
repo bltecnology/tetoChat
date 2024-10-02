@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import './index.css';
 import AppRoutes from './routes';
+import { BrowserRouter } from 'react-router-dom';
 
 const App = () => {
   useEffect(() => {
@@ -15,9 +16,9 @@ const App = () => {
   }, []);
 
   return (
-    <div className="App">
+      <BrowserRouter> 
       <AppRoutes />
-    </div>
+      </BrowserRouter>
   );
 };
 

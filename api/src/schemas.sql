@@ -58,11 +58,11 @@ CREATE TABLE IF NOT EXISTS quick_responses (
 
 CREATE TABLE IF NOT EXISTS transfers (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  whatsapp_message_id INT,  -- Nome mais consistente com a tabela whatsapp_messages
+  whatsapp_message_id INT, 
   department_origin_id INT,
   department_destination_id INT,
   transfer_date DATETIME,
-  FOREIGN KEY (whatsapp_message_id) REFERENCES whatsapp_messages(id),  -- Chave estrangeira correta
+  FOREIGN KEY (whatsapp_message_id) REFERENCES whatsapp_messages(id),  - Chave estrangeira correta
   FOREIGN KEY (department_origin_id) REFERENCES departments(id),
   FOREIGN KEY (department_destination_id) REFERENCES departments(id)
 );

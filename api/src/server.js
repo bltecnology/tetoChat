@@ -8,7 +8,7 @@ import multer from "multer";
 import pool from "./database.js";
 import dotenv from "dotenv";
 import { addUser } from "./newUser.js";
-import { authenticateUser, authenticateJWT } from "./auth.js"; // Use a função importada de auth.js
+import { authenticateUser, authenticateJWT } from "./auth.js"; 
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import mysql from "mysql2";
@@ -23,7 +23,7 @@ const io = new Server(server);
 
 export const authenticateJWTRoute = (req, res, next) => {
   const token =
-    req.headers.authorization && req.headers.authorization.split(" ")[1]; // Extrai o token do cabeçalho
+    req.headers.authorization && req.headers.authorization.split(" ")[1];
 
   if (!token) {
     return res.status(401).send("Token de acesso é necessário");
@@ -34,26 +34,27 @@ export const authenticateJWTRoute = (req, res, next) => {
       return res.status(403).send("Token inválido ou expirado");
     }
 
-    req.user = user; // Anexa o usuário decodificado à requisição
+    req.user = user; 
     next();
   });
 };
 
-// const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' }); // 1 hora de expiração
 
 app.use(bodyParser.json());
 
-// Configuração de CORS
+
 app.use(
   cors({
     origin: [
-      "https://teto-chat.vercel.app",
-      "https://tetochat-8m0r.onrender.com",
+      "http://front-tetoChat", 
+      "http://nginx-tetoChat",
+      "htpp://localhost" 
     ],
     methods: ["GET", "POST", "DELETE", "PATCH"],
     credentials: true,
   })
 );
+
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
@@ -61,7 +62,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Conexão com o banco de dados
+
 const connection = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -112,7 +113,7 @@ io.on("connection", (socket) => {
     if (message.user_id === userId) {
       socket.emit("new_message", message);
 
-      // Emitir um evento adicional para atualizar a aba de "Chat"
+      
       socket.broadcast.emit("update_chat_contacts", {
         contact_id: message.contact_id,
         user_id: message.user_id,
@@ -202,7 +203,9 @@ app.post("/webhook", async (request, response) => {
           }
 
           let contactId;
+          let isNewContact = false;
           try {
+            
             const [contactRows] = await pool.query(
               "SELECT id FROM contacts WHERE phone = ?",
               [contact.wa_id]
@@ -210,11 +213,13 @@ app.post("/webhook", async (request, response) => {
             if (contactRows.length > 0) {
               contactId = contactRows[0].id;
             } else {
+              
               const [result] = await pool.query(
                 "INSERT INTO contacts (name, phone) VALUES (?, ?)",
                 [contact.profile.name, contact.wa_id]
               );
               contactId = result.insertId;
+              isNewContact = true; 
             }
           } catch (err) {
             console.error("Erro ao buscar ou criar contato:", err);
@@ -222,6 +227,45 @@ app.post("/webhook", async (request, response) => {
             continue;
           }
 
+         
+          if (isNewContact) {
+            
+            const initialBotMessage = "Olá! Deseja conversar sobre: \n1- Orçamentos \n2- Contas";
+
+            await sendMessage(contact.wa_id, initialBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
+          } else {
+            
+            const userResponse = message.text.body.trim();
+
+            switch (userResponse) {
+              case '1':
+                
+                await sendMessage(contact.wa_id, "Você escolheu conversar sobre orçamentos. Estamos transferindo você...", process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
+                
+                
+                await pool.query(
+                  "INSERT INTO queueOfOrcamentos (contact_id, conversation_id, status) VALUES (?, ?, 'fila')",
+                  [contactId, `conv-${Date.now()}`]
+                );
+                break;
+              case '2':
+                
+                await sendMessage(contact.wa_id, "Você escolheu conversar sobre contas. Estamos transferindo você...", process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
+                
+                
+                await pool.query(
+                  "INSERT INTO queueOfAdministracao (contact_id, conversation_id, status) VALUES (?, ?, 'fila')",
+                  [contactId, `conv-${Date.now()}`]
+                );
+                break;
+              default:
+                
+                await sendMessage(contact.wa_id, "Opção inválida. Por favor, responda com 1 para orçamentos ou 2 para contas.", process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
+                break;
+            }
+          }
+
+          
           const sql =
             "INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
           const values = [

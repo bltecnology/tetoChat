@@ -1,4 +1,3 @@
-// vite.config.js
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
@@ -16,9 +15,14 @@ export default defineConfig({
     historyApiFallback: true,
     proxy: {
       '/socket.io': {
-        target: 'https://tetochat-8m0r.onrender.com',
+        target: process.env.REACT_APP_API_URL || 'http://api-tetoChat:3005',
         changeOrigin: true,
         ws: true
+      },
+      '/api': {
+        target: process.env.REACT_APP_API_URL || 'http://api-tetoChat:3005',
+        changeOrigin: true,
+        secure: false
       }
     }
   }

@@ -1,42 +1,56 @@
 version: '3.8'
 
 services:
-  frontend:
-    build:
-      context: ./front-end
-    ports:
-      - "80:80"
-    networks:
-      - teto-network
-
-  backend:
-    build:
-      context: ./api
-    ports:
-      - "3005:3005"
-    networks:
-      - teto-network
-    depends_on:
-      - db
-    environment:
-      DB_HOST: db
-      DB_USER: root
-      DB_PASSWORD: root
-      DB_NAME: tetoChat
-
-  db:
+  mysql:
     image: mysql:latest
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: tetoChat
-    volumes:
-      - ./mysql-data:/var/lib/mysql
-      - ./schemas.sql:/docker-entrypoint-initdb.d/schemas.sql
     ports:
-      - "3307:3307"  # Porta externa 3307 mapeada para a interna 3306
-    networks:
-      - teto-network
+      - '3306:3306'
+    environment:
+      MYSQL_DATABASE: 'tetoChat'
+      MYSQL_ROOT_PASSWORD: '02Mickey$'
+    volumes:
+      - mysql-volume:/database/db
+    restart: always
+
+  api:
+    container_name: api-tetoChat
+    build: ./api
+    restart: always
+    ports:
+      - '3005:3005'
+    depends_on:
+      - mysql
+    env_file:
+      - ./api/.env
+
+  frontend:
+    container_name: front-tetoChat
+    build: ./front-end
+    depends_on:
+      - api
+    ports:
+      - '3000:3000' # Adicionando porta para acessar o frontend diretamente
+    volumes:
+      - front-volume:/var/www/html
+    environment:
+      - REACT_APP_API_URL=http://api:3005 # URL para a API
+
+  nginx:
+    container_name: nginx-tetoChat
+    build: ./nginx
+    ports:
+      - '80:80'
+    volumes:
+      - front-volume:/var/www/html
+    depends_on:
+      - api
+      - mysql
+      - frontend
+
+volumes:
+  mysql-volume:
+  front-volume:
 
 networks:
-  teto-network:
+  default:
     driver: bridge
