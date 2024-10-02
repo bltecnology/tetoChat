@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS transfers (
   department_origin_id INT,
   department_destination_id INT,
   transfer_date DATETIME,
-  FOREIGN KEY (whatsapp_message_id) REFERENCES whatsapp_messages(id),  - Chave estrangeira correta
+  FOREIGN KEY (whatsapp_message_id) REFERENCES whatsapp_messages(id), 
   FOREIGN KEY (department_origin_id) REFERENCES departments(id),
   FOREIGN KEY (department_destination_id) REFERENCES departments(id)
 );
