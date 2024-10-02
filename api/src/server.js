@@ -48,7 +48,8 @@ app.use(
     origin: [
       "http://front-tetoChat", 
       "http://nginx-tetoChat",
-      "htpp://localhost" 
+      "htpp://localhost:5173",
+      "https://tetochat-8m0r.onrender.com" 
     ],
     methods: ["GET", "POST", "DELETE", "PATCH"],
     credentials: true,
