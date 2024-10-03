@@ -50,6 +50,7 @@ app.use(
       "http://nginx-tetoChat",
       "http://localhost:5173",
       "sql10.freesqldatabase.com" ,
+      "https://tetochat-8m0r.onrender.com",
       "https://tetochat-8m0r.onrender.com"
     ],
     methods: ["GET", "POST", "DELETE", "PATCH"],
@@ -206,18 +207,19 @@ app.post("/webhook", async (request, response) => {
 
           let contactId;
           let isNewContact = false;
+          let contactStatus = null; // Adiciona uma variável para verificar o status
+
           try {
-            
             const [contactRows] = await pool.query(
-              "SELECT id FROM contacts WHERE phone = ?",
+              "SELECT id, status FROM contacts WHERE phone = ?",
               [contact.wa_id]
             );
             if (contactRows.length > 0) {
               contactId = contactRows[0].id;
+              contactStatus = contactRows[0].status; // Obtem o status do contato
             } else {
-              
               const [result] = await pool.query(
-                "INSERT INTO contacts (name, phone) VALUES (?, ?)",
+                "INSERT INTO contacts (name, phone, status) VALUES (?, ?, 'novo')", // Insere o contato como 'novo'
                 [contact.profile.name, contact.wa_id]
               );
               contactId = result.insertId;
@@ -229,45 +231,48 @@ app.post("/webhook", async (request, response) => {
             continue;
           }
 
-         
-          if (isNewContact) {
-            
+          // Se o contato for novo, envia a mensagem de boas-vindas e atualiza o status
+          if (isNewContact || contactStatus === 'novo') {
             const initialBotMessage = "Olá! Deseja conversar sobre: \n1- Orçamentos \n2- Contas";
 
             await sendMessage(contact.wa_id, initialBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
-          } else {
-            
+
+            // Atualiza o status do contato para "aguardando_resposta"
+            await pool.query("UPDATE contacts SET status = 'aguardando_resposta' WHERE id = ?", [contactId]);
+
+          } else if (contactStatus === 'aguardando_resposta') {
+            // Resposta do usuário
             const userResponse = message.text.body.trim();
 
             switch (userResponse) {
               case '1':
-                
                 await sendMessage(contact.wa_id, "Você escolheu conversar sobre orçamentos. Estamos transferindo você...", process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
-                
-                
+
+                // Atualiza o status do contato para 'orcamentos'
                 await pool.query(
                   "INSERT INTO queueOfOrcamentos (contact_id, conversation_id, status) VALUES (?, ?, 'fila')",
                   [contactId, `conv-${Date.now()}`]
                 );
+
+                await pool.query("UPDATE contacts SET status = 'orcamentos' WHERE id = ?", [contactId]);
                 break;
               case '2':
-                
                 await sendMessage(contact.wa_id, "Você escolheu conversar sobre contas. Estamos transferindo você...", process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
-                
-                
+
                 await pool.query(
                   "INSERT INTO queueOfAdministracao (contact_id, conversation_id, status) VALUES (?, ?, 'fila')",
                   [contactId, `conv-${Date.now()}`]
                 );
+
+                await pool.query("UPDATE contacts SET status = 'administracao' WHERE id = ?", [contactId]);
                 break;
               default:
-                
                 await sendMessage(contact.wa_id, "Opção inválida. Por favor, responda com 1 para orçamentos ou 2 para contas.", process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
                 break;
             }
           }
 
-          
+          // Insere a mensagem recebida no banco de dados
           const sql =
             "INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
           const values = [
@@ -319,6 +324,7 @@ app.post("/webhook", async (request, response) => {
     response.sendStatus(400);
   }
 });
+
 
 app.post("/send", async (req, res) => {
   const { toPhone, text } = req.body;
