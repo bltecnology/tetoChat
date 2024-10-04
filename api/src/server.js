@@ -121,9 +121,6 @@ io.on("connection", (socket) => {
 });
 
 async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
-  console.log("Enviando mensagem para:", toPhone);
-  console.log("Conteúdo da mensagem:", text);
-
   const url = `https://graph.facebook.com/v20.0/${whatsappBusinessAccountId}/messages`;
   const data = {
     messaging_product: "whatsapp",
@@ -132,13 +129,14 @@ async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
     type: "text",
     text: { body: text },
   };
+
   const headers = {
     Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
   };
 
   try {
     const response = await axios.post(url, data, { headers });
-    console.log("Resposta da API do WhatsApp:", response.data);
+
 
     if (socket) {
       socket.emit("new_message", {
@@ -151,8 +149,7 @@ async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
 
     return response.data;
   } catch (error) {
-    console.error("Erro ao enviar mensagem para o WhatsApp:", error);
-    throw error;
+    console.error("Erro ao enviar mensagem para o WhatsApp:");
   }
 }
 
@@ -344,17 +341,20 @@ app.post("/webhook", async (request, response) => {
     response.sendStatus(400);
   }
 });
-
-app.post("/send", async (req, res) => {
+app.post("/send", authenticateJWT, async (req, res) => {
   const { toPhone, text } = req.body;
   const userId = req.user.id;
-
+  
+  console.log("Recebido:", { toPhone, text, userId });
+  
   if (!toPhone || !text) {
+    console.log("Erro: Campos obrigatórios ausentes");
     return res.status(400).send("toPhone e text são obrigatórios");
   }
 
   try {
     await sendMessage(toPhone, text, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
+    console.log("Mensagem enviada com sucesso para", toPhone);
 
     const [contactRows] = await pool.query(
       "SELECT id FROM contacts WHERE phone = ?",
@@ -363,19 +363,22 @@ app.post("/send", async (req, res) => {
     let contactId;
     if (contactRows.length > 0) {
       contactId = contactRows[0].id;
+      console.log("Contato existente com ID:", contactId);
     } else {
       const [result] = await pool.query(
         "INSERT INTO contacts (name, phone) VALUES (?, ?)",
         ["API", toPhone]
       );
       contactId = result.insertId;
+      console.log("Novo contato inserido com ID:", contactId);
     }
 
     const conversationId = `conv-${Date.now()}`;
     const insertMessageQuery = `
-  INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-`;
+      INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
     await pool.query(insertMessageQuery, [
       process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
       process.env.DISPLAY_PHONE_NUMBER,
@@ -389,26 +392,43 @@ app.post("/send", async (req, res) => {
       contactId,
       userId,
     ]);
+    console.log("Mensagem registrada no banco de dados");
 
     const [userRow] = await pool.query(
-      "SELECT department FROM users WHERE id = ?",
+      "SELECT department_id FROM users WHERE id = ?",
       [userId]
     );
-    const departmentName = userRow[0].department;
-    const queueTableName = `queueOf${departmentName}`;
+    const [departamentRowName] = await pool.query(
+      "SELECT name FROM departments WHERE id = ?",
+      [userRow[0].department_id]
+    );
+    
+    const departmentName = departamentRowName[0].name;
+    console.log("Departamento encontrado:", departmentName);
 
+    const queueTableName = `queueOf${departmentName}`;
     const insertQueueQuery = `
       INSERT INTO ${queueTableName} (contact_id, conversation_id, status)
       VALUES (?, ?, 'fila')
     `;
-    await pool.query(insertQueueQuery, [contactId, conversationId]);
 
-    res.status(200).send("Mensagem enviada e salva com sucesso");
+    await pool.query(insertQueueQuery, [contactId, conversationId]);
+    console.log("Mensagem adicionada à fila:", queueTableName);
+
+    return res.status(200).send("Mensagem enviada e salva com sucesso");
+    
   } catch (error) {
-    console.error("Erro ao enviar mensagem:", error);
-    res.status(500).send("Erro ao enviar mensagem");
+    console.error("Erro durante o processo:", error);
+    
+    // Verifica se os cabeçalhos já foram enviados antes de tentar enviar uma resposta
+    if (!res.headersSent) {
+      return res.status(500).send("Erro ao enviar mensagem");
+    }
+    // Adiciona um log caso os cabeçalhos já tenham sido enviados
+    console.log("Os cabeçalhos já foram enviados, não é possível enviar outra resposta.");
   }
 });
+
 
 app.get("/chats", async (req, res) => {
   const userId = req.user.id;

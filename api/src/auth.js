@@ -35,6 +35,8 @@ export const authenticateJWT = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) {
+    console.log(req.headers.authorization);
+    
     return res.sendStatus(401);
   }
 
@@ -45,7 +47,7 @@ export const authenticateJWT = (req, res, next) => {
 
       req.user = user;
 
-    //  res.json({ user });
+    res.json({ user });
 
     next();
   });
