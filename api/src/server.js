@@ -42,18 +42,7 @@ export const authenticateJWTRoute = (req, res, next) => {
 app.use(bodyParser.json());
 
 app.use(
-  cors({
-    origin: [
-      "http://front-tetoChat",
-      "http://nginx-tetoChat",
-      "http://localhost:5173",
-      "sql10.freesqldatabase.com",
-      "https://tetochat-8m0r.onrender.com",
-      "https://tetochat-8m0r.onrender.com",
-    ],
-    methods: ["GET", "POST", "DELETE", "PATCH"],
-    credentials: true,
-  })
+  cors({})
 );
 
 const storage = multer.diskStorage({
