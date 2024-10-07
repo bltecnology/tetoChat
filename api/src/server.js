@@ -339,7 +339,7 @@ app.post("/send", authenticateJWT, async (req, res) => {
 
   if (!toPhone || !text) {
     console.log("Erro: Campos obrigatórios ausentes");
-    return res.status(400).send("toPhone e text são obrigatórios"); // Certifique-se de que 'return' está presente aqui
+    return res.status(400).send("toPhone e text são obrigatórios"); // Finaliza aqui se os campos estiverem ausentes
   }
 
   try {
@@ -411,21 +411,22 @@ app.post("/send", authenticateJWT, async (req, res) => {
     await pool.query(insertQueueQuery, [contactId, conversationId]);
     console.log("Mensagem adicionada à fila:", queueTableName);
 
-    // Retornar a resposta ao cliente
-    return res.status(200).send("Mensagem enviada e salva com sucesso"); // Adicione 'return' aqui
+    // Retornar a resposta ao cliente (finaliza a função aqui)
+    return res.status(200).send("Mensagem enviada e salva com sucesso");
     
   } catch (error) {
     console.error("Erro durante o processo:", error);
 
-    // Verificar se os cabeçalhos já foram enviados antes de tentar responder
+    // Certifique-se de que o cabeçalho ainda não foi enviado antes de tentar enviar uma resposta de erro
     if (!res.headersSent) {
-      return res.status(500).send("Erro ao enviar mensagem"); // Adicione 'return' aqui
+      return res.status(500).send("Erro ao enviar mensagem");
     }
 
-    // Se os cabeçalhos já foram enviados, logar a mensagem
+    // Caso os cabeçalhos já tenham sido enviados, logue o erro e não faça mais nada
     console.log("Os cabeçalhos já foram enviados, não é possível enviar outra resposta.");
   }
 });
+
 
 
 
