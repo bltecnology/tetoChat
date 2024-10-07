@@ -118,13 +118,17 @@ async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
     type: "text",
     text: { body: text },
   };
+console.log('aaa');
 
   const headers = {
     Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
   };
+  console.log('ccc');
 
   try {
     const response = await axios.post(url, data, { headers });
+
+    console.log('bbb');
 
 
     if (socket) {
@@ -135,6 +139,7 @@ async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
         timestamp: new Date().getTime(),
       });
     }
+    console.log('ddd');
 
     return response.data;
   } catch (error) {
