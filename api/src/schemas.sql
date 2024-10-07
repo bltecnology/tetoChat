@@ -29,7 +29,8 @@ CREATE TABLE IF NOT EXISTS contacts (
   last_message TEXT,
   cpf VARCHAR(11),
   rg VARCHAR(10),
-  email VARCHAR(100)
+  email VARCHAR(100),
+  status VARCHAR(50)
 );
 
 CREATE TABLE IF NOT EXISTS whatsapp_messages (
