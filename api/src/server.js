@@ -330,21 +330,24 @@ app.post("/webhook", async (request, response) => {
     response.sendStatus(400);
   }
 });
+
 app.post("/send", authenticateJWT, async (req, res) => {
   const { toPhone, text } = req.body;
   const userId = req.user.id;
-  
+
   console.log("Recebido:", { toPhone, text, userId });
-  
+
   if (!toPhone || !text) {
     console.log("Erro: Campos obrigatórios ausentes");
-    return res.status(400).send("toPhone e text são obrigatórios");
+    return res.status(400).send("toPhone e text são obrigatórios"); // Certifique-se de que 'return' está presente aqui
   }
 
   try {
+    // Enviar mensagem via WhatsApp API
     await sendMessage(toPhone, text, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
     console.log("Mensagem enviada com sucesso para", toPhone);
 
+    // Verificar se o contato já existe no banco de dados
     const [contactRows] = await pool.query(
       "SELECT id FROM contacts WHERE phone = ?",
       [toPhone]
@@ -354,6 +357,7 @@ app.post("/send", authenticateJWT, async (req, res) => {
       contactId = contactRows[0].id;
       console.log("Contato existente com ID:", contactId);
     } else {
+      // Inserir novo contato se não existir
       const [result] = await pool.query(
         "INSERT INTO contacts (name, phone) VALUES (?, ?)",
         ["API", toPhone]
@@ -362,6 +366,7 @@ app.post("/send", authenticateJWT, async (req, res) => {
       console.log("Novo contato inserido com ID:", contactId);
     }
 
+    // Criar uma nova conversa e inserir a mensagem
     const conversationId = `conv-${Date.now()}`;
     const insertMessageQuery = `
       INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id)
@@ -383,6 +388,7 @@ app.post("/send", authenticateJWT, async (req, res) => {
     ]);
     console.log("Mensagem registrada no banco de dados");
 
+    // Recuperar o departamento do usuário
     const [userRow] = await pool.query(
       "SELECT department_id FROM users WHERE id = ?",
       [userId]
@@ -391,10 +397,11 @@ app.post("/send", authenticateJWT, async (req, res) => {
       "SELECT name FROM departments WHERE id = ?",
       [userRow[0].department_id]
     );
-    
+
     const departmentName = departamentRowName[0].name;
     console.log("Departamento encontrado:", departmentName);
 
+    // Adicionar a mensagem na fila do departamento correspondente
     const queueTableName = `queueOf${departmentName}`;
     const insertQueueQuery = `
       INSERT INTO ${queueTableName} (contact_id, conversation_id, status)
@@ -404,19 +411,23 @@ app.post("/send", authenticateJWT, async (req, res) => {
     await pool.query(insertQueueQuery, [contactId, conversationId]);
     console.log("Mensagem adicionada à fila:", queueTableName);
 
-    return res.status(200).send("Mensagem enviada e salva com sucesso");
+    // Retornar a resposta ao cliente
+    return res.status(200).send("Mensagem enviada e salva com sucesso"); // Adicione 'return' aqui
     
   } catch (error) {
     console.error("Erro durante o processo:", error);
-    
-    // Verifica se os cabeçalhos já foram enviados antes de tentar enviar uma resposta
+
+    // Verificar se os cabeçalhos já foram enviados antes de tentar responder
     if (!res.headersSent) {
-      return res.status(500).send("Erro ao enviar mensagem");
+      return res.status(500).send("Erro ao enviar mensagem"); // Adicione 'return' aqui
     }
-    // Adiciona um log caso os cabeçalhos já tenham sido enviados
+
+    // Se os cabeçalhos já foram enviados, logar a mensagem
     console.log("Os cabeçalhos já foram enviados, não é possível enviar outra resposta.");
   }
 });
+
+
 
 
 app.get("/chats", async (req, res) => {
