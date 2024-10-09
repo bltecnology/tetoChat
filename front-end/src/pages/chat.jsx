@@ -270,7 +270,7 @@ const Chat = () => {
             <button
               onClick={() => setActiveTab("chat")}
               className={`w-1/3 p-2 relative ${
-                activeTab === "chat" ? "text-red-500" : "text-gray-500"
+                activeTab === "chat" ? "text-red-500  " : "text-gray-500"
               }`}
             >
               Chat

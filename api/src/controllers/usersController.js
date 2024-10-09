@@ -1,7 +1,50 @@
 import bcrypt from 'bcryptjs';
-import pool from './database.js';
+import pool from '../models/db.js';
 
 const saltRounds = 10;
+
+export const getUsers = async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT * FROM users");
+    res.json(rows);
+  } catch (error) {
+    console.error("Erro ao buscar usuários:", error);
+    res.status(500).send("Erro ao buscar usuários");
+  }
+};
+
+export const updateUser = async (req, res) => {
+  const userId = req.params.id;
+  const { name, email, password, position, department } = req.body;
+
+  try {
+    const [user] = await pool.query("SELECT * FROM users WHERE id = ?", [
+      userId,
+    ]);
+
+    if (user.length === 0) {
+      return res.status(404).send("Usuário não encontrado");
+    }
+
+    const updatedUser = {
+      name: name || user[0].name,
+      email: email || user[0].email,
+      position: position || user[0].position,
+      department: department || user[0].department,
+    };
+
+    if (password) {
+      updatedUser.password = password;
+    }
+
+    await pool.query("UPDATE users SET ? WHERE id = ?", [updatedUser, userId]);
+
+    res.status(200).send("Usuário atualizado com sucesso");
+  } catch (error) {
+    console.error("Erro ao atualizar usuário:", error);
+    res.status(500).send("Erro ao atualizar usuário");
+  }
+};
 
 export const addUser = async (req, res) => {
   const { name, email, password, position_id, department_id } = req.body;
