@@ -1,6 +1,10 @@
 import jwt from 'jsonwebtoken';
 import pool from './db.js';
-import bcrypt from 'bcryptjs'; 
+import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
+
+// Carrega as variáveis de ambiente do arquivo .env
+dotenv.config();
 
 const SECRET_KEY = process.env.SECRET_KEY;
 
@@ -9,28 +13,37 @@ if (!SECRET_KEY) {
 }
 
 // Função para autenticar usuário e gerar o token JWT
-// Função para autenticar usuário e gerar o token JWT
 export const authenticateUser = async (req, res) => {
   const { email, password } = req.body;
 
+  // Verifica se email e senha foram fornecidos
   if (!email || !password) {
     return res.status(400).send('Email e senha são obrigatórios');
   }
 
   try {
+    // Busca o usuário pelo email
     const [rows] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
     const user = rows[0];
 
+    // Verifica se o usuário foi encontrado
     if (!user) {
       return res.status(401).send('Credenciais inválidas');
     }
 
+    // Compara a senha fornecida com a senha armazenada no banco
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).send('Credenciais inválidas');
     }
 
-    const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, { expiresIn: '1h' });
+    // Verifica se a chave secreta está presente
+    console.log("Chave secreta ao gerar token:", process.env.SECRET_KEY);
+
+    // Gera o token JWT com o ID e email do usuário
+    const token = jwt.sign({ id: user.id, email: user.email }, process.env.SECRET_KEY, { expiresIn: '1h' });
+
+    // Retorna o token gerado
     res.json({ token });
   } catch (error) {
     console.error('Erro ao tentar fazer login:', error);
@@ -38,22 +51,34 @@ export const authenticateUser = async (req, res) => {
   }
 };
 
-
 // Middleware para autenticar o token JWT
 export const authenticateJWT = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1]; // Extrai o token do header "Authorization"
+  
+  // Loga o token recebido e a chave secreta para verificação
+  console.log("Token recebido:", token);
+  console.log("Chave secreta ao verificar:", process.env.SECRET_KEY);
 
+  // Verifica se o token foi fornecido
   if (!token) {
-    return res.sendStatus(401); // Token não fornecido
+    return res.status(401).send('Token não fornecido'); // Token ausente
   }
 
   // Verifica o token JWT
-  jwt.verify(token, SECRET_KEY, (err, user) => {
+  jwt.verify(token, process.env.SECRET_KEY, (err, user) => {
     if (err) {
-      return res.sendStatus(403); // Token inválido ou expirado
+      console.error('Erro ao verificar o token:', err); // Log de erro detalhado
+      if (err.name === 'TokenExpiredError') {
+        return res.status(403).send('Token expirado'); // Token expirado
+      }
+      if (err.name === 'JsonWebTokenError') {
+        return res.status(403).send('Token inválido'); // Token inválido
+      }
+      return res.status(403).send('Erro ao verificar token'); // Outro erro
     }
 
-    req.user = user; // Armazena as informações do usuário decodificado no req.user
+    // Armazena as informações do usuário decodificado no req.user
+    req.user = user;
     next(); // Continua para a próxima função (controller da rota)
   });
 };

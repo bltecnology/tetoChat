@@ -1,5 +1,43 @@
 import pool from '../models/db.js';
+import axios from "axios";
 
+async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
+  const url = `https://graph.facebook.com/v20.0/${whatsappBusinessAccountId}/messages`;
+  const data = {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: toPhone,
+    type: "text",
+    text: { body: text },
+  };
+console.log('aaa');
+
+  const headers = {
+    Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+  };
+  console.log('ccc');
+
+  try {
+    const response = await axios.post(url, data, { headers });
+
+    console.log('bbb');
+
+
+    if (socket) {
+      socket.emit("new_message", {
+        phone_number_id: whatsappBusinessAccountId,
+        to: toPhone,
+        message_body: text,
+        timestamp: new Date().getTime(),
+      });
+    }
+    console.log('ddd');
+
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao enviar mensagem para o WhatsApp:", error);
+  }
+}
 
 // Buscar mensagens existentes
 export const getMessages = async (req, res) => {
@@ -15,7 +53,8 @@ export const getMessages = async (req, res) => {
 // Enviar mensagem
 export const send = async (req, res) => {
   const { toPhone, text } = req.body;
-
+  
+  
   // Verifica se o usuário está autenticado
   if (!req.user || !req.user.id) {
     return res.status(401).send("Usuário não autenticado");
@@ -69,16 +108,27 @@ export const send = async (req, res) => {
     ]);
 
     // Seleciona o departamento do usuário
-    const [userRow] = await pool.query("SELECT department FROM users WHERE id = ?", [userId]);
-    const departmentName = userRow[0].department;
-    const queueTableName = `queueOf${departmentName}`;
+    const [userRow] = await pool.query(
+      "SELECT department_id FROM users WHERE id = ?",
+      [userId]
+    );
+    const [departamentRowName] = await pool.query(
+      "SELECT name FROM departments WHERE id = ?",
+      [userRow[0].department_id]
+    );
 
-    // Insere o contato na fila
-    const insertQueueQuery = `
-      INSERT INTO ${queueTableName} (contact_id, conversation_id, status)
-      VALUES (?, ?, 'fila')
-    `;
+    const departmentName = departamentRowName[0].name;
+    console.log("Departamento encontrado:", departmentName);
+
+    // Adicionar a mensagem na fila do departamento correspondente
+    const queueTableName = `queueOf${departmentName}`;
+    const insertQueueQuery = 
+      `INSERT INTO ${queueTableName} (contact_id, conversation_id, status)
+      VALUES (?, ?, 'fila')`
+    ;
+
     await pool.query(insertQueueQuery, [contactId, conversationId]);
+    console.log("Mensagem adicionada à fila:", queueTableName);
 
     // Responde com sucesso
     res.status(200).send("Mensagem enviada e salva com sucesso");
