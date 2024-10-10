@@ -1,6 +1,4 @@
-
 import pool from '../models/db.js';
-
 
 export const getPositions = async (req, res) => {
   try {
@@ -11,7 +9,6 @@ export const getPositions = async (req, res) => {
     res.status(500).send("Erro ao buscar cargos");
   }
 };
-
 
 export const addPosition = async (req, res) => {
   const { name } = req.body;
@@ -44,33 +41,26 @@ export const deletePosition = async (req, res) => {
   }
 };
 
-
+// Método de edição de cargo corrigido
 export const editPosition = async (req, res) => {
-  const { id } = req.params; 
-  const { name } = req.body; 
+  const { id } = req.params;
+  const { name } = req.body;
+
+  if (!name) {
+    return res.status(400).send("Nome do cargo é obrigatório");
+  }
 
   try {
-    
-    const updatedPosition = await Position.update(
-      { name }, 
-      {
-        where: {
-          id, 
-        },
-      }
-    );
+    // Atualiza o cargo no banco de dados
+    const [result] = await pool.query("UPDATE positions SET name = ? WHERE id = ?", [name, id]);
 
-    if (updatedPosition[0] === 0) {
-      return res.status(404).json({ message: "Cargo não encontrado" });
+    if (result.affectedRows === 0) {
+      return res.status(404).send("Cargo não encontrado");
     }
 
-    
-    res.status(200).json({
-      message: "Cargo atualizado com sucesso",
-      position: { id, name }, 
-    });
+    res.status(200).send(`Cargo atualizado com sucesso. ID: ${id}`);
   } catch (error) {
     console.error("Erro ao atualizar cargo:", error);
-    res.status(500).json({ message: "Erro ao atualizar o cargo", error });
+    res.status(500).send("Erro ao atualizar o cargo");
   }
 };
