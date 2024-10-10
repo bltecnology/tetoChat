@@ -6,6 +6,7 @@ import {departmentsRoutes} from "./routes/departmentsRoutes.js";
 import {positionsRoutes} from "./routes/positionsRoutes.js";
 import {queueRoutes} from "./routes/queueRoutes.js";
 import {messagesRoutes} from "./routes/messagesRoutes.js";
+import {loginRoutes} from "./routes/loginRoutes.js";
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use(cors({
 
 app.use(express.json());
 
+app.use(loginRoutes)
 app.use(contactsRoutes);
 app.use(usersRoutes);
 app.use(departmentsRoutes);
