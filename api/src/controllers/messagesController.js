@@ -16,6 +16,7 @@ export const getMessages = async (req, res) => {
 export const send = async (req, res) => {
   const { toPhone, text } = req.body;
   const userId = req.user.id;
+  console.log(req.body);
 
   if (!toPhone || !text) {
     return res.status(400).send("toPhone e text são obrigatórios");
