@@ -171,7 +171,7 @@ const Chat = () => {
       try {
         // Enviar a mensagem ao backend
         const response = await axios.post(
-          "https://tetochat-8m0r.onrender.com/messages",
+          "https://tetochat-8m0r.onrender.com/send",
           {
             toPhone: selectedContact.phone,
             text: newMessage,
@@ -182,7 +182,8 @@ const Chat = () => {
             },
           }
         );
-  
+        console.log(response);
+        
         if (response.status === 200) {
           setNewMessage(""); // Limpa o campo de nova mensagem
           fetchChats(); // Atualiza as conversas após enviar a mensagem

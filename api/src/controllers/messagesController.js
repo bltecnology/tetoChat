@@ -42,7 +42,7 @@ console.log('aaa');
 // Buscar mensagens existentes
 export const getMessages = async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM messages");
+    const [rows] = await pool.query("SELECT * FROM whatsapp_messages");
     res.json(rows);
   } catch (error) {
     console.error("Erro ao buscar mensagens:", error);
