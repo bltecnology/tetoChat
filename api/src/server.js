@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import {contactsRoutes} from "./routes/contactsRoutes.js";
 import {usersRoutes} from "./routes/usersRoutes.js";
 import {departmentsRoutes} from "./routes/departmentsRoutes.js";
@@ -7,6 +8,12 @@ import {queueRoutes} from "./routes/queueRoutes.js";
 import {messagesRoutes} from "./routes/messagesRoutes.js";
 
 const app = express();
+
+app.use(cors({
+    origin: "http://localhost:5173", 
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], 
+    credentials: true 
+  }));
 
 app.use(express.json());
 
