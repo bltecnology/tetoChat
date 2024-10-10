@@ -15,33 +15,41 @@ export const getMessages = async (req, res) => {
 // Enviar mensagem
 export const send = async (req, res) => {
   const { toPhone, text } = req.body;
-  const userId = req.user.id;
-  console.log(req.body);
 
+  // Verifica se o usuário está autenticado
+  if (!req.user || !req.user.id) {
+    return res.status(401).send("Usuário não autenticado");
+  }
+  const userId = req.user.id;
+
+  // Verifica se os campos toPhone e text foram enviados
   if (!toPhone || !text) {
     return res.status(400).send("toPhone e text são obrigatórios");
   }
 
+  // Verifica se as variáveis de ambiente do WhatsApp estão configuradas
+  if (!process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || !process.env.DISPLAY_PHONE_NUMBER) {
+    return res.status(500).send("Configurações do WhatsApp estão ausentes");
+  }
+
   try {
+    // Envia a mensagem para o WhatsApp
     await sendMessage(toPhone, text, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
 
-    const [contactRows] = await pool.query(
-      "SELECT id FROM contacts WHERE phone = ?",
-      [toPhone]
-    );
+    // Verifica se o contato já existe no banco de dados, senão, insere
+    const [contactRows] = await pool.query("SELECT id FROM contacts WHERE phone = ?", [toPhone]);
     let contactId;
     if (contactRows.length > 0) {
       contactId = contactRows[0].id;
     } else {
-      const [result] = await pool.query(
-        "INSERT INTO contacts (name, phone) VALUES (?, ?)",
-        ["API", toPhone]
-      );
+      const [result] = await pool.query("INSERT INTO contacts (name, phone) VALUES (?, ?)", ["API", toPhone]);
       contactId = result.insertId;
     }
 
+    // Cria um ID de conversa único
     const conversationId = `conv-${Date.now()}`;
 
+    // Insere a mensagem no banco de dados
     const insertMessageQuery = `
       INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -60,19 +68,19 @@ export const send = async (req, res) => {
       userId,
     ]);
 
-    const [userRow] = await pool.query(
-      "SELECT department FROM users WHERE id = ?",
-      [userId]
-    );
+    // Seleciona o departamento do usuário
+    const [userRow] = await pool.query("SELECT department FROM users WHERE id = ?", [userId]);
     const departmentName = userRow[0].department;
     const queueTableName = `queueOf${departmentName}`;
 
+    // Insere o contato na fila
     const insertQueueQuery = `
       INSERT INTO ${queueTableName} (contact_id, conversation_id, status)
       VALUES (?, ?, 'fila')
     `;
     await pool.query(insertQueueQuery, [contactId, conversationId]);
 
+    // Responde com sucesso
     res.status(200).send("Mensagem enviada e salva com sucesso");
   } catch (error) {
     console.error("Erro ao enviar mensagem:", error);
