@@ -171,42 +171,29 @@ const Chat = () => {
       try {
         // Enviar a mensagem ao backend
         const response = await axios.post(
-          "https://tetochat-8m0r.onrender.com/send",
+          "https://tetochat-8m0r.onrender.com/messages",
           {
             toPhone: selectedContact.phone,
             text: newMessage,
           },
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              Authorization: `Bearer ${localStorage.getItem("token")}`, // Token JWT enviado no cabeçalho
             },
           }
         );
   
         if (response.status === 200) {
-          // Salvar a mensagem no backend
-          await axios.post(
-            "https://tetochat-8m0r.onrender.com/saveMessage",
-            {
-              contactId: selectedContact.id,
-              message: newMessage,
-              message_from: "me",
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-              },
-            }
-          );
-          setNewMessage("");
-          fetchChats();
+          setNewMessage(""); // Limpa o campo de nova mensagem
+          fetchChats(); // Atualiza as conversas após enviar a mensagem
         }
       } catch (error) {
         console.error("Erro ao enviar mensagem:", error);
       }
-      setNewMessage("");
     }
   };
+  
+  
   
 
   const handleKeyPress = (event) => {
