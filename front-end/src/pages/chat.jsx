@@ -44,7 +44,7 @@ const Chat = () => {
   const loadMessages = async (contactId) => {
     try {
       const response = await axios.get(
-        `https://tetochat-8m0r.onrender.com/messages?contact=${contactId}`,
+        `https://tetochat-8m0r.onrender.com/messages?contactId=${contactId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -56,6 +56,7 @@ const Chat = () => {
       console.error("Erro ao buscar mensagens:", error);
     }
   };
+  
 
   const fetchChats = async () => {
     try {
@@ -99,6 +100,7 @@ const Chat = () => {
       setQueueContacts([]);
     }
   };
+  
 
   const fetchContacts = async () => {
     try {
@@ -163,10 +165,11 @@ const Chat = () => {
         message_timestamp: Math.floor(Date.now() / 1000).toString(),
         contact_id: selectedContact.id,
       };
-
+  
       setMessages((prevMessages) => [...prevMessages, sentMessage]);
-
+  
       try {
+        // Enviar a mensagem ao backend
         const response = await axios.post(
           "https://tetochat-8m0r.onrender.com/send",
           {
@@ -179,8 +182,9 @@ const Chat = () => {
             },
           }
         );
-
+  
         if (response.status === 200) {
+          // Salvar a mensagem no backend
           await axios.post(
             "https://tetochat-8m0r.onrender.com/saveMessage",
             {
@@ -200,10 +204,10 @@ const Chat = () => {
       } catch (error) {
         console.error("Erro ao enviar mensagem:", error);
       }
-
       setNewMessage("");
     }
   };
+  
 
   const handleKeyPress = (event) => {
     if (event.key === "Enter") {
@@ -217,15 +221,13 @@ const Chat = () => {
   };
 
   const handleTransferComplete = async (selectedDepartmentId) => {
-    console.log(selectedDepartmentId);
-  
     try {
-      // Chama o endpoint de transferência
+      // Enviar o contato para outro departamento
       await axios.post(
         "https://tetochat-8m0r.onrender.com/transfer",
         {
           contactId: selectedContact.id,
-          departmentId: selectedDepartmentId.selectedDepartment, // Supondo que você tenha o id do departamento no modal
+          departmentId: selectedDepartmentId.selectedDepartment, // id do departamento selecionado
         },
         {
           headers: {
@@ -233,23 +235,20 @@ const Chat = () => {
           },
         }
       );
-      // Remove o contato da fila e do chat localmente
+      // Atualizar a fila e a lista de chats localmente
       setQueueContacts((prevQueue) =>
         prevQueue.filter((contact) => contact.id !== selectedContact.id)
       );
-
       setChatContacts((prevChats) =>
         prevChats.filter((contact) => contact.id !== selectedContact.id)
       );
-      console.log("aaa");
-
-      // Reseta a seleção e fecha o modal
       setSelectedContact(null);
       setShowModal(false);
     } catch (error) {
       console.error("Erro ao transferir contato:", error);
     }
   };
+  
 
   const handleContactClick = async (contact) => {
     setSelectedContact(contact);
