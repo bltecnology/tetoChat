@@ -94,7 +94,9 @@ const Positions = () => {
         alert("Cargo excluído com sucesso");
       } catch (error) {
         console.error("Erro ao excluir cargo:", error.message);
-        alert("Erro ao excluir o cargo. Verifique o console para mais detalhes.");
+        alert(
+          "Erro ao excluir o cargo. Verifique o console para mais detalhes."
+        );
       }
     }
   };
@@ -142,6 +144,7 @@ const Positions = () => {
                             Editar
                           </button>
                         </DropdownMenuItem>
+
                         <DropdownMenuItem className="hover:bg-gray-200 text-center">
                           <button
                             onClick={() => handleDeletePosition(position.id)}
@@ -165,9 +168,9 @@ const Positions = () => {
         onClose={() => setIsModalOpen(false)}
         onSave={(newName) => {
           if (editingPosition) {
-            editPosition(editingPosition.id, newName); // Edita o cargo existente
+            editPosition(editingPosition.id, newName); // Corrigido: agora edita o cargo
           } else {
-            addPosition(newName); // Adiciona um novo cargo
+            addPosition(newName); // Caso não esteja editando, adiciona um novo cargo
           }
         }}
         initialValue={editingPosition ? editingPosition.name : ""}
