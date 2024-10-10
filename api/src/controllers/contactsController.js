@@ -19,6 +19,16 @@ export const addContact = async (req, res) => {
   }
 };
 
+export const getContacts = async (req, res) => {
+  try {
+    const [contacts] = await pool.query("SELECT * FROM contacts");
+    res.status(200).json(contacts);
+  } catch (error) {
+    console.error("Erro ao buscar contatos:", error);
+    res.status(500).send("Erro ao buscar contatos");
+  }
+};
+
 export const deleteContact = async (req, res) => {
   const contactId = req.params.id;
   try {
