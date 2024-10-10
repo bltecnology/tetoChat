@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import pool from './db.js';
-import bcrypt from 'bcrypt'; // Para comparar senhas com hash
+import bcrypt from 'bcryptjs'; 
 
 const SECRET_KEY = process.env.SECRET_KEY;
 
