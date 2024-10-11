@@ -173,6 +173,17 @@ export const receiveMessage = async (request, response) => {
           // Logar o ID da mensagem e do contato
           console.log(`Processando mensagem com ID: ${message.id} de ${contact.wa_id}`);
 
+          // Verificar se a mensagem já foi processada
+          const [messageExists] = await pool.query(
+            "SELECT id FROM whatsapp_messages WHERE message_id = ?",
+            [message.id]
+          );
+
+          if (messageExists.length > 0) {
+            console.log(`Mensagem já processada com ID: ${message.id}`);
+            continue; // Ignora esta mensagem
+          }
+
           if (
             !contact ||
             !contact.profile ||

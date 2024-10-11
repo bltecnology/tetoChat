@@ -51,7 +51,8 @@ const Chat = () => {
           },
         }
       );
-      setMessages(response.data);
+      // Filtrar mensagens pelo contato selecionado
+      setMessages(response.data.filter(message => message.contact_id === contactId));
     } catch (error) {
       console.error("Erro ao buscar mensagens:", error);
     }
@@ -132,31 +133,25 @@ const Chat = () => {
   useEffect(() => {
     if (selectedContact) {
       loadMessages(selectedContact.id);
+    } else {
+      setMessages([]); // Limpa as mensagens ao trocar de contato
     }
   }, [selectedContact]);
 
   useEffect(() => {
     const handleNewMessage = (message) => {
+      // Verificar se a mensagem recebida é para o contato atualmente selecionado
       if (selectedContact && message.contact_id === selectedContact.id) {
         setMessages((prevMessages) => [...prevMessages, message]);
       }
-  
-      if (!chatContacts.some((c) => c.id === message.contact_id)) {
-        const updatedContact = contacts.find(
-          (contact) => contact.id === message.contact_id
-        );
-        if (updatedContact) {
-          setChatContacts((prevChats) => [...prevChats, updatedContact]);
-        }
-      }
     };
-  
+
     socket.on("new_message", handleNewMessage);
-  
+
     return () => {
       socket.off("new_message", handleNewMessage);
     };
-  }, [selectedContact]);  // Removendo dependências extras, somente `selectedContact`
+  }, [selectedContact]);
   
   const handleSendMessage = async () => {
     if (selectedContact && newMessage.trim() !== "") {
