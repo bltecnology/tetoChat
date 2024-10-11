@@ -3,7 +3,7 @@ import { addQueue, deleteQueue, getQueue } from "../controllers/queueController.
 
 const queueRoutes = express.Router();
 
-queueRoutes.get("/queue", getQueue);
+queueRoutes.get("/queue/:department", getQueue);
 queueRoutes.post("/queue", addQueue);
 queueRoutes.delete("/queue/:id", deleteQueue);
 

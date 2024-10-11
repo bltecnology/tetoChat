@@ -3,8 +3,11 @@ import pool from '../models/db.js';
 
 
 export const getQueue = async (req, res) => {
+  const {department} = req.params;
+  console.log(department);
+  
   try {
-    const [rows] = await pool.query("SELECT * FROM queue");
+    const [rows] = await pool.query(`SELECT * FROM queueOf${department}`);
     res.json(rows);
   } catch (error) {
     console.error("Erro ao buscar filas:", error);
