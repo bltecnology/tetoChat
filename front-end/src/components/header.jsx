@@ -7,9 +7,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@radix-ui/react-dropdown-menu";
-import axios from "axios";
-
-import { useEffect } from "react";
 
 
 const Header = () => {

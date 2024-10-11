@@ -87,6 +87,8 @@ const Chat = () => {
   const fetchQueue = async () => {
     try {
       const departmentTable = `queueOf${localStorage.getItem("department")}`;
+      console.log(departmentTable);
+      
       const response = await axios.get(
         `https://tetochat-8m0r.onrender.com/queue/${departmentTable}`,
         {

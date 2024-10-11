@@ -16,9 +16,12 @@ const LoginPage = () => {
     try {
       const response = await axios.post('https://tetochat-8m0r.onrender.com/login', { email, password: senha });
       const { token } = response.data;
-
+      const { department } = response.data;
+      console.log(response.data);
+      
       // Armazena o token no localStorage
       localStorage.setItem('token', token);
+      localStorage.setItem('department', department);
 
       // Configura o token em todas as requisições Axios
 

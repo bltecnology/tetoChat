@@ -23,8 +23,16 @@ export const authenticateUser = async (req, res) => {
 
   try {
     // Busca o usuário pelo email
-    const [rows] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
-    const user = rows[0];
+    const [rows] = await pool.execute(
+      `SELECT users.*, departments.id AS department_id, departments.name AS department_name 
+       FROM users 
+       INNER JOIN departments ON users.department_id = departments.id 
+       WHERE users.email = ?`, 
+       [email]
+    );
+    
+    
+        const user = rows[0];
 
     // Verifica se o usuário foi encontrado
     if (!user) {
@@ -41,10 +49,10 @@ export const authenticateUser = async (req, res) => {
     console.log("Chave secreta ao gerar token:", process.env.SECRET_KEY);
 
     // Gera o token JWT com o ID e email do usuário
-    const token = jwt.sign({ id: user.id, email: user.email }, process.env.SECRET_KEY, { expiresIn: '1h' });
-
+    const token = jwt.sign({ id: user.id, email: user.email, department:user.department_name }, process.env.SECRET_KEY, { expiresIn: '1h' });
+    const department = user.department_name
     // Retorna o token gerado
-    res.json({ token });
+    res.json({ token, department});
   } catch (error) {
     console.error('Erro ao tentar fazer login:', error);
     res.status(500).send('Erro ao tentar fazer login');
