@@ -228,8 +228,7 @@ export const receiveMessage = async (request, response) => {
 
           // Se o contato for novo, envia a mensagem de boas-vindas e atualiza o status
           if (isNewContact || contactStatus === "novo") {
-            const initialBotMessage =
-              "Olá! Deseja conversar sobre: \n1- Orçamentos \n2- Contas";
+            const initialBotMessage = `Olá ${contact.profile.name}! Seja muito bem-vindo(a) ao atendimento digital da Teto Bello. Para direcioná-lo, selecione uma opção abaixo:\n\n1 - Comercial / Vendas\n2 - Instalação / Assistência Técnica\n3 - Financeiro / Adm\n4 - Projetos\n5 - Compras\n6 - Trabalhe Conosco`;
 
             await sendMessage(
               contact.wa_id,
@@ -247,14 +246,13 @@ export const receiveMessage = async (request, response) => {
             const userResponse = message.text.body.trim();
 
             switch (userResponse) {
-              case "1":
+              case "1": // Comercial / Vendas
                 await sendMessage(
                   contact.wa_id,
-                  "Você escolheu conversar sobre orçamentos. Estamos transferindo você...",
+                  `Seja muito bem-vindo(a) à Teto Bello! Ficamos muito felizes de poder participar desta fase tão importante na sua obra. Vamos começar! Qual produto você procura?\n1 - Envidraçamento de sacadas/complementos\n2 - Coberturas\n3 - Cobertura com envidraçamento de sacadas\n4 - Vidraçaria (Vidros/Box/Espelhos)\n5 - Esquadrias de alumínio\n6 - Guarda corpo e corrimão\n7 - Fachadas\n8 - Cortinas e persianas\n9 - Manutenção\n10 - Mais de um item acima.`,
                   process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
                 );
 
-                // Atualiza o status do contato para 'orcamentos'
                 await pool.query(
                   "INSERT INTO queueOfOrcamentos (contact_id, conversation_id, status) VALUES (?, ?, 'fila')",
                   [contactId, `conv-${Date.now()}`]
@@ -265,27 +263,96 @@ export const receiveMessage = async (request, response) => {
                   [contactId]
                 );
                 break;
-              case "2":
+
+              case "2": // Instalação / Assistência Técnica
                 await sendMessage(
                   contact.wa_id,
-                  "Você escolheu conversar sobre contas. Estamos transferindo você...",
+                  `O que deseja?\n1 - Saber o prazo de instalação do meu contrato\n2 - Agendar Instalação\n3 - Solicitar Assistência Técnica.\nPor favor, informe seu nome, nome do condomínio, número do apartamento e número do contrato.`,
                   process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
                 );
 
                 await pool.query(
-                  "INSERT INTO queueOfAdministracao (contact_id, conversation_id, status) VALUES (?, ?, 'fila')",
+                  "INSERT INTO queueOfInstalacao (contact_id, conversation_id, status) VALUES (?, ?, 'fila')",
                   [contactId, `conv-${Date.now()}`]
                 );
 
                 await pool.query(
-                  "UPDATE contacts SET status = 'administracao' WHERE id = ?",
+                  "UPDATE contacts SET status = 'instalacao' WHERE id = ?",
                   [contactId]
                 );
                 break;
+
+              case "3": // Financeiro / Adm
+                await sendMessage(
+                  contact.wa_id,
+                  `O que deseja?\n1 - Solicitar Boleto Bancário\n2 - Informações financeiras referentes ao meu contrato.\nPor favor, informe seu nome, nome do condomínio, número do apartamento e número do contrato.`,
+                  process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
+                );
+
+                await pool.query(
+                  "INSERT INTO queueOfFinanceiro (contact_id, conversation_id, status) VALUES (?, ?, 'fila')",
+                  [contactId, `conv-${Date.now()}`]
+                );
+
+                await pool.query(
+                  "UPDATE contacts SET status = 'financeiro' WHERE id = ?",
+                  [contactId]
+                );
+                break;
+
+              case "4": // Projetos
+                await sendMessage(
+                  contact.wa_id,
+                  `Você ainda não recebeu seu projeto executivo? Entre em contato com seu consultor técnico para dar continuidade ao atendimento. Caso precise de suporte, informe seu nome, condomínio, apartamento e número do contrato, e redirecionaremos seu atendimento.`,
+                  process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
+                );
+
+                await pool.query(
+                  "INSERT INTO queueOfProjetos (contact_id, conversation_id, status) VALUES (?, ?, 'fila')",
+                  [contactId, `conv-${Date.now()}`]
+                );
+
+                await pool.query(
+                  "UPDATE contacts SET status = 'projetos' WHERE id = ?",
+                  [contactId]
+                );
+                break;
+
+              case "5": // Compras
+                await sendMessage(
+                  contact.wa_id,
+                  `Deseja vender para nós? Por favor, envie seu portfólio abaixo. Caso já seja fornecedor, informe seu nome, o nome do comprador e a empresa para contato.`,
+                  process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
+                );
+
+                await pool.query(
+                  "INSERT INTO queueOfCompras (contact_id, conversation_id, status) VALUES (?, ?, 'fila')",
+                  [contactId, `conv-${Date.now()}`]
+                );
+
+                await pool.query(
+                  "UPDATE contacts SET status = 'compras' WHERE id = ?",
+                  [contactId]
+                );
+                break;
+
+              case "6": // Trabalhe Conosco
+                await sendMessage(
+                  contact.wa_id,
+                  `Envie seu currículo atualizado abaixo. Se houver uma vaga disponível que corresponda ao seu perfil, entraremos em contato.`,
+                  process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
+                );
+
+                await pool.query(
+                  "UPDATE contacts SET status = 'trabalhe_conosco' WHERE id = ?",
+                  [contactId]
+                );
+                break;
+
               default:
                 await sendMessage(
                   contact.wa_id,
-                  "Opção inválida. Por favor, responda com 1 para orçamentos ou 2 para contas.",
+                  "Opção inválida. Por favor, selecione uma das opções válidas.",
                   process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
                 );
                 break;
@@ -347,3 +414,4 @@ export const receiveMessage = async (request, response) => {
     response.sendStatus(400);
   }
 };
+
