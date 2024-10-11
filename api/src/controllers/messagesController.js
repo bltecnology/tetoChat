@@ -10,17 +10,16 @@ async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
     type: "text",
     text: { body: text },
   };
-  console.log("aaa");
+  console.log("Iniciando envio de mensagem para o WhatsApp");
 
   const headers = {
     Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
   };
-  console.log("ccc");
 
   try {
     const response = await axios.post(url, data, { headers });
 
-    console.log("bbb");
+    console.log(`Mensagem enviada para o WhatsApp: ${text} para ${toPhone}`);
 
     if (socket) {
       socket.emit("new_message", {
@@ -30,7 +29,6 @@ async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
         timestamp: new Date().getTime(),
       });
     }
-    console.log("ddd");
 
     return response.data;
   } catch (error) {
@@ -142,6 +140,7 @@ export const send = async (req, res) => {
   }
 };
 
+// Webhook para verificar assinatura
 export const getWehook = function (req, res) {
   if (
     req.query["hub.mode"] == "subscribe" &&
@@ -170,6 +169,9 @@ export const receiveMessage = async (request, response) => {
           const message = data.messages[0];
           const contact =
             data.contacts && data.contacts.length > 0 ? data.contacts[0] : null;
+
+          // Logar o ID da mensagem e do contato
+          console.log(`Processando mensagem com ID: ${message.id} de ${contact.wa_id}`);
 
           if (
             !contact ||
@@ -297,7 +299,10 @@ export const receiveMessage = async (request, response) => {
 
           try {
             await pool.query(sql, values);
-            io.emit("new_message", {
+            console.log(`Mensagem inserida no banco de dados com ID: ${message.id}`);
+
+            // Emite um evento para os clientes conectados via Socket.IO
+            req.io.emit("new_message", {
               phone_number_id: data.metadata.phone_number_id,
               display_phone_number: data.metadata.display_phone_number,
               contact_name: contact.profile.name,
@@ -309,7 +314,7 @@ export const receiveMessage = async (request, response) => {
               message_body: message.text.body,
               contact_id: contactId,
             });
-            console.log("Dados inseridos com sucesso");
+
           } catch (err) {
             console.error("Erro ao inserir dados no banco de dados:", err);
             allEntriesProcessed = false;

@@ -136,11 +136,11 @@ const Chat = () => {
   }, [selectedContact]);
 
   useEffect(() => {
-    socket.on("new_message", (message) => {
-      if (message.contact_id === selectedContact?.id) {
+    const handleNewMessage = (message) => {
+      if (selectedContact && message.contact_id === selectedContact.id) {
         setMessages((prevMessages) => [...prevMessages, message]);
       }
-
+  
       if (!chatContacts.some((c) => c.id === message.contact_id)) {
         const updatedContact = contacts.find(
           (contact) => contact.id === message.contact_id
@@ -149,13 +149,15 @@ const Chat = () => {
           setChatContacts((prevChats) => [...prevChats, updatedContact]);
         }
       }
-    });
-
-    return () => {
-      socket.off("new_message");
     };
-  }, [selectedContact, chatContacts, contacts]);
-
+  
+    socket.on("new_message", handleNewMessage);
+  
+    return () => {
+      socket.off("new_message", handleNewMessage);
+    };
+  }, [selectedContact]);  // Removendo dependências extras, somente `selectedContact`
+  
   const handleSendMessage = async () => {
     if (selectedContact && newMessage.trim() !== "") {
       const sentMessage = {
@@ -194,10 +196,7 @@ const Chat = () => {
     }
   };
   
-  
-  
-
-  const handleKeyPress = (event) => {
+    const handleKeyPress = (event) => {
     if (event.key === "Enter") {
       handleSendMessage();
     }
