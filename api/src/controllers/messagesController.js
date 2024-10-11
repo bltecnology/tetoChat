@@ -249,15 +249,11 @@ export const receiveMessage = async (request, response) => {
               case "1": // Comercial / Vendas
                 await sendMessage(
                   contact.wa_id,
-                  `Seja muito bem-vindo(a) à Teto Bello! Ficamos muito felizes de poder participar desta fase tão importante na sua obra. Vamos começar! Qual produto você procura?\n1 - Envidraçamento de sacadas/complementos\n2 - Coberturas\n3 - Cobertura com envidraçamento de sacadas\n4 - Vidraçaria (Vidros/Box/Espelhos)\n5 - Esquadrias de alumínio\n6 - Guarda corpo e corrimão\n7 - Fachadas\n8 - Cortinas e persianas\n9 - Manutenção\n10 - Mais de um item acima.`,
+                  `Seja muito bem-vindo(a) à Teto Bello! Vamos começar! Qual produto você procura?\n1 - Envidraçamento de sacadas/complementos\n2 - Coberturas\n3 - Cobertura com envidraçamento de sacadas\n4 - Vidraçaria (Vidros/Box/Espelhos)\n5 - Esquadrias de alumínio\n6 - Guarda corpo e corrimão\n7 - Fachadas\n8 - Cortinas e persianas\n9 - Manutenção\n10 - Mais de um item acima.`,
                   process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
                 );
 
-                await pool.query(
-                  "INSERT INTO queueOfOrcamentos (contact_id, conversation_id, status) VALUES (?, ?, 'fila')",
-                  [contactId, `conv-${Date.now()}`]
-                );
-
+                // Atualiza o status para evitar o loop
                 await pool.query(
                   "UPDATE contacts SET status = 'orcamentos' WHERE id = ?",
                   [contactId]
@@ -271,11 +267,7 @@ export const receiveMessage = async (request, response) => {
                   process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
                 );
 
-                await pool.query(
-                  "INSERT INTO queueOfInstalacao (contact_id, conversation_id, status) VALUES (?, ?, 'fila')",
-                  [contactId, `conv-${Date.now()}`]
-                );
-
+                // Atualiza o status para evitar o loop
                 await pool.query(
                   "UPDATE contacts SET status = 'instalacao' WHERE id = ?",
                   [contactId]
@@ -289,11 +281,7 @@ export const receiveMessage = async (request, response) => {
                   process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
                 );
 
-                await pool.query(
-                  "INSERT INTO queueOfFinanceiro (contact_id, conversation_id, status) VALUES (?, ?, 'fila')",
-                  [contactId, `conv-${Date.now()}`]
-                );
-
+                // Atualiza o status para evitar o loop
                 await pool.query(
                   "UPDATE contacts SET status = 'financeiro' WHERE id = ?",
                   [contactId]
@@ -307,11 +295,7 @@ export const receiveMessage = async (request, response) => {
                   process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
                 );
 
-                await pool.query(
-                  "INSERT INTO queueOfProjetos (contact_id, conversation_id, status) VALUES (?, ?, 'fila')",
-                  [contactId, `conv-${Date.now()}`]
-                );
-
+                // Atualiza o status para evitar o loop
                 await pool.query(
                   "UPDATE contacts SET status = 'projetos' WHERE id = ?",
                   [contactId]
@@ -325,11 +309,7 @@ export const receiveMessage = async (request, response) => {
                   process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
                 );
 
-                await pool.query(
-                  "INSERT INTO queueOfCompras (contact_id, conversation_id, status) VALUES (?, ?, 'fila')",
-                  [contactId, `conv-${Date.now()}`]
-                );
-
+                // Atualiza o status para evitar o loop
                 await pool.query(
                   "UPDATE contacts SET status = 'compras' WHERE id = ?",
                   [contactId]
@@ -343,6 +323,7 @@ export const receiveMessage = async (request, response) => {
                   process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
                 );
 
+                // Atualiza o status para evitar o loop
                 await pool.query(
                   "UPDATE contacts SET status = 'trabalhe_conosco' WHERE id = ?",
                   [contactId]
@@ -414,4 +395,3 @@ export const receiveMessage = async (request, response) => {
     response.sendStatus(400);
   }
 };
-
