@@ -1,5 +1,5 @@
-import pool from "../models/db";
-import axios from "axios";
+import pool from "../models/db.js";
+
 
 export const transfer = async (req, res) => {
     const { contactId, departmentId } = req.body;
