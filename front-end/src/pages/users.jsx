@@ -34,17 +34,17 @@ const Users = () => {
         await axios.delete(`https://tetochat-8m0r.onrender.com/users/${userId}`);
         setUsers(users.filter(user => user.id !== userId));
       } catch (error) {
-        console.error('Erro ao excluir usuário:', error.message); // Exibe a mensagem do erro
+        console.error('Erro ao excluir usuário:', error.message);
         alert('Erro ao excluir o usuário. Verifique o console para mais detalhes.');
       }
     }
   };
   
-
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const response = await axios.get('https://tetochat-8m0r.onrender.com/users');
+        console.log(response.data);  // Log the response
         setUsers(response.data);
       } catch (error) {
         console.error('Erro ao buscar usuários:', error);
@@ -74,8 +74,9 @@ const Users = () => {
                 <div key={user.id} className="flex items-center py-2 border-b">
                   <div className="w-1/5 px-2">{user.name}</div>
                   <div className="w-1/5 px-0">{user.email}</div>
-                  <div className="w-1/5 px-2">{user.position}</div>
-                  <div className="w-1/5 px-2">{user.department}</div>
+                  {/* Ensure these fields match API response keys */}
+                  <div className="w-1/5 px-2">{user.position || user.cargo}</div> 
+                  <div className="w-1/5 px-2">{user.department || user.departamento}</div>
                   <div className="w-1/5 flex justify-end px-4">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

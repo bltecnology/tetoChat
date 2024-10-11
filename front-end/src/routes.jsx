@@ -11,6 +11,7 @@ import Departments from './pages/departments';
 import Positions from './pages/positions';
 import QuickResponses from './pages/quickResponses';
 
+
 const AppRoutes = () => {
   return (
     
@@ -26,6 +27,7 @@ const AppRoutes = () => {
         <Route path="/users" element={<Users />} />
         <Route path="/positions" element={<Positions />} />
         <Route path="/quickResponses" element={<QuickResponses />} />
+        
       </Routes>
   );
 };

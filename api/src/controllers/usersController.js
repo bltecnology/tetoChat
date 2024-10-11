@@ -5,13 +5,21 @@ const saltRounds = 10;
 
 export const getUsers = async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM users");
+    // Updated query with JOINs to fetch position and department names
+    const query = `
+      SELECT u.id, u.name, u.email, p.name AS position, d.name AS department 
+      FROM users u
+      JOIN positions p ON u.position_id = p.id
+      JOIN departments d ON u.department_id = d.id
+    `;
+    const [rows] = await pool.query(query);
     res.json(rows);
   } catch (error) {
     console.error("Erro ao buscar usuários:", error);
     res.status(500).send("Erro ao buscar usuários");
   }
 };
+
 
 export const updateUser = async (req, res) => {
   const userId = req.params.id;
