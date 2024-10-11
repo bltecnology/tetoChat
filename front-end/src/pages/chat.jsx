@@ -86,7 +86,7 @@ const Chat = () => {
 
   const fetchQueue = async () => {
     try {
-      const departmentTable = `queueOf${localStorage.getItem("department")}`;
+      const departmentTable = `${localStorage.getItem("department")}`;
       console.log(departmentTable);
       
       const response = await axios.get(
