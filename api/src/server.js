@@ -7,6 +7,7 @@ import {positionsRoutes} from "./routes/positionsRoutes.js";
 import {queueRoutes} from "./routes/queueRoutes.js";
 import {messagesRoutes} from "./routes/messagesRoutes.js";
 import {loginRoutes} from "./routes/loginRoutes.js";
+import { transferRoutes } from "./routes/transferRoutes.js";
 
 const app = express();
 
@@ -25,5 +26,6 @@ app.use(departmentsRoutes);
 app.use(positionsRoutes);
 app.use(queueRoutes);
 app.use(messagesRoutes);
+app.use(transferRoutes)
 
 app.listen(3005, () => console.log(`Servidor rodando na porta 3005`));
