@@ -17,7 +17,7 @@ import { format } from "date-fns";
 import defaultProfilePic from "../assets/defaultProfile.png";
 import { useNavigate } from "react-router-dom";
 
-const socket = io("https://tetochat-8m0r.onrender.com");
+const socket = io("https://tetochat-nje1.onrender.com");
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
@@ -44,7 +44,7 @@ const Chat = () => {
   const loadMessages = async (contactId) => {
     try {
       const response = await axios.get(
-        `https://tetochat-8m0r.onrender.com/messages?contactId=${contactId}`,
+        `https://tetochat-nje1.onrender.com/messages?contactId=${contactId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -62,7 +62,7 @@ const Chat = () => {
   const fetchChats = async () => {
     try {
       const response = await axios.get(
-        `https://tetochat-8m0r.onrender.com/getUserChats?userId=${localStorage.getItem(
+        `https://tetochat-nje1.onrender.com/getUserChats?userId=${localStorage.getItem(
           "userId"
         )}`,
         {
@@ -90,7 +90,7 @@ const Chat = () => {
       console.log(departmentTable);
       
       const response = await axios.get(
-        `https://tetochat-8m0r.onrender.com/queue/${departmentTable}`,
+        `https://tetochat-nje1.onrender.com/queue/${departmentTable}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -108,7 +108,7 @@ const Chat = () => {
   const fetchContacts = async () => {
     try {
       const response = await axios.get(
-        "https://tetochat-8m0r.onrender.com/contacts",
+        "https://tetochat-nje1.onrender.com/contacts",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -170,7 +170,7 @@ const Chat = () => {
       try {
         // Enviar a mensagem ao backend
         const response = await axios.post(
-          "https://tetochat-8m0r.onrender.com/send",
+          "https://tetochat-nje1.onrender.com/send",
           {
             toPhone: selectedContact.phone,
             text: newMessage,
@@ -208,7 +208,7 @@ const Chat = () => {
     try {
       // Enviar o contato para outro departamento
       await axios.post(
-        "https://tetochat-8m0r.onrender.com/transfer",
+        "https://tetochat-nje1.onrender.com/transfer",
         {
           contactId: selectedContact.id,
           departmentId: selectedDepartmentId.selectedDepartment, // id do departamento selecionado
