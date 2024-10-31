@@ -399,46 +399,66 @@ export const receiveMessage = async (request, response) => {
   }
 };
 
-
-// Configuração do multer para armazenar imagem na memória
+// Configuração do multer para armazenar arquivo na memória
 const storage = multer.memoryStorage();
 export const upload = multer({ storage });
 
-// Função para enviar e salvar a imagem no banco de dados
-export async function sendImageMessage(req, res) {
-  const { toPhone, whatsappBusinessAccountId } = req.body;
-  const imageBuffer = req.file.buffer;  // Imagem em binário do multer
+// Função para enviar e salvar um arquivo no banco de dados
+export async function sendFile(req, res) {
+  const { toPhone, whatsappBusinessAccountId, fileType } = req.body;
+  const fileBuffer = req.file.buffer;  // Arquivo em binário do multer
+  const fileName = req.file.originalname;  // Nome do arquivo
 
   try {
-    // Insere a imagem e os dados no banco de dados na tabela whatsapp_messages
-    const [result] = await pool.query(
-      'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, image_data) VALUES (?, ?, ?)',
-      [toPhone, whatsappBusinessAccountId, imageBuffer]
+    // Insere a mensagem sem o arquivo na tabela whatsapp_messages
+    const [messageResult] = await pool.query(
+      'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number) VALUES (?, ?)',
+      [toPhone, whatsappBusinessAccountId]
+    );
+    const messageId = messageResult.insertId;
+
+    // Insere o arquivo na tabela media_files associada à mensagem
+    await pool.query(
+      'INSERT INTO media_files (message_id, file_type, file_data, file_name) VALUES (?, ?, ?, ?)',
+      [messageId, fileType, fileBuffer, fileName]
     );
 
-    res.status(200).json({ message: 'Imagem salva com sucesso!', messageId: result.insertId });
+    res.status(200).json({ message: 'Arquivo salvo com sucesso!', messageId });
   } catch (error) {
-    console.error("Erro ao salvar imagem:", error);
-    res.status(500).json({ error: 'Erro ao salvar imagem' });
+    console.error("Erro ao salvar arquivo:", error);
+    res.status(500).json({ error: 'Erro ao salvar arquivo' });
   }
 }
 
-// Função para recuperar a imagem do banco de dados e enviá-la como resposta
-export async function getImageMessage(req, res) {
+// Função para recuperar um arquivo do banco de dados
+export async function getFile(req, res) {
   const { messageId } = req.params;
 
   try {
-    const [rows] = await pool.query('SELECT image_data FROM whatsapp_messages WHERE id = ?', [messageId]);
+    const [rows] = await pool.query(
+      'SELECT file_type, file_data, file_name FROM media_files WHERE message_id = ?',
+      [messageId]
+    );
 
-    if (rows.length === 0 || !rows[0].image_data) {
-      return res.status(404).json({ error: 'Imagem não encontrada' });
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Arquivo não encontrado' });
     }
 
-    // Configura o header para retornar a imagem em formato binário
-    res.set('Content-Type', 'image/jpeg');
-    res.send(rows[0].image_data);  // Envia a imagem para o cliente
+    const file = rows[0];
+    
+    // Configura o header para o tipo correto de arquivo e envia o conteúdo
+    const mimeType = {
+      image: 'image/jpeg',
+      audio: 'audio/mpeg',
+      video: 'video/mp4',
+      document: 'application/octet-stream' // Genérico para documentos
+    }[file.file_type] || 'application/octet-stream';
+
+    res.set('Content-Type', mimeType);
+    res.set('Content-Disposition', `attachment; filename="${file.file_name}"`);
+    res.send(file.file_data);
   } catch (error) {
-    console.error("Erro ao recuperar imagem:", error);
-    res.status(500).json({ error: 'Erro ao recuperar imagem' });
+    console.error("Erro ao recuperar arquivo:", error);
+    res.status(500).json({ error: 'Erro ao recuperar arquivo' });
   }
 }

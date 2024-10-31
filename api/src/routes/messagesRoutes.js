@@ -3,8 +3,8 @@ import { getMessages,
          getWebhook, 
          receiveMessage, 
          send, 
-         sendImageMessage, 
-         getImageMessage,
+         sendFile,
+         getFile, 
          upload } from "../controllers/messagesController.js";
 import { authenticateJWT } from "../models/auth.js";
 
@@ -14,7 +14,7 @@ messagesRoutes.get("/messages", authenticateJWT, getMessages);
 messagesRoutes.post("/send", authenticateJWT, send);
 messagesRoutes.post("/webhook", receiveMessage);
 messagesRoutes.get("/webhook", getWebhook);
-messagesRoutes.post('/send-image', upload.single('image'), sendImageMessage);
-messagesRoutes.get('/image/:messageId', getImageMessage)
+messagesRoutes.post('/send-file', upload.single('file'), sendFile);
+messagesRoutes.get('/file/:messageId', getFile);
 
 export { messagesRoutes };
