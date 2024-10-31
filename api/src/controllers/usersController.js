@@ -37,8 +37,8 @@ export const updateUser = async (req, res) => {
     const updatedUser = {
       name: name || user[0].name,
       email: email || user[0].email,
-      position: position || user[0].position,
-      department: department || user[0].department,
+      position_id: position || user[0].position,
+      department_id: department || user[0].department,
     };
 
     if (password) {

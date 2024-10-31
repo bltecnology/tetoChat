@@ -29,8 +29,6 @@ export const transfer = async (req, res) => {
       `;
       await pool.query(transferQuery, [contactId]);
   
-      // await pool.query("DELETE FROM queue WHERE contact_id = ?", [contactId]);
-  
       res.status(200).send("Atendimento transferido com sucesso para a fila");
     } catch (error) {
       console.error("Erro ao transferir atendimento:", error);

@@ -141,7 +141,7 @@ export const send = async (req, res) => {
 };
 
 // Webhook para verificar assinatura
-export const getWehook = function (req, res) {
+export const getWebhook = function (req, res) {
   if (
     req.query["hub.mode"] == "subscribe" &&
     req.query["hub.verify_token"] == process.env.WEBHOOK_VERIFY_TOKEN
@@ -361,7 +361,7 @@ export const receiveMessage = async (request, response) => {
             console.log(`Mensagem inserida no banco de dados com ID: ${message.id}`);
 
             // Emite um evento para os clientes conectados via Socket.IO
-            req.io.emit("new_message", {
+            global.io.emit("new_message", {
               phone_number_id: data.metadata.phone_number_id,
               display_phone_number: data.metadata.display_phone_number,
               contact_name: contact.profile.name,
