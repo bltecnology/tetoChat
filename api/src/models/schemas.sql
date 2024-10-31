@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS whatsapp_messages (
   message_timestamp VARCHAR(20),
   message_type VARCHAR(20),
   message_body TEXT,  -- Mudado para TEXT
+  image_data LONGBLOB,  -- Coluna para armazenar dados da imagem
   contact_id INT,
   FOREIGN KEY (contact_id) REFERENCES contacts(id),
   user_id INT,
@@ -66,4 +67,12 @@ CREATE TABLE IF NOT EXISTS transfers (
   FOREIGN KEY (whatsapp_message_id) REFERENCES whatsapp_messages(id), 
   FOREIGN KEY (department_origin_id) REFERENCES departments(id),
   FOREIGN KEY (department_destination_id) REFERENCES departments(id)
+);
+
+CREATE TABLE IF NOT EXISTS messages (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    toPhone VARCHAR(20) NOT NULL,
+    whatsappBusinessAccountId VARCHAR(100) NOT NULL,
+    image_data LONGBLOB,  -- Coluna para armazenar dados da imagem
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

@@ -13,7 +13,7 @@ const QuickResponses = () => {
     useEffect(() => {
         const fetchQuickResponses = async () => {
             try {
-                const response = await axios.get('https://tetochat-nje1.onrender.com/quickResponses');
+                const response = await axios.get('https://tetochat-nje1.onrender.com//quickResponses');
                 setQuickResponses(response.data);
             } catch (error) {
                 console.error('Erro ao buscar respostas rápidas:', error);
@@ -25,7 +25,7 @@ const QuickResponses = () => {
 
     const addQuickResponse = async (text, department) => {
         try {
-            const response = await axios.post('https://tetochat-nje1.onrender.com/quickResponses', { text, department });
+            const response = await axios.post('https://tetochat-nje1.onrender.com//quickResponses', { text, department });
             setQuickResponses([...quickResponses, response.data]);
             setIsModalOpen(false);
         } catch (error) {

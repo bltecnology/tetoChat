@@ -1,5 +1,8 @@
 import pool from "../models/db.js";
 import axios from "axios";
+import multer from 'multer';
+import path from 'path';
+
 
 async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
   const url = `https://graph.facebook.com/v20.0/${whatsappBusinessAccountId}/messages`;
@@ -395,3 +398,47 @@ export const receiveMessage = async (request, response) => {
     response.sendStatus(400);
   }
 };
+
+
+// Configuração do multer para armazenar imagem na memória
+const storage = multer.memoryStorage();
+export const upload = multer({ storage });
+
+// Função para enviar e salvar a imagem no banco de dados
+export async function sendImageMessage(req, res) {
+  const { toPhone, whatsappBusinessAccountId } = req.body;
+  const imageBuffer = req.file.buffer;  // Imagem em binário do multer
+
+  try {
+    // Insere a imagem e os dados no banco de dados na tabela whatsapp_messages
+    const [result] = await pool.query(
+      'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, image_data) VALUES (?, ?, ?)',
+      [toPhone, whatsappBusinessAccountId, imageBuffer]
+    );
+
+    res.status(200).json({ message: 'Imagem salva com sucesso!', messageId: result.insertId });
+  } catch (error) {
+    console.error("Erro ao salvar imagem:", error);
+    res.status(500).json({ error: 'Erro ao salvar imagem' });
+  }
+}
+
+// Função para recuperar a imagem do banco de dados e enviá-la como resposta
+export async function getImageMessage(req, res) {
+  const { messageId } = req.params;
+
+  try {
+    const [rows] = await pool.query('SELECT image_data FROM whatsapp_messages WHERE id = ?', [messageId]);
+
+    if (rows.length === 0 || !rows[0].image_data) {
+      return res.status(404).json({ error: 'Imagem não encontrada' });
+    }
+
+    // Configura o header para retornar a imagem em formato binário
+    res.set('Content-Type', 'image/jpeg');
+    res.send(rows[0].image_data);  // Envia a imagem para o cliente
+  } catch (error) {
+    console.error("Erro ao recuperar imagem:", error);
+    res.status(500).json({ error: 'Erro ao recuperar imagem' });
+  }
+}
