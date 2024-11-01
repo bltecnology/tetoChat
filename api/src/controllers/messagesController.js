@@ -404,39 +404,31 @@ const storage = multer.memoryStorage();
 export const upload = multer({ storage });
 
 // Função para enviar e salvar um arquivo no banco de dados
-// Controller function to handle file sending
-export const sendFile = async (req, res) => {
+export async function sendFile(req, res) {
+  const { toPhone, whatsappBusinessAccountId, fileType } = req.body;
+  const fileBuffer = req.file.buffer;  // Arquivo em binário do multer
+  const fileName = req.file.originalname;  // Nome do arquivo
+
   try {
-    // Check if a file is included in the request
-    if (!req.file) {
-      return res.status(400).json({ message: "File is required." });
-    }
+    // Insere a mensagem sem o arquivo na tabela whatsapp_messages
+    const [messageResult] = await pool.query(
+      'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number) VALUES (?, ?)',
+      [toPhone, whatsappBusinessAccountId]
+    );
+    const messageId = messageResult.insertId;
 
-    const fileBuffer = req.file.buffer; // Buffer of the uploaded file
-    const { toPhone, whatsappBusinessAccountId, fileType } = req.body;
+    // Insere o arquivo na tabela media_files associada à mensagem
+    await pool.query(
+      'INSERT INTO media_files (message_id, file_type, file_data, file_name) VALUES (?, ?, ?, ?)',
+      [messageId, fileType, fileBuffer, fileName]
+    );
 
-    // Replace this with actual logic to send file to WhatsApp API or other processing
-    const url = `https://graph.facebook.com/v20.0/${whatsappBusinessAccountId}/messages`;
-    const headers = {
-      Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-      'Content-Type': 'application/json',
-    };
-
-    const data = {
-      messaging_product: 'whatsapp',
-      recipient_type: 'individual',
-      to: toPhone,
-      type: fileType, // e.g., 'image', 'audio'
-      [fileType]: { link: `data:${req.file.mimetype};base64,${fileBuffer.toString('base64')}` },
-    };
-
-    const response = await axios.post(url, data, { headers });
-    res.status(200).json({ message: "File sent successfully", data: response.data });
+    res.status(200).json({ message: 'Arquivo salvo com sucesso!', messageId });
   } catch (error) {
-    console.error("Error in sendFile:", error);
-    res.status(500).json({ message: "Error sending file" });
+    console.error("Erro ao salvar arquivo:", error);
+    res.status(500).json({ error: 'Erro ao salvar arquivo' });
   }
-};
+}
 
 // Função para recuperar um arquivo do banco de dados
 export async function getFile(req, res) {
