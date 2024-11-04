@@ -358,9 +358,29 @@ export async function sendFile(req, res) {
 
     // Responde com sucesso se o arquivo for enviado corretamente
     res.status(200).json({ message: "Arquivo enviado com sucesso", data: response.data });
+
+    saveMediaFile(messageId, fileType, fileUrl, fileName);
   } catch (error) {
     console.error("Erro ao enviar arquivo:", error);
     res.status(500).json({ error: "Falha ao enviar o arquivo" });
+  }
+}
+
+async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
+  try {
+    // Faz download do arquivo binário usando o URL do WhatsApp
+    const response = await axios.get(fileUrl, { responseType: 'arraybuffer' });
+    const fileData = response.data;
+
+    // Insere o arquivo na tabela `media_files`
+    await pool.query(
+      'INSERT INTO media_files (message_id, file_type, file_data, file_name) VALUES (?, ?, ?, ?)',
+      [messageId, fileType, fileData, fileName]
+    );
+
+    console.log('Arquivo de mídia salvo com sucesso.');
+  } catch (error) {
+    console.error('Erro ao salvar arquivo de mídia:', error);
   }
 }
 
@@ -383,15 +403,15 @@ export async function getFile(req, res) {
     // Obtém o arquivo e configura o MIME type correto
     const file = rows[0];
     const mimeType = {
-      image: 'image/jpeg',           // Padrão para imagens JPEG
-      audio: 'audio/mpeg',           // Padrão para áudio MP3
-      video: 'video/mp4',            // Padrão para vídeos MP4
-      document: 'application/pdf'    // Padrão para PDF, ajustável conforme necessário
-    }[file.file_type] || 'application/octet-stream'; // Genérico para arquivos não especificados
+      image: 'image/jpeg',
+      audio: 'audio/mpeg',
+      video: 'video/mp4',
+      document: 'application/pdf'
+    }[file.file_type] || 'application/octet-stream';
 
     // Configura os headers para o tipo de arquivo e faz o download do arquivo com o nome correto
     res.set('Content-Type', mimeType);
-    res.set('Content-Disposition', `attachment; filename="${file.file_name}"`);
+    res.set('Content-Disposition', `inline; filename="${file.file_name}"`);
     res.send(file.file_data);  // Envia os dados binários do arquivo
   } catch (error) {
     console.error("Erro ao recuperar arquivo:", error);
