@@ -5,7 +5,9 @@ import FormData from "form-data";
 import fs from "fs";
 import 'dotenv/config';
 
-
+// Configuração do multer para armazenar arquivo na memória
+const storage = multer.memoryStorage();
+export const upload = multer({ storage });
 
 async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
   const url = `https://graph.facebook.com/v20.0/${whatsappBusinessAccountId}/messages`;
@@ -229,7 +231,9 @@ export const receiveMessage = async (request, response) => {
             messageBody = `[imagem: ${imageId}]`;
             console.log(`Mensagem de imagem recebida: ID da imagem - ${imageId}, Tipo MIME - ${mimeType}`);
 
-            // Aqui, você pode decidir baixar ou salvar a imagem usando o ID
+            // Salva a imagem usando saveMediaFile
+            const fileUrl = `https://graph.facebook.com/v20.0/${imageId}`;
+            saveMediaFile(message.id, 'image', fileUrl, `${imageId}.jpg`);
 
           } else if (message.type === "video" && message.video) {
             const videoId = message.video.id;
@@ -237,7 +241,9 @@ export const receiveMessage = async (request, response) => {
             messageBody = `[vídeo: ${videoId}]`;
             console.log(`Mensagem de vídeo recebida: ID do vídeo - ${videoId}, Tipo MIME - ${mimeType}`);
 
-            // Lógica para baixar ou salvar o vídeo pode ser adicionada aqui
+            // Salva o vídeo usando saveMediaFile
+            const fileUrl = `https://graph.facebook.com/v20.0/${videoId}`;
+            saveMediaFile(message.id, 'video', fileUrl, `${videoId}.mp4`);
 
           } else if (message.type === "document" && message.document) {
             const documentId = message.document.id;
@@ -246,7 +252,9 @@ export const receiveMessage = async (request, response) => {
             messageBody = `[documento: ${documentId}, nome: ${fileName}]`;
             console.log(`Mensagem de documento recebida: ID do documento - ${documentId}, Nome do arquivo - ${fileName}, Tipo MIME - ${mimeType}`);
 
-            // Lógica para baixar ou salvar o documento pode ser adicionada aqui
+            // Salva o documento usando saveMediaFile
+            const fileUrl = `https://graph.facebook.com/v20.0/${documentId}`;
+            saveMediaFile(message.id, 'document', fileUrl, fileName);
 
           } else if (message.type === "audio" && message.audio) {
             const audioId = message.audio.id;
@@ -254,7 +262,9 @@ export const receiveMessage = async (request, response) => {
             messageBody = `[áudio: ${audioId}]`;
             console.log(`Mensagem de áudio recebida: ID do áudio - ${audioId}, Tipo MIME - ${mimeType}`);
 
-            // Lógica para baixar ou salvar o áudio pode ser adicionada aqui
+            // Salva o áudio usando saveMediaFile
+            const fileUrl = `https://graph.facebook.com/v20.0/${audioId}`;
+            saveMediaFile(message.id, 'audio', fileUrl, `${audioId}.mp3`);
 
           } else {
             console.error("Tipo de mensagem não suportado:", message.type);
@@ -318,11 +328,6 @@ export const receiveMessage = async (request, response) => {
   }
 };
 
-// Configuração do multer para armazenar arquivo na memória
-const storage = multer.memoryStorage();
-export const upload = multer({ storage });
-
-
 // Função sendFile corrigida
 export async function sendFile(req, res) {
   try {
@@ -359,7 +364,6 @@ export async function sendFile(req, res) {
     // Responde com sucesso se o arquivo for enviado corretamente
     res.status(200).json({ message: "Arquivo enviado com sucesso", data: response.data });
 
-    saveMediaFile(messageId, fileType, fileUrl, fileName);
   } catch (error) {
     console.error("Erro ao enviar arquivo:", error);
     res.status(500).json({ error: "Falha ao enviar o arquivo" });
