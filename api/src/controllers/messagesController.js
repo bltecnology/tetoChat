@@ -176,10 +176,9 @@ export const receiveMessage = async (request, response) => {
           const contact =
             data.contacts && data.contacts.length > 0 ? data.contacts[0] : null;
 
-          // Logar o ID da mensagem e do contato
           console.log(`Processando mensagem com ID: ${message.id} de ${contact.wa_id}`);
 
-          // Verificar se a mensagem já foi processada
+          // Verifique se a mensagem já foi processada
           const [messageExists] = await pool.query(
             "SELECT id FROM whatsapp_messages WHERE message_id = ?",
             [message.id]
@@ -190,163 +189,33 @@ export const receiveMessage = async (request, response) => {
             continue; // Ignora esta mensagem
           }
 
-          if (
-            !contact ||
-            !contact.profile ||
-            !contact.wa_id ||
-            !message ||
-            !message.text ||
-            !message.text.body
-          ) {
-            console.error(
-              "Dados inválidos recebidos:",
-              JSON.stringify(request.body)
-            );
+          if (!contact || !contact.profile || !contact.wa_id || !message) {
+            console.error("Dados inválidos recebidos:", JSON.stringify(request.body));
             allEntriesProcessed = false;
             continue;
           }
 
-          let contactId;
-          let isNewContact = false;
-          let contactStatus = null; // Adiciona uma variável para verificar o status
+          // Lidar com mensagens de texto e imagens separadamente
+          if (message.type === "text" && message.text) {
+            const messageBody = message.text.body;
+            console.log("Mensagem de texto recebida:", messageBody);
 
-          try {
-            const [contactRows] = await pool.query(
-              "SELECT id, status FROM contacts WHERE phone = ?",
-              [contact.wa_id]
-            );
-            if (contactRows.length > 0) {
-              contactId = contactRows[0].id;
-              contactStatus = contactRows[0].status; // Obtem o status do contato
-            } else {
-              const [result] = await pool.query(
-                "INSERT INTO contacts (name, phone, status) VALUES (?, ?, 'novo')", // Insere o contato como 'novo'
-                [contact.profile.name, contact.wa_id]
-              );
-              contactId = result.insertId;
-              isNewContact = true;
-            }
-          } catch (err) {
-            console.error("Erro ao buscar ou criar contato:", err);
+            // Lógica para processar mensagens de texto aqui
+
+          } else if (message.type === "image" && message.image) {
+            const imageId = message.image.id;
+            const mimeType = message.image.mime_type;
+            console.log(`Mensagem de imagem recebida: ID da imagem - ${imageId}, Tipo MIME - ${mimeType}`);
+
+            // Exemplo de como salvar a imagem no banco ou realizar alguma ação
+            // Aqui você pode decidir baixar a imagem usando o ID fornecido pela API do WhatsApp
+
+          } else {
+            console.error("Tipo de mensagem não suportado:", message.type);
             allEntriesProcessed = false;
-            continue;
           }
 
-          // Se o contato for novo, envia a mensagem de boas-vindas e atualiza o status
-          if (isNewContact || contactStatus === "novo") {
-            const initialBotMessage = `Olá ${contact.profile.name}! Seja muito bem-vindo(a) ao atendimento digital da Teto Bello. Para direcioná-lo, selecione uma opção abaixo:\n\n1 - Comercial / Vendas\n2 - Instalação / Assistência Técnica\n3 - Financeiro / Adm\n4 - Projetos\n5 - Compras\n6 - Trabalhe Conosco`;
-
-            await sendMessage(
-              contact.wa_id,
-              initialBotMessage,
-              process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
-            );
-
-            // Atualiza o status do contato para "aguardando_resposta"
-            await pool.query(
-              "UPDATE contacts SET status = 'aguardando_resposta' WHERE id = ?",
-              [contactId]
-            );
-          } else if (contactStatus === "aguardando_resposta") {
-            // Resposta do usuário
-            const userResponse = message.text.body.trim();
-
-            switch (userResponse) {
-              case "1": // Comercial / Vendas
-                await sendMessage(
-                  contact.wa_id,
-                  `Seja muito bem-vindo(a) à Teto Bello! Vamos começar! Qual produto você procura?\n1 - Envidraçamento de sacadas/complementos\n2 - Coberturas\n3 - Cobertura com envidraçamento de sacadas\n4 - Vidraçaria (Vidros/Box/Espelhos)\n5 - Esquadrias de alumínio\n6 - Guarda corpo e corrimão\n7 - Fachadas\n8 - Cortinas e persianas\n9 - Manutenção\n10 - Mais de um item acima.`,
-                  process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
-                );
-
-                // Atualiza o status para evitar o loop
-                await pool.query(
-                  "UPDATE contacts SET status = 'orcamentos' WHERE id = ?",
-                  [contactId]
-                );
-                break;
-
-              case "2": // Instalação / Assistência Técnica
-                await sendMessage(
-                  contact.wa_id,
-                  `O que deseja?\n1 - Saber o prazo de instalação do meu contrato\n2 - Agendar Instalação\n3 - Solicitar Assistência Técnica.\nPor favor, informe seu nome, nome do condomínio, número do apartamento e número do contrato.`,
-                  process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
-                );
-
-                // Atualiza o status para evitar o loop
-                await pool.query(
-                  "UPDATE contacts SET status = 'instalacao' WHERE id = ?",
-                  [contactId]
-                );
-                break;
-
-              case "3": // Financeiro / Adm
-                await sendMessage(
-                  contact.wa_id,
-                  `O que deseja?\n1 - Solicitar Boleto Bancário\n2 - Informações financeiras referentes ao meu contrato.\nPor favor, informe seu nome, nome do condomínio, número do apartamento e número do contrato.`,
-                  process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
-                );
-
-                // Atualiza o status para evitar o loop
-                await pool.query(
-                  "UPDATE contacts SET status = 'financeiro' WHERE id = ?",
-                  [contactId]
-                );
-                break;
-
-              case "4": // Projetos
-                await sendMessage(
-                  contact.wa_id,
-                  `Você ainda não recebeu seu projeto executivo? Entre em contato com seu consultor técnico para dar continuidade ao atendimento. Caso precise de suporte, informe seu nome, condomínio, apartamento e número do contrato, e redirecionaremos seu atendimento.`,
-                  process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
-                );
-
-                // Atualiza o status para evitar o loop
-                await pool.query(
-                  "UPDATE contacts SET status = 'projetos' WHERE id = ?",
-                  [contactId]
-                );
-                break;
-
-              case "5": // Compras
-                await sendMessage(
-                  contact.wa_id,
-                  `Deseja vender para nós? Por favor, envie seu portfólio abaixo. Caso já seja fornecedor, informe seu nome, o nome do comprador e a empresa para contato.`,
-                  process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
-                );
-
-                // Atualiza o status para evitar o loop
-                await pool.query(
-                  "UPDATE contacts SET status = 'compras' WHERE id = ?",
-                  [contactId]
-                );
-                break;
-
-              case "6": // Trabalhe Conosco
-                await sendMessage(
-                  contact.wa_id,
-                  `Envie seu currículo atualizado abaixo. Se houver uma vaga disponível que corresponda ao seu perfil, entraremos em contato.`,
-                  process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
-                );
-
-                // Atualiza o status para evitar o loop
-                await pool.query(
-                  "UPDATE contacts SET status = 'trabalhe_conosco' WHERE id = ?",
-                  [contactId]
-                );
-                break;
-
-              default:
-                await sendMessage(
-                  contact.wa_id,
-                  "Opção inválida. Por favor, selecione uma das opções válidas.",
-                  process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
-                );
-                break;
-            }
-          }
-
-          // Insere a mensagem recebida no banco de dados
+          // Insira a mensagem recebida no banco de dados
           const sql =
             "INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
           const values = [
@@ -358,7 +227,7 @@ export const receiveMessage = async (request, response) => {
             message.from,
             message.timestamp,
             message.type,
-            message.text.body,
+            message.type === "text" ? message.text.body : "", // Salva o corpo da mensagem se for texto
             contactId,
           ];
 
@@ -376,7 +245,7 @@ export const receiveMessage = async (request, response) => {
               message_from: message.from,
               message_timestamp: message.timestamp,
               message_type: message.type,
-              message_body: message.text.body,
+              message_body: message.type === "text" ? message.text.body : "[imagem]", // Indica que é uma imagem
               contact_id: contactId,
             });
 
