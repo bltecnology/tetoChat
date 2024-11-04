@@ -1,7 +1,10 @@
 import pool from "../models/db.js";
 import axios from "axios";
 import multer from 'multer';
-import path from 'path';
+import FormData from "form-data";
+import fs from "fs";
+import 'dotenv/config';
+
 
 
 async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
@@ -403,30 +406,44 @@ export const receiveMessage = async (request, response) => {
 const storage = multer.memoryStorage();
 export const upload = multer({ storage });
 
-// Função para enviar e salvar um arquivo no banco de dados
+// Função sendFile corrigida
 export async function sendFile(req, res) {
-  const { toPhone, whatsappBusinessAccountId, fileType } = req.body;
-  const fileBuffer = req.file.buffer;  // Arquivo em binário do multer
-  const fileName = req.file.originalname;  // Nome do arquivo
-
   try {
-    // Insere a mensagem sem o arquivo na tabela whatsapp_messages
-    const [messageResult] = await pool.query(
-      'INSERT INTO whatsapp_messages (phone_number_id, display_phone_number) VALUES (?, ?)',
-      [toPhone, whatsappBusinessAccountId]
-    );
-    const messageId = messageResult.insertId;
+    // Verifica se o arquivo está presente no request
+    if (!req.file) {
+      return res.status(400).json({ error: "Arquivo não encontrado" });
+    }
 
-    // Insere o arquivo na tabela media_files associada à mensagem
-    await pool.query(
-      'INSERT INTO media_files (message_id, file_type, file_data, file_name) VALUES (?, ?, ?, ?)',
-      [messageId, fileType, fileBuffer, fileName]
-    );
+    // Cria uma nova instância de FormData
+    const formData = new FormData();
 
-    res.status(200).json({ message: 'Arquivo salvo com sucesso!', messageId });
+    // Anexa o arquivo ao FormData usando o buffer ao invés de um caminho de arquivo
+    formData.append("file", req.file.buffer, {
+      filename: req.file.originalname,
+      contentType: req.file.mimetype
+    });
+
+    // Inclui o campo necessário para especificar o produto de mensagens
+    formData.append("messaging_product", "whatsapp");
+
+    // Configura as opções de headers, incluindo o token de autenticação e o content-type para FormData
+    const headers = {
+      ...formData.getHeaders(),
+      Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
+    };
+    console.log(`TESTE TOKEN WHATSAPP Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`)
+
+    // URL do endpoint da API do WhatsApp para envio de arquivos (verifique se a versão está correta)
+    const url = 'https://graph.facebook.com/v20.0/408476129004761/media';
+
+    // Envia o arquivo usando uma requisição POST
+    const response = await axios.post(url, formData, { headers });
+
+    // Responde com sucesso se o arquivo for enviado corretamente
+    res.status(200).json({ message: "Arquivo enviado com sucesso", data: response.data });
   } catch (error) {
-    console.error("Erro ao salvar arquivo:", error);
-    res.status(500).json({ error: 'Erro ao salvar arquivo' });
+    console.error("Erro ao enviar arquivo:", error);
+    res.status(500).json({ error: "Falha ao enviar o arquivo" });
   }
 }
 
