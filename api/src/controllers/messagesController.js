@@ -217,23 +217,49 @@ export const receiveMessage = async (request, response) => {
             continue;
           }
 
-          // Lidar com mensagens de texto e imagens separadamente
+          // Processamento de diferentes tipos de mensagem
+          let messageBody;
           if (message.type === "text" && message.text) {
-            const messageBody = message.text.body;
+            messageBody = message.text.body;
             console.log("Mensagem de texto recebida:", messageBody);
-
-            // Lógica para processar mensagens de texto aqui
 
           } else if (message.type === "image" && message.image) {
             const imageId = message.image.id;
             const mimeType = message.image.mime_type;
+            messageBody = `[imagem: ${imageId}]`;
             console.log(`Mensagem de imagem recebida: ID da imagem - ${imageId}, Tipo MIME - ${mimeType}`);
 
-            // Exemplo de como salvar a imagem no banco ou realizar alguma ação
-            // Aqui você pode decidir baixar a imagem usando o ID fornecido pela API do WhatsApp
+            // Aqui, você pode decidir baixar ou salvar a imagem usando o ID
+
+          } else if (message.type === "video" && message.video) {
+            const videoId = message.video.id;
+            const mimeType = message.video.mime_type;
+            messageBody = `[vídeo: ${videoId}]`;
+            console.log(`Mensagem de vídeo recebida: ID do vídeo - ${videoId}, Tipo MIME - ${mimeType}`);
+
+            // Lógica para baixar ou salvar o vídeo pode ser adicionada aqui
+
+          } else if (message.type === "document" && message.document) {
+            const documentId = message.document.id;
+            const mimeType = message.document.mime_type;
+            const fileName = message.document.filename;
+            messageBody = `[documento: ${documentId}, nome: ${fileName}]`;
+            console.log(`Mensagem de documento recebida: ID do documento - ${documentId}, Nome do arquivo - ${fileName}, Tipo MIME - ${mimeType}`);
+
+            // Lógica para baixar ou salvar o documento pode ser adicionada aqui
+
+          } else if (message.type === "audio" && message.audio) {
+            const audioId = message.audio.id;
+            const mimeType = message.audio.mime_type;
+            messageBody = `[áudio: ${audioId}]`;
+            console.log(`Mensagem de áudio recebida: ID do áudio - ${audioId}, Tipo MIME - ${mimeType}`);
+
+            // Lógica para baixar ou salvar o áudio pode ser adicionada aqui
+
           } else {
             console.error("Tipo de mensagem não suportado:", message.type);
             allEntriesProcessed = false;
+            continue;
           }
 
           // Insere a mensagem recebida no banco de dados
@@ -248,7 +274,7 @@ export const receiveMessage = async (request, response) => {
             message.from,
             message.timestamp,
             message.type,
-            message.type === "text" ? message.text.body : "[imagem]", // Indica que é uma imagem
+            messageBody,
             contactId,
           ];
 
@@ -266,7 +292,7 @@ export const receiveMessage = async (request, response) => {
               message_from: message.from,
               message_timestamp: message.timestamp,
               message_type: message.type,
-              message_body: message.type === "text" ? message.text.body : "[imagem]", // Indica que é uma imagem
+              message_body: messageBody,
               contact_id: contactId,
             });
 
@@ -292,10 +318,10 @@ export const receiveMessage = async (request, response) => {
   }
 };
 
-
 // Configuração do multer para armazenar arquivo na memória
 const storage = multer.memoryStorage();
 export const upload = multer({ storage });
+
 
 // Função sendFile corrigida
 export async function sendFile(req, res) {
@@ -343,28 +369,30 @@ export async function getFile(req, res) {
   const { messageId } = req.params;
 
   try {
+    // Consulta para buscar o tipo de arquivo, dados do arquivo e nome do arquivo com base no messageId
     const [rows] = await pool.query(
       'SELECT file_type, file_data, file_name FROM media_files WHERE message_id = ?',
       [messageId]
     );
 
+    // Verifica se algum arquivo foi encontrado
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Arquivo não encontrado' });
     }
 
+    // Obtém o arquivo e configura o MIME type correto
     const file = rows[0];
-    
-    // Configura o header para o tipo correto de arquivo e envia o conteúdo
     const mimeType = {
-      image: 'image/jpeg',
-      audio: 'audio/mpeg',
-      video: 'video/mp4',
-      document: 'application/octet-stream' // Genérico para documentos
-    }[file.file_type] || 'application/octet-stream';
+      image: 'image/jpeg',           // Padrão para imagens JPEG
+      audio: 'audio/mpeg',           // Padrão para áudio MP3
+      video: 'video/mp4',            // Padrão para vídeos MP4
+      document: 'application/pdf'    // Padrão para PDF, ajustável conforme necessário
+    }[file.file_type] || 'application/octet-stream'; // Genérico para arquivos não especificados
 
+    // Configura os headers para o tipo de arquivo e faz o download do arquivo com o nome correto
     res.set('Content-Type', mimeType);
     res.set('Content-Disposition', `attachment; filename="${file.file_name}"`);
-    res.send(file.file_data);
+    res.send(file.file_data);  // Envia os dados binários do arquivo
   } catch (error) {
     console.error("Erro ao recuperar arquivo:", error);
     res.status(500).json({ error: 'Erro ao recuperar arquivo' });
