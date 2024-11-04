@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS whatsapp_messages (
   display_phone_number VARCHAR(20),
   contact_name VARCHAR(100),
   wa_id VARCHAR(20),
-  message_id VARCHAR(280),
+  message_id VARCHAR(280) unique,
   message_from VARCHAR(20),
   message_timestamp VARCHAR(20),
   message_type VARCHAR(20),
@@ -52,13 +52,15 @@ CREATE TABLE IF NOT EXISTS whatsapp_messages (
 
 CREATE TABLE IF NOT EXISTS media_files (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    message_id INT NOT NULL,
+    message_id VARCHAR(280) NOT NULL,
     file_type ENUM('image', 'audio', 'video', 'document') NOT NULL,  -- Tipo de arquivo
     file_data LONGBLOB NOT NULL,  -- Dados binários do arquivo
     file_name VARCHAR(255),       -- Nome original do arquivo (opcional)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (message_id) REFERENCES whatsapp_messages(id) ON DELETE CASCADE
+    FOREIGN KEY (message_id) REFERENCES whatsapp_messages(message_id) ON DELETE CASCADE
 );
+
+
 
 CREATE TABLE IF NOT EXISTS quick_responses (
   id INT AUTO_INCREMENT PRIMARY KEY,
