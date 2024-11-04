@@ -195,6 +195,28 @@ export const receiveMessage = async (request, response) => {
             continue;
           }
 
+          // Obter ou criar o contato e definir contactId
+          let contactId;
+          try {
+            const [contactRows] = await pool.query(
+              "SELECT id FROM contacts WHERE phone = ?",
+              [contact.wa_id]
+            );
+            if (contactRows.length > 0) {
+              contactId = contactRows[0].id;
+            } else {
+              const [result] = await pool.query(
+                "INSERT INTO contacts (name, phone) VALUES (?, ?)",
+                [contact.profile.name, contact.wa_id]
+              );
+              contactId = result.insertId;
+            }
+          } catch (err) {
+            console.error("Erro ao buscar ou criar contato:", err);
+            allEntriesProcessed = false;
+            continue;
+          }
+
           // Lidar com mensagens de texto e imagens separadamente
           if (message.type === "text" && message.text) {
             const messageBody = message.text.body;
@@ -209,13 +231,12 @@ export const receiveMessage = async (request, response) => {
 
             // Exemplo de como salvar a imagem no banco ou realizar alguma ação
             // Aqui você pode decidir baixar a imagem usando o ID fornecido pela API do WhatsApp
-
           } else {
             console.error("Tipo de mensagem não suportado:", message.type);
             allEntriesProcessed = false;
           }
 
-          // Insira a mensagem recebida no banco de dados
+          // Insere a mensagem recebida no banco de dados
           const sql =
             "INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
           const values = [
@@ -227,7 +248,7 @@ export const receiveMessage = async (request, response) => {
             message.from,
             message.timestamp,
             message.type,
-            message.type === "text" ? message.text.body : "", // Salva o corpo da mensagem se for texto
+            message.type === "text" ? message.text.body : "[imagem]", // Indica que é uma imagem
             contactId,
           ];
 
@@ -270,6 +291,7 @@ export const receiveMessage = async (request, response) => {
     response.sendStatus(400);
   }
 };
+
 
 // Configuração do multer para armazenar arquivo na memória
 const storage = multer.memoryStorage();
