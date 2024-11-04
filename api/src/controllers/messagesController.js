@@ -378,6 +378,8 @@ async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     // Faz download do arquivo binário usando o URL do WhatsApp com token de autenticação
     const response = await axios.get(urlWithToken, { responseType: 'arraybuffer' });
     const fileData = response.data;
+    console.log("Tamanho do arquivo baixado:", fileData.length);
+
 
     // Insere o arquivo na tabela `media_files`
     await pool.query(
@@ -397,18 +399,15 @@ export async function getFile(req, res) {
   const { messageId } = req.params;
 
   try {
-    // Consulta para buscar o tipo de arquivo, dados do arquivo e nome do arquivo com base no messageId
     const [rows] = await pool.query(
       'SELECT file_type, file_data, file_name FROM media_files WHERE message_id = ?',
       [messageId]
     );
 
-    // Verifica se algum arquivo foi encontrado
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Arquivo não encontrado' });
     }
 
-    // Obtém o arquivo e configura o MIME type correto
     const file = rows[0];
     const mimeType = {
       image: 'image/jpeg',
@@ -417,10 +416,17 @@ export async function getFile(req, res) {
       document: 'application/pdf'
     }[file.file_type] || 'application/octet-stream';
 
-    // Configura os headers para o tipo de arquivo e faz o download do arquivo com o nome correto
     res.set('Content-Type', mimeType);
     res.set('Content-Disposition', `inline; filename="${file.file_name}"`);
-    res.send(file.file_data);  // Envia os dados binários do arquivo
+    
+    // Verifica se os dados não estão vazios
+    if (file.file_data && file.file_data.length > 0) {
+      console.log("Tamanho do arquivo recuperado:", file.file_data.length);
+      res.send(Buffer.from(file.file_data));  // Converte para Buffer antes de enviar
+    } else {
+      console.error("Dados do arquivo estão vazios ou inválidos.");
+      res.status(500).json({ error: 'Erro ao recuperar dados do arquivo' });
+    }
   } catch (error) {
     console.error("Erro ao recuperar arquivo:", error);
     res.status(500).json({ error: 'Erro ao recuperar arquivo' });
