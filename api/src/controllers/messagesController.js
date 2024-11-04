@@ -372,14 +372,18 @@ export async function sendFile(req, res) {
 
 async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
   try {
-    // Adiciona o token de acesso na URL do arquivo
-    const urlWithToken = `${fileUrl}?access_token=${process.env.WHATSAPP_ACCESS_TOKEN}`;
-
-    // Faz download do arquivo binário usando o URL do WhatsApp com token de autenticação
-    const response = await axios.get(urlWithToken, { responseType: 'arraybuffer' });
+    // Faz download do arquivo binário usando o URL direto
+    const response = await axios.get(fileUrl, { responseType: 'arraybuffer' });
     const fileData = response.data;
-    console.log("Tamanho do arquivo baixado:", fileData.length);
 
+    // Verifique se o tamanho do arquivo baixado corresponde ao esperado
+    const fileSize = Buffer.byteLength(fileData);
+    console.log(`Tamanho do arquivo baixado: ${fileSize} bytes`);
+
+    if (fileSize < 1000) { // Tamanho baixo pode indicar erro no download
+      console.error('O arquivo baixado é menor que o esperado. Pode ter ocorrido um problema no download.');
+      return;
+    }
 
     // Insere o arquivo na tabela `media_files`
     await pool.query(
@@ -392,7 +396,6 @@ async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     console.error('Erro ao salvar arquivo de mídia:', error);
   }
 }
-
 
 // Função para recuperar um arquivo do banco de dados
 export async function getFile(req, res) {
