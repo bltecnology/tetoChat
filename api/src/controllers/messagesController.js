@@ -2,7 +2,7 @@ import pool from "../models/db.js";
 import axios from "axios";
 import multer from 'multer';
 import FormData from "form-data";
-import fs from "fs";
+import pool from "../models/db.js";
 import 'dotenv/config';
 
 // Configuração do multer para armazenar arquivo na memória
@@ -372,20 +372,23 @@ export async function sendFile(req, res) {
 
 async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
   try {
-    // Faz download do arquivo binário usando o URL direto
-    const response = await axios.get(fileUrl, { responseType: 'arraybuffer' });
+    // Faz o download do arquivo usando a URL fornecida na resposta do Facebook
+    const response = await axios.get(fileUrl, {
+      responseType: 'arraybuffer', // Configura para receber o arquivo como um buffer de bytes
+    });
+
     const fileData = response.data;
 
-    // Verifique se o tamanho do arquivo baixado corresponde ao esperado
+    // Verifica o tamanho do arquivo baixado
     const fileSize = Buffer.byteLength(fileData);
     console.log(`Tamanho do arquivo baixado: ${fileSize} bytes`);
 
-    if (fileSize < 1000) { // Tamanho baixo pode indicar erro no download
+    if (fileSize < 1000) { // Condição para verificar se o arquivo baixado é válido
       console.error('O arquivo baixado é menor que o esperado. Pode ter ocorrido um problema no download.');
       return;
     }
 
-    // Insere o arquivo na tabela `media_files`
+    // Insere o arquivo na tabela `media_files` do banco de dados
     await pool.query(
       'INSERT INTO media_files (message_id, file_type, file_data, file_name) VALUES (?, ?, ?, ?)',
       [messageId, fileType, fileData, fileName]
@@ -396,6 +399,10 @@ async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     console.error('Erro ao salvar arquivo de mídia:', error);
   }
 }
+
+export { saveMediaFile };
+
+
 
 // Função para recuperar um arquivo do banco de dados
 export async function getFile(req, res) {
