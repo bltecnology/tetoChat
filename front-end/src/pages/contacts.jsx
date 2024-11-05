@@ -20,7 +20,7 @@ const Contacts = () => {
     const fetchContacts = async () => {
       try {
         const response = await axios.get(
-          "https://tetochat-nje1.onrender.com//contacts"
+          "https://tetochat-nje1.onrender.com/contacts"
         );
         setContacts(response.data);
       } catch (error) {
@@ -34,7 +34,7 @@ const Contacts = () => {
   const addContact = async () => {
     try {
       const response = await axios.get(
-        "https://tetochat-nje1.onrender.com//contacts"
+        "https://tetochat-nje1.onrender.com/contacts"
       );
       setContacts(response.data);
       setIsModalOpen(false);
@@ -50,7 +50,7 @@ const Contacts = () => {
     if (confirmDelete) {
       try {
         await axios.delete(
-          `https://tetochat-nje1.onrender.com//contacts/${contactId}`
+          `https://tetochat-nje1.onrender.com/contacts/${contactId}`
         );
         setContacts(contacts.filter((contact) => contact.id !== contactId));
       } catch (error) {
