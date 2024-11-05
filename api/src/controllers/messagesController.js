@@ -369,10 +369,14 @@ export async function sendFile(req, res) {
   }
 }
 
-async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
+export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
   try {
-    // Faz o download do arquivo usando a URL fornecida na resposta do Facebook
-    const response = await axios.get(fileUrl, {
+    // Adiciona o token de acesso como parâmetro na URL
+    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+    const fileUrlWithToken = `${fileUrl}?access_token=${accessToken}`;
+
+    // Faz o download do arquivo usando a URL com o token
+    const response = await axios.get(fileUrlWithToken, {
       responseType: 'arraybuffer', // Configura para receber o arquivo como um buffer de bytes
     });
 
@@ -398,10 +402,6 @@ async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     console.error('Erro ao salvar arquivo de mídia:', error);
   }
 }
-
-export { saveMediaFile };
-
-
 
 // Função para recuperar um arquivo do banco de dados
 export async function getFile(req, res) {
