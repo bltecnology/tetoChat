@@ -35,3 +35,18 @@ export const transfer = async (req, res) => {
       res.status(500).send("Erro ao transferir atendimento");
     }
   };
+
+export const queueStandBy = async (req, res) => {
+  const departmentTable = req.params.department;
+  const tableName = `queueOf${departmentTable}`;
+
+  try {
+    const [contacts] = await pool.query(
+      `SELECT DISTINCT c.* FROM contacts AS c INNER JOIN ${tableName} AS q ON q.contact_id = c.id`
+    );
+    res.status(200).json(contacts);
+  } catch (error) {
+    console.error("Erro ao buscar contatos:", error);
+    res.status(500).send("Erro ao buscar contatos");
+  }
+};

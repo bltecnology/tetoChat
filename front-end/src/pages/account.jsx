@@ -13,7 +13,7 @@ const Account = () => {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const response = await axios.get('https://tetochat-nje1.onrender.com/me');
+                const response = await axios.get('http://localhost:3005/me');
                 setUser(response.data);
             } catch (error) {
                 console.error('Erro ao buscar dados do usuário:', error);
@@ -30,7 +30,7 @@ const Account = () => {
         }
 
         try {
-            await axios.put('https://tetochat-nje1.onrender.com/update-password', {
+            await axios.put('http://localhost:3005/update-password', {
                 password: newPassword
             });
             setMessage('Senha alterada com sucesso');

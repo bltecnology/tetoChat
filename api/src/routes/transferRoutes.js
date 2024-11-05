@@ -1,10 +1,14 @@
 import express from "express";
-import { transfer } from "../controllers/transferController.js";
+import { transfer,
+         queueStandBy,
+         queueOut
+        } from "../controllers/transferController.js";
 
 const transferRoutes = express.Router();
 
 
 transferRoutes.post("/transfer", transfer);
+transferRoutes.get("/queue/:department", queueStandBy)
 
 
 export { transferRoutes };
