@@ -2,7 +2,6 @@ import pool from "../models/db.js";
 import axios from "axios";
 import multer from 'multer';
 import FormData from "form-data";
-import pool from "../models/db.js";
 import 'dotenv/config';
 
 // Configuração do multer para armazenar arquivo na memória
