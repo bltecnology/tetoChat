@@ -45,3 +45,20 @@ export const deleteContact = async (req, res) => {
     res.status(500).send("Erro ao deletar contato");
   }
 };
+
+export const getUserChats = async (req, res) => {
+  const department = req.params.department;
+
+  try {
+    // Use parameterized query with `?` to safely include the department value
+    const [contacts] = await pool.query(
+      `SELECT * FROM contacts WHERE status = ?`,
+      [department]
+    );
+    res.status(200).json(contacts);
+  } catch (error) {
+    console.error("Erro ao buscar contatos do chat:", error);
+    res.status(500).send("Erro ao buscar contatos do chat");
+  }
+};
+

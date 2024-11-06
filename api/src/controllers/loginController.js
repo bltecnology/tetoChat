@@ -37,7 +37,10 @@ export const loginUser = async (req, res) => {
     });
 
     // Enviar o token e informações básicas do usuário
-    res.status(200).json({ token, user: { id: user.id, email: user.email, name: user.name } });
+    //res.status(200).json({ token, user: { id: user.id, email: user.email, name: user.name } });
+    // Backend (loginUser controller)
+    res.status(200).json({ token, department: user.department, id: user.id });
+
   } catch (error) {
     console.error('Erro ao fazer login:', error);
     res.status(500).json({ message: 'Erro ao tentar fazer login' });

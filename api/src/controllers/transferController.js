@@ -19,7 +19,8 @@ export const transfer = async (req, res) => {
       if (!department.length) {
         return res.status(404).send("Departamento não encontrado");
       }
-  
+      
+      const departmentName = `${department[0].name}`;
       const tableName = `queueOf${department[0].name}`;
       const transferQuery = `
         INSERT INTO ${tableName} (contact_id, message_body, message_from, message_timestamp)
@@ -28,6 +29,12 @@ export const transfer = async (req, res) => {
         WHERE contact_id = ?
       `;
       await pool.query(transferQuery, [contactId]);
+
+      const statusQuery = `
+        UPDATE contacts SET status = '${department[0].name}'
+        WHERE id = ?
+      `;
+      await pool.query(statusQuery, [contactId]);
   
       res.status(200).send("Atendimento transferido com sucesso para a fila");
     } catch (error) {
@@ -54,7 +61,7 @@ export const queueStandBy = async (req, res) => {
 export const queueOut = async (req, res) => {
   const departmentTable = req.params.department;
   const tableName = `queueOf${departmentTable}`;
-  const { idDoFront } = req.body; // Supondo que o ID está no corpo da requisição
+  const { idContact } = req.body; // Supondo que o ID está no corpo da requisição
 
   try {
     // Busca todos os nomes dos departamentos da tabela departments
@@ -71,7 +78,7 @@ export const queueOut = async (req, res) => {
     // Executa o DELETE somente se o departamento for válido
     await pool.query(
       `DELETE FROM ${tableName} WHERE contact_id = ?`, 
-      [idDoFront]
+      [idContact]
     );
 
     res.status(200).json({ message: "Contato removido da fila com sucesso" });

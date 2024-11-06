@@ -566,30 +566,26 @@ const Chat = () => {
   
 
   const fetchChats = async () => {
+    const department = localStorage.getItem("department");
+    
     try {
       const response = await axios.get(
-        `http://localhost:3005/getUserChats?userId=${localStorage.getItem(
-          "userId"
-        )}`,
+        `http://localhost:3005/getUserChats/${department}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
-
+  
       const fetchedChats = Array.isArray(response.data) ? response.data : [];
-
-      const uniqueChats = fetchedChats.filter(
-        (chat) => chat.user_id === localStorage.getItem("userId")
-      );
-
-      setChatContacts((prevChats) => [...prevChats, ...uniqueChats]);
+      setChatContacts(fetchedChats);  // Atualiza os contatos do chat
     } catch (error) {
       console.error("Erro ao buscar chats:", error);
     }
   };
-
+  
+  
   const fetchQueue = async () => {
     try {
       const departmentTable = `${localStorage.getItem("department")}`;
@@ -690,13 +686,15 @@ const Chat = () => {
   
         if (response.status === 200) {
           setNewMessage(""); // Limpa o campo de nova mensagem
+          console.log("Aba Chat")
+
           fetchChats(); // Atualiza as conversas após enviar a mensagem
   
           // Remover o contato da fila usando queueOut
           await axios.delete(
             `http://localhost:3005/queue/${localStorage.getItem("department")}`,
             {
-              data: { idDoFront: selectedContact.id },
+              data: { idContact: selectedContact.id },
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
               },
@@ -713,7 +711,6 @@ const Chat = () => {
       }
     }
   };
-  
   
   const handleKeyPress = (event) => {
   if (event.key === "Enter") {
