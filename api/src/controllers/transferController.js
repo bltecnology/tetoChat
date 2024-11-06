@@ -50,3 +50,33 @@ export const queueStandBy = async (req, res) => {
     res.status(500).send("Erro ao buscar contatos");
   }
 };
+
+export const queueOut = async (req, res) => {
+  const departmentTable = req.params.department;
+  const tableName = `queueOf${departmentTable}`;
+  const { idDoFront } = req.body; // Supondo que o ID está no corpo da requisição
+
+  try {
+    // Busca todos os nomes dos departamentos da tabela departments
+    const [departments] = await pool.query("SELECT name FROM departments");
+
+    // Cria um array com os nomes dos departamentos para validação
+    const validDepartments = departments.map(dept => dept.name);
+
+    // Valida se o departmentTable é um nome de departamento válido
+    if (!validDepartments.includes(departmentTable)) {
+      return res.status(400).send("Departamento inválido");
+    }
+
+    // Executa o DELETE somente se o departamento for válido
+    await pool.query(
+      `DELETE FROM ${tableName} WHERE contact_id = ?`, 
+      [idDoFront]
+    );
+
+    res.status(200).json({ message: "Contato removido da fila com sucesso" });
+  } catch (error) {
+    console.error("Erro ao remover contato da fila:", error);
+    res.status(500).send("Erro ao remover contato da fila");
+  }
+};

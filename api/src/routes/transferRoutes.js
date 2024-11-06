@@ -9,6 +9,7 @@ const transferRoutes = express.Router();
 
 transferRoutes.post("/transfer", transfer);
 transferRoutes.get("/queue/:department", queueStandBy)
+transferRoutes.delete("/queue/:department", queueOut)
 
 
 export { transferRoutes };

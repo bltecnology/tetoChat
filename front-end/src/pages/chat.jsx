@@ -610,7 +610,6 @@ const Chat = () => {
       setQueueContacts([]);
     }
   };
-  
 
   const fetchContacts = async () => {
     try {
@@ -688,11 +687,26 @@ const Chat = () => {
             },
           }
         );
-        console.log(response);
-        
+  
         if (response.status === 200) {
           setNewMessage(""); // Limpa o campo de nova mensagem
           fetchChats(); // Atualiza as conversas após enviar a mensagem
+  
+          // Remover o contato da fila usando queueOut
+          await axios.delete(
+            `http://localhost:3005/queue/${localStorage.getItem("department")}`,
+            {
+              data: { idDoFront: selectedContact.id },
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+  
+          // Atualizar o estado da fila localmente após a remoção
+          setQueueContacts((prevQueue) =>
+            prevQueue.filter((contact) => contact.id !== selectedContact.id)
+          );
         }
       } catch (error) {
         console.error("Erro ao enviar mensagem:", error);
@@ -700,10 +714,11 @@ const Chat = () => {
     }
   };
   
-    const handleKeyPress = (event) => {
-    if (event.key === "Enter") {
-      handleSendMessage();
-    }
+  
+  const handleKeyPress = (event) => {
+  if (event.key === "Enter") {
+    handleSendMessage();
+  }
   };
 
   const handleTransferClick = (contact) => {
