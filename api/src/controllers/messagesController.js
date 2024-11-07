@@ -172,6 +172,8 @@ export const receiveMessage = async (request, response) => {
       const changes = entry.changes;
       for (const change of changes) {
         const data = change.value;
+        console.log(data)
+
         if (data && data.messages && data.messages.length > 0) {
           const message = data.messages[0];
           const contact =
@@ -271,6 +273,9 @@ export const receiveMessage = async (request, response) => {
             continue;
           }
 
+          console.log(message)
+          console.log("dkhkadsh")
+          console.log(messageBody)
           // Insere a mensagem recebida no banco de dados
           const sql =
             "INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -359,6 +364,7 @@ export async function sendFile(req, res) {
 
     // Envia o arquivo usando uma requisição POST
     const response = await axios.post(url, formData, { headers });
+    
 
     // Responde com sucesso se o arquivo for enviado corretamente
     res.status(200).json({ message: "Arquivo enviado com sucesso", data: response.data });
@@ -390,6 +396,8 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
       console.error('O arquivo baixado é menor que o esperado. Pode ter ocorrido um problema no download.');
       return;
     }
+
+
 
     // Insere o arquivo na tabela `media_files` do banco de dados
     await pool.query(

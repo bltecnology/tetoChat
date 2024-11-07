@@ -15,7 +15,7 @@ const ModalUsers = ({ isOpen, onClose, onSave, user }) => {
     if (isOpen) {
       const fetchDepartments = async () => {
         try {
-          const response = await axios.get('http://localhost:3005/departments');
+          const response = await axios.get('https://tetochat-nje1.onrender.com/departments');
           setDepartments(response.data);
         } catch (error) {
           console.error('Erro ao buscar departamentos:', error);
@@ -24,7 +24,7 @@ const ModalUsers = ({ isOpen, onClose, onSave, user }) => {
 
       const fetchPositions = async () => {
         try {
-          const response = await axios.get('http://localhost:3005/positions'); // Endpoint para posições
+          const response = await axios.get('https://tetochat-nje1.onrender.com/positions'); // Endpoint para posições
           setPositions(response.data);
         } catch (error) {
           console.error('Erro ao buscar posições:', error);
@@ -63,10 +63,10 @@ const ModalUsers = ({ isOpen, onClose, onSave, user }) => {
     try {
       if (user) {
         // Atualizar usuário existente
-        await axios.put(`http://localhost:3005/users/${user.id}`, updatedUser);
+        await axios.put(`https://tetochat-nje1.onrender.com/users/${user.id}`, updatedUser);
       } else {
         // Criar novo usuário
-        const response = await axios.post('http://localhost:3005/users', updatedUser);
+        const response = await axios.post('https://tetochat-nje1.onrender.com/users', updatedUser);
         updatedUser.id = response.data.id;
       }
       onSave(updatedUser);

@@ -14,7 +14,7 @@ const LoginPage = () => {
     event.preventDefault();
 
     try {
-      const response = await axios.post('http://localhost:3005/login', { email, password: senha });
+      const response = await axios.post('https://tetochat-nje1.onrender.com/login', { email, password: senha });
       const { token } = response.data;
       const { department } = response.data;
       

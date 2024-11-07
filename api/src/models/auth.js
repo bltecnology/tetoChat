@@ -64,8 +64,8 @@ export const authenticateJWT = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1]; // Extrai o token do header "Authorization"
   
   // Loga o token recebido e a chave secreta para verificação
-  console.log("Token recebido:", token);
-  console.log("Chave secreta ao verificar:", process.env.SECRET_KEY);
+  // console.log("Token recebido:", token);
+  // console.log("Chave secreta ao verificar:", process.env.SECRET_KEY);
 
   // Verifica se o token foi fornecido
   if (!token) {

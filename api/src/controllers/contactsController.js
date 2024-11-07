@@ -2,10 +2,17 @@
 import pool from '../models/db.js';
 
 export const addContact = async (req, res) => {
-  const { name, phone, tag, note, cpf, rg, email } = req.body;
+  let { name, phone, tag, note, cpf, rg, email } = req.body;
   if (!name || !phone) {
     return res.status(400).send("Nome e telefone são obrigatórios");
   }
+  // [name, phone, tag, note, cpf, rg, email].forEach((value, index, array) => {
+  //   if (value === '') array[index] = null;
+  // })
+  // [name, phone, tag, note, cpf, rg, email].forEach((value, index, array) => {
+  //   console.log(array[index])
+  // })
+
   try {
     const [result] = await pool.query(
       "INSERT INTO contacts (name, phone, tag, note, cpf, rg, email) VALUES (?, ?, ?, ?, ?, ?, ?)",

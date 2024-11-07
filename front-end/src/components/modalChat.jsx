@@ -8,7 +8,7 @@
     useEffect(() => {
         const fetchDepartments = async () => {
         try {
-            const response = await axios.get('http://localhost:3005/departments');
+            const response = await axios.get('https://tetochat-nje1.onrender.com/departments');
             setDepartments(response.data);
         } catch (error) {
             console.error('Erro ao buscar departamentos:', error);
@@ -21,7 +21,7 @@
     const handleTransfer = async () => {
         if (selectedDepartment && contactId) {
         try {
-            await axios.post('http://localhost:3005/transfer', {
+            await axios.post('https://tetochat-nje1.onrender.com/transfer', {
             contactId: contactId,
             departmentId: selectedDepartment,
             });
