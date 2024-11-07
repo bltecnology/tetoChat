@@ -382,7 +382,7 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
 
     // Faz o download do arquivo usando a URL com o token
     const response = await axios.get(fileUrlWithToken, {
-      responseType: 'json',
+      responseType: 'arraybuffer',
       // Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
     });
     console.log("AQUI")
@@ -409,12 +409,15 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     }
 
 
-
-    // Insere o arquivo na tabela `media_files` do banco de dados
-    await pool.query(
-      'INSERT INTO media_files (message_id, file_type, file_data, file_name) VALUES (?, ?, ?, ?)',
-      [messageId, fileType, fileData, fileName]
-    );
+    try {
+      // Insere o arquivo na tabela `media_files` do banco de dados
+      await pool.query(
+        'INSERT INTO media_files (message_id, file_type, file_data, file_name) VALUES (?, ?, ?, ?)',
+        [messageId, fileType, fileData, fileName]
+      );
+    } catch (error) {
+      console.error('Erro ao inserir no banco de dados:', error);
+    }
 
     console.log('Arquivo de mídia salvo com sucesso.');
   } catch (error) {
