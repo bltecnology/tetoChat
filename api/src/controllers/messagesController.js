@@ -274,7 +274,6 @@ export const receiveMessage = async (request, response) => {
           }
 
           console.log(message)
-          console.log("dkhkadsh")
           console.log(messageBody)
           // Insere a mensagem recebida no banco de dados
           const sql =
@@ -383,12 +382,16 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
 
     // Faz o download do arquivo usando a URL com o token
     const response = await axios.get(fileUrlWithToken, {
-      responseType: 'arraybuffer', // Configura para receber o arquivo como um buffer de bytes
+      responseType: 'arraybuffer',
+      // Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
     });
-
-    console.log(response)
+    console.log("AQUI")
+    console.log(response.url)
 
     const fileData = response.data;
+
+    // const response = await axios.post(url, formData, { headers });
+
 
     // Verifica o tamanho do arquivo baixado
     const fileSize = Buffer.byteLength(fileData);

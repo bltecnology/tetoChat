@@ -6,12 +6,6 @@ export const addContact = async (req, res) => {
   if (!name || !phone) {
     return res.status(400).send("Nome e telefone são obrigatórios");
   }
-  // [name, phone, tag, note, cpf, rg, email].forEach((value, index, array) => {
-  //   if (value === '') array[index] = null;
-  // })
-  // [name, phone, tag, note, cpf, rg, email].forEach((value, index, array) => {
-  //   console.log(array[index])
-  // })
 
   try {
     const [result] = await pool.query(
