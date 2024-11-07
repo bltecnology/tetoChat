@@ -9,7 +9,7 @@ const storage = multer.memoryStorage();
 export const upload = multer({ storage });
 
 async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
-  const url = `https://graph.facebook.com/v20.0/${whatsappBusinessAccountId}/messages`;
+  const url = `https://graph.facebook.com/v21.0/${whatsappBusinessAccountId}/messages`;
   const data = {
     messaging_product: "whatsapp",
     recipient_type: "individual",
@@ -233,7 +233,7 @@ export const receiveMessage = async (request, response) => {
             console.log(`Mensagem de imagem recebida: ID da imagem - ${imageId}, Tipo MIME - ${mimeType}`);
 
             // Salva a imagem usando saveMediaFile
-            const fileUrl = `https://graph.facebook.com/v20.0/${imageId}`;
+            const fileUrl = `https://graph.facebook.com/v21.0/${imageId}`;
             saveMediaFile(message.id, 'image', fileUrl, `${imageId}.jpg`);
 
           } else if (message.type === "video" && message.video) {
@@ -243,7 +243,7 @@ export const receiveMessage = async (request, response) => {
             console.log(`Mensagem de vídeo recebida: ID do vídeo - ${videoId}, Tipo MIME - ${mimeType}`);
 
             // Salva o vídeo usando saveMediaFile
-            const fileUrl = `https://graph.facebook.com/v20.0/${videoId}`;
+            const fileUrl = `https://graph.facebook.com/v21.0/${videoId}`;
             saveMediaFile(message.id, 'video', fileUrl, `${videoId}.mp4`);
 
           } else if (message.type === "document" && message.document) {
@@ -254,7 +254,7 @@ export const receiveMessage = async (request, response) => {
             console.log(`Mensagem de documento recebida: ID do documento - ${documentId}, Nome do arquivo - ${fileName}, Tipo MIME - ${mimeType}`);
 
             // Salva o documento usando saveMediaFile
-            const fileUrl = `https://graph.facebook.com/v20.0/${documentId}`;
+            const fileUrl = `https://graph.facebook.com/v21.0/${documentId}`;
             saveMediaFile(message.id, 'document', fileUrl, fileName);
 
           } else if (message.type === "audio" && message.audio) {
@@ -264,7 +264,7 @@ export const receiveMessage = async (request, response) => {
             console.log(`Mensagem de áudio recebida: ID do áudio - ${audioId}, Tipo MIME - ${mimeType}`);
 
             // Salva o áudio usando saveMediaFile
-            const fileUrl = `https://graph.facebook.com/v20.0/${audioId}`;
+            const fileUrl = `https://graph.facebook.com/v21.0/${audioId}`;
             saveMediaFile(message.id, 'audio', fileUrl, `${audioId}.mp3`);
 
           } else {
@@ -359,7 +359,7 @@ export async function sendFile(req, res) {
     console.log(`TESTE TOKEN WHATSAPP Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`)
 
     // URL do endpoint da API do WhatsApp para envio de arquivos (verifique se a versão está correta)
-    const url = 'https://graph.facebook.com/v20.0/408476129004761/media';
+    const url = 'https://graph.facebook.com/v21.0/408476129004761/media';
 
     // Envia o arquivo usando uma requisição POST
     const response = await axios.post(url, formData, { headers });
@@ -382,7 +382,7 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
 
     // Faz o download do arquivo usando a URL com o token
     const response = await axios.get(fileUrlWithToken, {
-      // responseType: 'arraybuffer',
+      responseType: 'json',
       // Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
     });
     console.log("AQUI")
