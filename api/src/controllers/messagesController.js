@@ -386,6 +386,8 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
       responseType: 'arraybuffer', // Configura para receber o arquivo como um buffer de bytes
     });
 
+    console.log(response)
+
     const fileData = response.data;
 
     // Verifica o tamanho do arquivo baixado
