@@ -409,15 +409,12 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     }
 
 
-    try {
-      // Insere o arquivo na tabela `media_files` do banco de dados
-      await pool.query(
-        'INSERT INTO media_files (message_id, file_type, file_data, file_name) VALUES (?, ?, ?, ?)',
-        [messageId, fileType, fileData, fileName]
-      );
-    } catch (error) {
-      console.error('Erro ao inserir no banco de dados:', error);
-    }
+    
+    // Insere o arquivo na tabela `media_files` do banco de dados
+    await pool.query(
+      'INSERT INTO media_files (message_id, file_type, file_data, file_name) VALUES (?, ?, ?, ?)',
+      [messageId, fileType, fileData, fileName]
+    );
 
     console.log('Arquivo de mídia salvo com sucesso.');
   } catch (error) {
