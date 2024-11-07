@@ -390,13 +390,15 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     console.log("ESSE")
     console.log(response)
 
-    const fileData = response.data;
+    const fileData = response.data.url;
 
-    // const response = await axios.post(url, formData, { headers });
+    const responseDoc = await axios.get(fileData, {
+      Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
+    });
 
 
     // Verifica o tamanho do arquivo baixado
-    const fileSize = Buffer.byteLength(fileData);
+    const fileSize = Buffer.byteLength(responseDoc);
     console.log(`Tamanho do arquivo baixado: ${fileSize} bytes`);
 
     if (fileSize < 1000) { // Condição para verificar se o arquivo baixado é válido
