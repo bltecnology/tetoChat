@@ -386,15 +386,17 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
       // Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
     });
     console.log("AQUI")
-    console.log(response.data)
+    console.log(response.data.url)
     console.log("ESSE")
-    console.log(response)
+    // console.log(response)
 
     const fileData = response.data.url;
 
     const responseDoc = await axios.get(fileData, {
       Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
     });
+
+    console.log(responseDoc)
 
 
     // Verifica o tamanho do arquivo baixado
