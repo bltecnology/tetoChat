@@ -385,8 +385,10 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
       responseType: 'arraybuffer',
       // Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
     });
-    console.log("AQUI")
+    console.log("AQUI URL")
     console.log(response.data.url)
+    console.log("AQUI data")
+    console.log(response.data)
     console.log("ESSE")
     // console.log(response)
 
