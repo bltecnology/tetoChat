@@ -389,10 +389,11 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     // console.log(response.data.url)
     console.log("AQUI Response")
     console.log(response)
-    // console.log("ESSE")
+    console.log("AQUI CONFIG")
+    console.log(response.config)
     // console.log(response)
 
-    const fileData = response.data;
+    const fileData = response.config.url;
     console.log("File Data: ",fileData)
 
     const responseDoc = await axios.get(fileData, {
