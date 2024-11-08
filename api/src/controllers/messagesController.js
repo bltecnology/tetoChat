@@ -414,6 +414,8 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
       Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
     });
     const fileData = fileResponse.data;
+    console.log("Get lookaside Completa",fileResponse)
+    console.log("Get lookaside Data",fileResponse.data)
 
 
     // Verifica o tamanho do arquivo baixado
