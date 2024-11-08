@@ -18,7 +18,7 @@ import { format } from "date-fns";
 import defaultProfilePic from "../assets/defaultProfile.png";
 import { useNavigate } from "react-router-dom";
 
-const socket = io("http://localhost:3005");
+const socket = io("https://tetochat-nje1.onrender.com");
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
@@ -508,7 +508,7 @@ const Chat = () => {
 export default Chat;
 */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import {
   FiPhoneForwarded,
@@ -525,7 +525,7 @@ import EmojiPicker from "emoji-picker-react";
 import { format } from "date-fns";
 import defaultProfilePic from "../assets/defaultProfile.png";
 
-const socket = io("http://localhost:3005");
+const socket = io("https://tetochat-nje1.onrender.com");
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
@@ -537,6 +537,9 @@ const Chat = () => {
   const [selectedContact, setSelectedContact] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState("contatos");
+
+  // 1. Criar uma referência para o final do container de mensagens
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     socket.on("update_queue", (data) => {
@@ -559,6 +562,7 @@ const Chat = () => {
       );
       // Filtrar mensagens pelo contato selecionado
       setMessages(response.data.filter(message => message.contact_id === contactId));
+      scrollToBottom(); // Rola automaticamente após carregar mensagens
     } catch (error) {
       console.error("Erro ao buscar mensagens:", error);
     }
@@ -634,6 +638,11 @@ const Chat = () => {
     }
   }, [activeTab]);
 
+  // 2. Função para rolar automaticamente para o fim das mensagens
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   useEffect(() => {
     if (selectedContact) {
       loadMessages(selectedContact.id);
@@ -643,10 +652,15 @@ const Chat = () => {
   }, [selectedContact]);
 
   useEffect(() => {
+    scrollToBottom(); // Rola para o final sempre que as mensagens são atualizadas
+  }, [messages]);
+
+  useEffect(() => {
     const handleNewMessage = (message) => {
       // Verificar se a mensagem recebida é para o contato atualmente selecionado
       if (selectedContact && message.contact_id === selectedContact.id) {
         setMessages((prevMessages) => [...prevMessages, message]);
+        scrollToBottom(); // Rola para o final ao receber nova mensagem
       }
     };
 
@@ -668,6 +682,8 @@ const Chat = () => {
       };
   
       setMessages((prevMessages) => [...prevMessages, sentMessage]);
+      setNewMessage(""); // Limpa o campo de nova mensagem
+      scrollToBottom();
   
       try {
         // Enviar a mensagem ao backend
@@ -952,6 +968,7 @@ const Chat = () => {
                       </span>
                     </div>
                   ))}
+                    <div ref={messagesEndRef} /> {/* Adicionando referência ao final das mensagens */}
                 </div>
               </div>
 
