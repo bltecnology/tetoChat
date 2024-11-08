@@ -383,7 +383,7 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     // Faz o download do arquivo usando a URL com o token
     const response = await axios.get(fileUrlWithToken, {
       responseType: 'arraybuffer',
-      // Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+      Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
     });
     console.log("AQUI URL")
     console.log(response.data.url)
