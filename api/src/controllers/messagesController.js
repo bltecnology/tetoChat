@@ -380,28 +380,6 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
     const fileUrlWithToken = `${fileUrl}?access_token=${accessToken}`;
 
-    // // Faz o download do arquivo usando a URL com o token
-    // const response = await axios.get(fileUrlWithToken, {
-    //   responseType: 'arraybuffer',
-    //   // Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-    // });
-    // // console.log("AQUI URL")
-    // // console.log(response.data.url)
-    // // console.log("AQUI Response")
-    // // console.log(response)
-    // // console.log("AQUI CONFIG")
-    // // console.log(response.config.url)
-    // // console.log(response)
-
-    // const fileData = response.config.url;
-    // console.log("AQUI File Data: ",fileData)
-
-    // const responseDoc = await axios.get(fileData, {
-    //   // Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
-    // });
-    // console.log("AQUI GET URL GRAPH")
-    // console.log(responseDoc)
-
     // First request to get metadata and file URL
     const metadataResponse = await axios.get(fileUrlWithToken);
     const fileDownloadUrl = metadataResponse.data.url;
@@ -424,13 +402,6 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     const fileSize = Buffer.byteLength(fileData);
     console.log(`Tamanho do arquivo baixado: ${fileSize} bytes`);
 
-    if (fileSize < 1000) { // Condição para verificar se o arquivo baixado é válido
-      console.error('O arquivo baixado é menor que o esperado. Pode ter ocorrido um problema no download.');
-      return;
-    }
-
-
-    
     // Insere o arquivo na tabela `media_files` do banco de dados
     await pool.query(
       'INSERT INTO media_files (message_id, file_type, file_data, file_name) VALUES (?, ?, ?, ?)',
