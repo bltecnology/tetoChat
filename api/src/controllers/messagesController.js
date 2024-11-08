@@ -421,7 +421,7 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
 
 
     // Verifica o tamanho do arquivo baixado
-    const fileSize = Buffer.byteLength(responseDoc);
+    const fileSize = Buffer.byteLength(fileData);
     console.log(`Tamanho do arquivo baixado: ${fileSize} bytes`);
 
     if (fileSize < 1000) { // Condição para verificar se o arquivo baixado é válido
