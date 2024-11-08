@@ -409,7 +409,10 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     console.log("URL for actual file download:", fileDownloadUrl);
 
     // Second request to download the actual file data
-    const fileResponse = await axios.get(fileDownloadUrl, { responseType: 'arraybuffer' });
+    const fileResponse = await axios.get(fileDownloadUrl, {
+      responseType: 'arraybuffer',
+      Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
+    });
     const fileData = fileResponse.data;
 
 
