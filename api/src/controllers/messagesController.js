@@ -380,25 +380,37 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
     const fileUrlWithToken = `${fileUrl}?access_token=${accessToken}`;
 
-    // Faz o download do arquivo usando a URL com o token
-    const response = await axios.get(fileUrlWithToken, {
-      responseType: 'arraybuffer',
-      // Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-    });
-    // console.log("AQUI URL")
-    // console.log(response.data.url)
-    // console.log("AQUI Response")
-    // console.log(response)
-    // console.log("AQUI CONFIG")
-    // console.log(response.config.url)
-    // console.log(response)
+    // // Faz o download do arquivo usando a URL com o token
+    // const response = await axios.get(fileUrlWithToken, {
+    //   responseType: 'arraybuffer',
+    //   // Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+    // });
+    // // console.log("AQUI URL")
+    // // console.log(response.data.url)
+    // // console.log("AQUI Response")
+    // // console.log(response)
+    // // console.log("AQUI CONFIG")
+    // // console.log(response.config.url)
+    // // console.log(response)
 
-    const fileData = response.config.url;
-    console.log("AQUI File Data: ",fileData)
+    // const fileData = response.config.url;
+    // console.log("AQUI File Data: ",fileData)
 
-    const responseDoc = await axios.get(fileData);
-    console.log("AQUI RESPONSE GET URL GRAPH")
-    console.log(responseDoc)
+    // const responseDoc = await axios.get(fileData, {
+    //   // Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
+    // });
+    // console.log("AQUI GET URL GRAPH")
+    // console.log(responseDoc)
+
+    // First request to get metadata and file URL
+    const metadataResponse = await axios.get(fileUrlWithToken);
+    const fileDownloadUrl = metadataResponse.data.url;
+
+    console.log("URL for actual file download:", fileDownloadUrl);
+
+    // Second request to download the actual file data
+    const fileResponse = await axios.get(fileDownloadUrl, { responseType: 'arraybuffer' });
+    const fileData = fileResponse.data;
 
 
     // Verifica o tamanho do arquivo baixado
