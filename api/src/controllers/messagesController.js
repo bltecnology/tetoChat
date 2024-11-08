@@ -387,10 +387,10 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     });
     // console.log("AQUI URL")
     // console.log(response.data.url)
-    console.log("AQUI Response")
-    console.log(response)
+    // console.log("AQUI Response")
+    // console.log(response)
     console.log("AQUI CONFIG")
-    console.log(response.config)
+    console.log(response.config.url)
     // console.log(response)
 
     const fileData = response.config.url;
