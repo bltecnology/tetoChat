@@ -396,10 +396,8 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     const fileData = response.config.url;
     console.log("AQUI File Data: ",fileData)
 
-    const responseDoc = await axios.get(fileData, {
-      // Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
-    });
-    console.log("AQUI GET URL GRAPH")
+    const responseDoc = await axios.get(fileData);
+    console.log("AQUI RESPONSE GET URL GRAPH")
     console.log(responseDoc)
 
 
