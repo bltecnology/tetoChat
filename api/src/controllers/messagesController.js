@@ -172,100 +172,40 @@ export const receiveMessage = async (request, response) => {
       const changes = entry.changes;
       for (const change of changes) {
         const data = change.value;
-        console.log(data)
 
         if (data && data.messages && data.messages.length > 0) {
           const message = data.messages[0];
           const contact =
             data.contacts && data.contacts.length > 0 ? data.contacts[0] : null;
 
-          console.log(`Processando mensagem com ID: ${message.id} de ${contact.wa_id}`);
-
-          // Verifique se a mensagem já foi processada
-          const [messageExists] = await pool.query(
-            "SELECT id FROM whatsapp_messages WHERE message_id = ?",
-            [message.id]
-          );
-
-          if (messageExists.length > 0) {
-            console.log(`Mensagem já processada com ID: ${message.id}`);
-            continue; // Ignora esta mensagem
-          }
-
-          if (!contact || !contact.profile || !contact.wa_id || !message) {
-            console.error("Dados inválidos recebidos:", JSON.stringify(request.body));
-            allEntriesProcessed = false;
-            continue;
-          }
-
-          // Obter ou criar o contato e definir contactId
-          let contactId;
-          try {
-            const [contactRows] = await pool.query(
-              "SELECT id FROM contacts WHERE phone = ?",
-              [contact.wa_id]
-            );
-            if (contactRows.length > 0) {
-              contactId = contactRows[0].id;
-            } else {
-              const [result] = await pool.query(
-                "INSERT INTO contacts (name, phone) VALUES (?, ?)",
-                [contact.profile.name, contact.wa_id]
-              );
-              contactId = result.insertId;
-            }
-          } catch (err) {
-            console.error("Erro ao buscar ou criar contato:", err);
-            allEntriesProcessed = false;
-            continue;
-          }
-
-          // Processamento de diferentes tipos de mensagem
+          // Check the message type and handle .txt, .ogg, and .mp3
           let messageBody;
           if (message.type === "text" && message.text) {
             messageBody = message.text.body;
-            console.log("Mensagem de texto recebida:", messageBody);
-
-          } else if (message.type === "image" && message.image) {
-            const imageId = message.image.id;
-            const mimeType = message.image.mime_type;
-            messageBody = `[imagem: ${imageId}]`;
-            console.log(`Mensagem de imagem recebida: ID da imagem - ${imageId}, Tipo MIME - ${mimeType}`);
-
-            // Salva a imagem usando saveMediaFile
-            const fileUrl = `https://graph.facebook.com/v21.0/${imageId}`;
-            saveMediaFile(message.id, 'image', fileUrl, `${imageId}.jpg`);
-
-          } else if (message.type === "video" && message.video) {
-            const videoId = message.video.id;
-            const mimeType = message.video.mime_type;
-            messageBody = `[vídeo: ${videoId}]`;
-            console.log(`Mensagem de vídeo recebida: ID do vídeo - ${videoId}, Tipo MIME - ${mimeType}`);
-
-            // Salva o vídeo usando saveMediaFile
-            const fileUrl = `https://graph.facebook.com/v21.0/${videoId}`;
-            saveMediaFile(message.id, 'video', fileUrl, `${videoId}.mp4`);
 
           } else if (message.type === "document" && message.document) {
             const documentId = message.document.id;
             const mimeType = message.document.mime_type;
             const fileName = message.document.filename;
             messageBody = `[documento: ${documentId}, nome: ${fileName}]`;
-            console.log(`Mensagem de documento recebida: ID do documento - ${documentId}, Nome do arquivo - ${fileName}, Tipo MIME - ${mimeType}`);
 
-            // Salva o documento usando saveMediaFile
-            const fileUrl = `https://graph.facebook.com/v21.0/${documentId}`;
-            saveMediaFile(message.id, 'document', fileUrl, fileName);
+            // Support for .txt files
+            if (mimeType === 'text/plain' || fileName.endsWith('.txt')) {
+              const fileUrl = `https://graph.facebook.com/v21.0/${documentId}`;
+              await saveMediaFile(message.id, 'text', fileUrl, fileName);
+            }
 
           } else if (message.type === "audio" && message.audio) {
             const audioId = message.audio.id;
             const mimeType = message.audio.mime_type;
-            messageBody = `[áudio: ${audioId}]`;
-            console.log(`Mensagem de áudio recebida: ID do áudio - ${audioId}, Tipo MIME - ${mimeType}`);
 
-            // Salva o áudio usando saveMediaFile
-            const fileUrl = `https://graph.facebook.com/v21.0/${audioId}`;
-            saveMediaFile(message.id, 'audio', fileUrl, `${audioId}.mp3`);
+            // Support for .ogg and .mp3 audio files
+            if (mimeType === 'audio/ogg' || mimeType === 'audio/mp3') {
+              messageBody = `[áudio: ${audioId}]`;
+              const fileExtension = mimeType === 'audio/ogg' ? 'ogg' : 'mp3';
+              const fileUrl = `https://graph.facebook.com/v21.0/${audioId}`;
+              await saveMediaFile(message.id, 'audio', fileUrl, `${audioId}.${fileExtension}`);
+            }
 
           } else {
             console.error("Tipo de mensagem não suportado:", message.type);
@@ -273,9 +213,7 @@ export const receiveMessage = async (request, response) => {
             continue;
           }
 
-          console.log(message)
-          console.log(messageBody)
-          // Insere a mensagem recebida no banco de dados
+          // Insert message into database
           const sql =
             "INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
           const values = [
@@ -295,7 +233,7 @@ export const receiveMessage = async (request, response) => {
             await pool.query(sql, values);
             console.log(`Mensagem inserida no banco de dados com ID: ${message.id}`);
 
-            // Emite um evento para os clientes conectados via Socket.IO
+            // Emit message event
             global.io.emit("new_message", {
               phone_number_id: data.metadata.phone_number_id,
               display_phone_number: data.metadata.display_phone_number,
@@ -330,6 +268,74 @@ export const receiveMessage = async (request, response) => {
     response.sendStatus(400);
   }
 };
+
+// Updated saveMediaFile to support .mp3 files
+export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
+  try {
+    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+    const fileUrlWithToken = `${fileUrl}?access_token=${accessToken}`;
+
+    // First request to get metadata and file URL
+    const metadataResponse = await axios.get(fileUrlWithToken);
+    const fileDownloadUrl = metadataResponse.data.url;
+
+    // Second request to download the actual file data
+    const fileResponse = await axios.get(fileDownloadUrl, {
+      responseType: 'arraybuffer',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const fileData = fileResponse.data;
+
+    // Insert file into database
+    await pool.query(
+      'INSERT INTO media_files (message_id, file_type, file_data, file_name) VALUES (?, ?, ?, ?)',
+      [messageId, fileType, fileData, fileName]
+    );
+
+    console.log('Arquivo de mídia salvo com sucesso.');
+  } catch (error) {
+    console.error('Erro ao salvar arquivo de mídia:', error);
+  }
+}
+
+// Updated getFile to support .mp3 files
+export async function getFile(req, res) {
+  const { messageId } = req.params;
+
+  try {
+    const [rows] = await pool.query(
+      'SELECT file_type, file_data, file_name FROM media_files WHERE message_id = ?',
+      [messageId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    const file = rows[0];
+    const mimeType = {
+      image: 'image/jpeg',
+      audio: file.file_name.endsWith('.mp3') ? 'audio/mpeg' : 'audio/ogg',  // Added .mp3 support
+      video: 'video/mp4',
+      document: 'application/pdf',
+      text: 'text/plain'
+    }[file.file_type] || 'application/octet-stream';
+
+    res.set('Content-Type', mimeType);
+    res.set('Content-Disposition', `inline; filename="${file.file_name}"`);
+    
+    if (file.file_data && file.file_data.length > 0) {
+      res.send(Buffer.from(file.file_data));
+    } else {
+      res.status(500).json({ error: 'Error retrieving file data' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Error retrieving file' });
+  }
+}
+
 
 // Função sendFile corrigida
 export async function sendFile(req, res) {
@@ -415,6 +421,45 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
 }
 
 // Função para recuperar um arquivo do banco de dados
+// export async function getFile(req, res) {
+//   const { messageId } = req.params;
+
+//   try {
+//     const [rows] = await pool.query(
+//       'SELECT file_type, file_data, file_name FROM media_files WHERE message_id = ?',
+//       [messageId]
+//     );
+
+//     if (rows.length === 0) {
+//       return res.status(404).json({ error: 'Arquivo não encontrado' });
+//     }
+
+//     const file = rows[0];
+//     const mimeType = {
+//       image: 'image/jpeg',
+//       audio: 'audio/mpeg',
+//       video: 'video/mp4',
+//       document: 'application/pdf'
+//     }[file.file_type] || 'application/octet-stream';
+
+//     res.set('Content-Type', mimeType);
+//     res.set('Content-Disposition', `inline; filename="${file.file_name}"`);
+    
+//     // Verifica se os dados não estão vazios
+//     if (file.file_data && file.file_data.length > 0) {
+//       console.log("Tamanho do arquivo recuperado:", file.file_data.length);
+//       res.send(Buffer.from(file.file_data));  // Converte para Buffer antes de enviar
+//     } else {
+//       console.error("Dados do arquivo estão vazios ou inválidos.");
+//       res.status(500).json({ error: 'Erro ao recuperar dados do arquivo' });
+//     }
+//   } catch (error) {
+//     console.error("Erro ao recuperar arquivo:", error);
+//     res.status(500).json({ error: 'Erro ao recuperar arquivo' });
+//   }
+// }
+
+// Function to retrieve a file from the database
 export async function getFile(req, res) {
   const { messageId } = req.params;
 
@@ -425,13 +470,13 @@ export async function getFile(req, res) {
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ error: 'Arquivo não encontrado' });
+      return res.status(404).json({ error: 'File not found' });
     }
 
     const file = rows[0];
     const mimeType = {
       image: 'image/jpeg',
-      audio: 'audio/mpeg',
+      audio: 'audio/ogg',  // Updated for audio/ogg type
       video: 'video/mp4',
       document: 'application/pdf'
     }[file.file_type] || 'application/octet-stream';
@@ -439,16 +484,19 @@ export async function getFile(req, res) {
     res.set('Content-Type', mimeType);
     res.set('Content-Disposition', `inline; filename="${file.file_name}"`);
     
-    // Verifica se os dados não estão vazios
+    // Check if file data is not empty or null
     if (file.file_data && file.file_data.length > 0) {
-      console.log("Tamanho do arquivo recuperado:", file.file_data.length);
-      res.send(Buffer.from(file.file_data));  // Converte para Buffer antes de enviar
+      console.log("File size:", file.file_data.length);
+      console.log("Retrieved file type:", file.file_type);
+      console.log("MIME type set in response:", mimeType);
+
+      res.send(Buffer.from(file.file_data));  // Send as buffer
     } else {
-      console.error("Dados do arquivo estão vazios ou inválidos.");
-      res.status(500).json({ error: 'Erro ao recuperar dados do arquivo' });
+      console.error("File data is empty or invalid.");
+      res.status(500).json({ error: 'Error retrieving file data' });
     }
   } catch (error) {
-    console.error("Erro ao recuperar arquivo:", error);
-    res.status(500).json({ error: 'Erro ao recuperar arquivo' });
+    console.error("Error retrieving file:", error);
+    res.status(500).json({ error: 'Error retrieving file' });
   }
 }
