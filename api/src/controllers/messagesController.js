@@ -322,8 +322,12 @@ export const receiveMessage = async (request, response) => {
 
     const bodyBotMessage = `Olá ${contact.profile.name}! Seja muito bem-vindo(a) ao atendimento digital da Teto Bello. Para direcioná-lo, selecione uma opção abaixo:\n\n1 - Comercial / Vendas\n2 - Instalação / Assistência Técnica\n3 - Financeiro / Adm\n4 - Projetos\n5 - Compras\n6 - Trabalhe Conosco`;
     
+    console.log("AQUI")
+    console.log("Body",bodyBotMessage)
+    console.log("toPhone",contact.wa_id,)
+
     const initialBotMessage = [
-      toPhone =  contact.wa_id,
+      toPhone = contact.wa_id,
       text = bodyBotMessage
     ]
 
@@ -334,11 +338,11 @@ export const receiveMessage = async (request, response) => {
     // async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket)
 
     
-    console.log(contact)
+    console.log(contact.wa_id)
     console.log(data.messages.from)
 
     if (isNewContact){
-      quickResponses(data.messages.from,userResponse, contactId)
+      welcomeBot(data.messages.from,values.messageBody, contactId)
     }
 
     if (allEntriesProcessed) {
@@ -520,7 +524,7 @@ export async function getFile(req, res) {
 }
 
 //QuickReponse
-export async function quickResponses(contact,userResponse, contactId) {
+export async function welcomeBot(contact,userResponse, contactId) {
 
   let departamentoQueue;
 
