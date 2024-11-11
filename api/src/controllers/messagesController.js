@@ -320,6 +320,7 @@ export const receiveMessage = async (request, response) => {
       }
     }
 
+    console.log(contact)
     const initialBotMessage = `Olá ${contact.profile.name}! Seja muito bem-vindo(a) ao atendimento digital da Teto Bello. Para direcioná-lo, selecione uma opção abaixo:\n\n1 - Comercial / Vendas\n2 - Instalação / Assistência Técnica\n3 - Financeiro / Adm\n4 - Projetos\n5 - Compras\n6 - Trabalhe Conosco`;
 
     await sendMessage(
@@ -329,7 +330,7 @@ export const receiveMessage = async (request, response) => {
     );
 
     if (isNewContact){
-      quickResponses(userResponse, contactId)
+      quickResponses(contact,userResponse, contactId)
     }
 
     if (allEntriesProcessed) {
@@ -511,7 +512,7 @@ export async function getFile(req, res) {
 }
 
 //QuickReponse
-export async function quickResponses(userResponse, contactId) {
+export async function quickResponses(contact,userResponse, contactId) {
 
   let departamentoQueue;
 
