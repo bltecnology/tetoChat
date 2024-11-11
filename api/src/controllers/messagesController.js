@@ -319,7 +319,10 @@ export const receiveMessage = async (request, response) => {
         }
       }
     }
-
+    
+    
+    console.log("AQUI")
+    
     const bodyBotMessage = `Olá ${contact.profile.name}! Seja muito bem-vindo(a) ao atendimento digital da Teto Bello. Para direcioná-lo, selecione uma opção abaixo:\n\n1 - Comercial / Vendas\n2 - Instalação / Assistência Técnica\n3 - Financeiro / Adm\n4 - Projetos\n5 - Compras\n6 - Trabalhe Conosco`;
     
     console.log("AQUI")
