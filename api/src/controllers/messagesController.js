@@ -172,7 +172,7 @@ export const receiveMessage = async (request, response) => {
       const changes = entry.changes;
       for (const change of changes) {
         const data = change.value;
-        console.log(data)
+        // console.log(data.metadata.phone_number_id)
 
         if (data && data.messages && data.messages.length > 0) {
           const message = data.messages[0];
@@ -320,17 +320,25 @@ export const receiveMessage = async (request, response) => {
       }
     }
 
-    console.log(values.contact)
-    const initialBotMessage = `Olá ${contact.profile.name}! Seja muito bem-vindo(a) ao atendimento digital da Teto Bello. Para direcioná-lo, selecione uma opção abaixo:\n\n1 - Comercial / Vendas\n2 - Instalação / Assistência Técnica\n3 - Financeiro / Adm\n4 - Projetos\n5 - Compras\n6 - Trabalhe Conosco`;
+    const bodyBotMessage = `Olá ${contact.profile.name}! Seja muito bem-vindo(a) ao atendimento digital da Teto Bello. Para direcioná-lo, selecione uma opção abaixo:\n\n1 - Comercial / Vendas\n2 - Instalação / Assistência Técnica\n3 - Financeiro / Adm\n4 - Projetos\n5 - Compras\n6 - Trabalhe Conosco`;
+    
+    const initialBotMessage = [
+      toPhone =  contact.wa_id,
+      text = bodyBotMessage
+    ]
 
-    await sendMessage(
-      contact.wa_id,
+    await send(
       initialBotMessage,
       process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
     );
+    // async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket)
+
+    
+    console.log(contact)
+    console.log(data.messages.from)
 
     if (isNewContact){
-      quickResponses(values.contact,userResponse, contactId)
+      quickResponses(data.messages.from,userResponse, contactId)
     }
 
     if (allEntriesProcessed) {
