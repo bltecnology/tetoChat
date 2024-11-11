@@ -312,6 +312,15 @@ export const receiveMessage = async (request, response) => {
               contact_id: contactId,
             });
 
+            const bodyBotMessage = `Olá ${contact.profile.name}! Seja muito bem-vindo(a) ao atendimento digital da Teto Bello. Para direcioná-lo, selecione uma opção abaixo:\n\n1 - Comercial / Vendas\n2 - Instalação / Assistência Técnica\n3 - Financeiro / Adm\n4 - Projetos\n5 - Compras\n6 - Trabalhe Conosco`;
+
+            try {
+              await sendMessage(contact.wa_id, bodyBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
+              console.log("Initial bot message sent to", contact.wa_id);
+            } catch (error) {
+              console.error("Error sending initial bot message:", error);
+            }
+            
           } catch (err) {
             console.error("Erro ao inserir dados no banco de dados:", err);
             allEntriesProcessed = false;
@@ -322,8 +331,8 @@ export const receiveMessage = async (request, response) => {
     
     
     console.log("AQUI")
-    
-    const bodyBotMessage = `Olá ${contact.profile.name}! Seja muito bem-vindo(a) ao atendimento digital da Teto Bello. Para direcioná-lo, selecione uma opção abaixo:\n\n1 - Comercial / Vendas\n2 - Instalação / Assistência Técnica\n3 - Financeiro / Adm\n4 - Projetos\n5 - Compras\n6 - Trabalhe Conosco`;
+
+
     
     console.log("AQUI")
     console.log("Body",bodyBotMessage)
