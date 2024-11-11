@@ -200,6 +200,8 @@ export const receiveMessage = async (request, response) => {
 
           // Obter ou criar o contato e definir contactId
           let contactId;
+          let isNewContact = false;
+
           try {
             const [contactRows] = await pool.query(
               "SELECT id FROM contacts WHERE phone = ?",
@@ -213,6 +215,7 @@ export const receiveMessage = async (request, response) => {
                 [contact.profile.name, contact.wa_id]
               );
               contactId = result.insertId;
+              isNewContact = true;
             }
           } catch (err) {
             console.error("Erro ao buscar ou criar contato:", err);
@@ -273,8 +276,8 @@ export const receiveMessage = async (request, response) => {
             continue;
           }
 
-          console.log(message)
-          console.log(messageBody)
+          // console.log(message)
+          // console.log(messageBody)
           // Insere a mensagem recebida no banco de dados
           const sql =
             "INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -315,6 +318,18 @@ export const receiveMessage = async (request, response) => {
           }
         }
       }
+    }
+
+    const initialBotMessage = `Olá ${contact.profile.name}! Seja muito bem-vindo(a) ao atendimento digital da Teto Bello. Para direcioná-lo, selecione uma opção abaixo:\n\n1 - Comercial / Vendas\n2 - Instalação / Assistência Técnica\n3 - Financeiro / Adm\n4 - Projetos\n5 - Compras\n6 - Trabalhe Conosco`;
+
+    await sendMessage(
+      contact.wa_id,
+      initialBotMessage,
+      process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
+    );
+
+    if (isNewContact){
+      quickResponses(userResponse, contactId)
     }
 
     if (allEntriesProcessed) {
@@ -394,8 +409,8 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
       },
     });
     const fileData = fileResponse.data;
-    console.log("Get lookaside Completa",fileResponse)
-    console.log("Get lookaside Data",fileResponse.data)
+    // console.log("Get lookaside Completa",fileResponse)
+    // console.log("Get lookaside Data",fileResponse.data)
 
 
     // Verifica o tamanho do arquivo baixado
@@ -493,4 +508,85 @@ export async function getFile(req, res) {
     console.error("Error retrieving file:", error);
     res.status(500).json({ error: 'Error retrieving file' });
   }
+}
+
+//QuickReponse
+export async function quickResponses(userResponse, contactId) {
+
+  let departamentoQueue;
+
+  switch (userResponse) {
+    case "1": // Comercial / Vendas
+      await sendMessage(
+        contact.wa_id,
+        `Seja muito bem-vindo(a) à Teto Bello! Vamos começar! Qual produto você procura?\n1 - Envidraçamento de sacadas/complementos\n2 - Coberturas\n3 - Cobertura com envidraçamento de sacadas\n4 - Vidraçaria (Vidros/Box/Espelhos)\n5 - Esquadrias de alumínio\n6 - Guarda corpo e corrimão\n7 - Fachadas\n8 - Cortinas e persianas\n9 - Manutenção\n10 - Mais de um item acima.`,
+        process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
+      );
+
+      departamentoQueue = "orcamentos";
+      
+      break;
+
+    case "2": // Instalação / Assistência Técnica
+      await sendMessage(
+        contact.wa_id,
+        `O que deseja?\n1 - Saber o prazo de instalação do meu contrato\n2 - Agendar Instalação\n3 - Solicitar Assistência Técnica.\nPor favor, informe seu nome, nome do condomínio, número do apartamento e número do contrato.`,
+        process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
+      );
+
+      departamentoQueue = "instalacao";
+
+      break;
+
+    case "3": // Financeiro / Adm
+      await sendMessage(
+        contact.wa_id,
+        `O que deseja?\n1 - Solicitar Boleto Bancário\n2 - Informações financeiras referentes ao meu contrato.\nPor favor, informe seu nome, nome do condomínio, número do apartamento e número do contrato.`,
+        process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
+      );
+
+      departamentoQueue = "financeiro";
+
+      break;
+
+    case "4": // Projetos
+      await sendMessage(
+        contact.wa_id,
+        `Você ainda não recebeu seu projeto executivo? Entre em contato com seu consultor técnico para dar continuidade ao atendimento. Caso precise de suporte, informe seu nome, condomínio, apartamento e número do contrato, e redirecionaremos seu atendimento.`,
+        process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
+      );
+
+      departamentoQueue = "projetos";
+
+      break;
+
+    case "5": // Compras
+      await sendMessage(
+        contact.wa_id,
+        `Deseja vender para nós? Por favor, envie seu portfólio abaixo. Caso já seja fornecedor, informe seu nome, o nome do comprador e a empresa para contato.`,
+        process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
+      );
+
+      departamentoQueue = "compras";
+
+      break;
+
+    case "6": // Trabalhe Conosco
+      await sendMessage(
+        contact.wa_id,
+        `Envie seu currículo atualizado abaixo. Se houver uma vaga disponível que corresponda ao seu perfil, entraremos em contato.`,
+        process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
+      );
+      
+      
+      departamentoQueue = "trabalhe_conosco";
+
+      break;
+  }
+
+  // Atualiza o status para evitar o loop
+  await pool.query(
+    `UPDATE contacts SET status = ${departamentoQueue} WHERE id = ?`,
+    [contactId]
+  );
 }

@@ -86,18 +86,6 @@ export const addUser = async (req, res) => {
 
     const insertId = result.insertId;
 
-    // Criar uma tabela `chat` exclusiva para o usuário recém-criado
-    const chatTableName = `chat_user_${insertId}`;
-    const createChatTableQuery = `
-      CREATE TABLE IF NOT EXISTS ${chatTableName} (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        contact_id INT NOT NULL,
-        conversation_id INT NOT NULL,
-        FOREIGN KEY (contact_id) REFERENCES contacts(id)
-      )
-    `;
-    await pool.query(createChatTableQuery);
-
     res.status(201).send(`Usuário adicionado com sucesso. ID: ${insertId}`);
   } catch (error) {
     console.error('Erro ao salvar usuário:', error);
