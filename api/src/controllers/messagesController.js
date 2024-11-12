@@ -325,15 +325,21 @@ export const receiveMessage = async (request, response) => {
             allEntriesProcessed = false;
           }
 
-          console.log("ContactId: ", values)
-
           try {
-            const welcome = await pool.query(
+            const [rows] = await pool.query(
               "SELECT stage FROM contacts WHERE id = ?",
               [contactId]
             );
+          
+            if (rows.length > 0) {
+              const stage = rows[0].stage;
+              console.log("Stage atual:", stage);
+              return stage; // Retorne o valor do stage se necessário para usá-lo em outras partes do código
+            } else {
+              console.log("Nenhum registro encontrado para o contactId:", contactId);
+            }
           } catch (error) {
-            console.log("Erro ao buscar stage")
+            console.log("Erro ao buscar stage:", error);
           }
 
           try {
@@ -344,13 +350,13 @@ export const receiveMessage = async (request, response) => {
               );
             }
           } catch (error) {
-            console.log("Erro ao reiniciar stage")
+            console.log("Erro ao reiniciar stage");
           }
 
           try {
-            redirectBot(contact.wa_id, messageBody, contactId, stage)
+            redirectBot(contact.wa_id, messageBody, contactId);
           } catch {
-            console.log("Erro ao redirecionar o cliente")
+            console.log("Erro ao redirecionar o cliente");
           }
         }
       }
@@ -538,16 +544,22 @@ export async function getFile(req, res) {
 export async function redirectBot(contact, messageBody, contactId) {
   console.log("Entrou no redirect")
   const departmentName = "";
-  const nextStage = 0;
+  let nextStage = "welcome";
+  let bodyBotMessage;
 
-  const stage = await pool.query(
-    'SELECT stage FROM contacts WHERE id = ?',
-    [contactId]
-  );
+  try {
+    let [stageRow] = await pool.query(
+      'SELECT stage FROM contacts WHERE id = ?',
+      [contactId]
+    );
+    const currentStage = stageRow[0]?.stage || "welcome";
+  } catch (error) {
+    console.log("Erro ao recuperar stage dentro do redirect")
+  }
 
-  switch (stage) {
+  switch (currentStage) {
     case "welcome":
-      const bodyBotMessage = `Olá ${contact.profile.name}! Seja muito bem-vindo(a) ao atendimento digital da Teto Bello. Para direcioná-lo, selecione uma opção abaixo:
+      bodyBotMessage = `Olá ${contact.profile.name}! Seja muito bem-vindo(a) ao atendimento digital da Teto Bello. Para direcioná-lo, selecione uma opção abaixo:
       \n\n1 - Comercial / Vendas
       \n2 - Instalação / Assistência Técnica
       \n3 - Financeiro / Adm
@@ -583,94 +595,100 @@ export async function redirectBot(contact, messageBody, contactId) {
         case "6":
           departmentName = "Trabalhe Conosco";
         break;
-      }
 
-      try {
-        const getDepartmentId = await pool.query(
-          "SELECT id FROM departments WHERE name = ?",
-          [departmentName]
-        );
-      } catch (error) {
-        console.log("Erro na definição do id do departamento")
-      }
-
-      const transferRequestBody = {
-        contactId: contactId,
-        departmentId: getDepartmentId
-      }
-
-      try {
-        transfer(transferRequestBody,res);
-        nextStage = "atending";
-      } catch {
-        console.log("Departamento não encontrado")
-        bodyBotMessage = `Departamento não encontrado! Por favor selecione novamente o departamento desejado
-          \n\n1 - Comercial / Vendas
-          \n2 - Instalação / Assistência Técnica
-          \n3 - Financeiro / Adm
-          \n4 - Projetos
-          \n5 - Compras
-          \n6 - Trabalhe Conosco`;
-        await sendMessage(contact, bodyBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
-      }
-
-      switch (messageBody) {
-        case "1": // Comercial / Vendas
-          bodyBotMessage = `Qual produto você procura?
-          \n1 - Envidraçamento de sacadas/complementos
-          \n2 - Coberturas
-          \n3 - Cobertura com envidraçamento de sacadas
-          \n4 - Vidraçaria (Vidros/Box/Espelhos)
-          \n5 - Esquadrias de alumínio
-          \n6 - Guarda corpo e corrimão
-          \n7 - Fachadas
-          \n8 - Cortinas e persianas
-          \n9 - Manutenção
-          \n10 - Mais de um item acima.`
-          nextStage = "atendent";
-          console.log("Definiu switch 2.1")
-          break;
-    
-        case "2": // Instalação / Assistência Técnica
-          bodyBotMessage = `O que deseja?
-          \n1 - Saber o prazo de instalação do meu contrato
-          \n2 - Agendar Instalação
-          \n3 - Solicitar Assistência Técnica.`
-          nextStage = "atendent";
-          console.log("Definiu switch 2.2")
-          break;
-    
-        case "3": // Financeiro / Adm
-          bodyBotMessage = `O que deseja?
-          \n1 - Solicitar Boleto Bancário
-          \n2 - Informações financeiras referentes ao meu contrato.`
-          nextStage = "atendent";
-          console.log("Definiu switch 2.3")
-          break;
-    
-        case "4": // Projetos
-          bodyBotMessage = `Você ainda não recebeu seu projeto executivo? Entre em contato com seu consultor técnico para dar continuidade ao atendimento. Caso precise de suporte, informe seu nome, condomínio, apartamento e número do contrato, e redirecionaremos seu atendimento.`
-          nextStage = "atendent";
-          console.log("Definiu switch 2.4")
-          break;
-    
-        case "5": // Compras
-          bodyBotMessage = `Deseja vender para nós? Por favor, envie seu portfólio abaixo. Caso já seja fornecedor, informe seu nome, o nome do comprador e a empresa para contato.`
-          nextStage = "atendent";
-          console.log("Definiu switch 2.5")
-          break;
-    
-        case "6": // Trabalhe Conosco
-          bodyBotMessage = `Envie seu currículo atualizado abaixo. Se houver uma vaga disponível que corresponda ao seu perfil, entraremos em contato.`
-          nextStage = "welcome";
-          console.log("Definiu switch 2.6")
-          break;
         default:
-          bodyBotMessage = `Desculpe, não entendi, poderia informar o número novamente?`
-          nextStage = "submenu";
+          bodyBotMessage = `Desculpe, não entendi. Por favor, escolha uma opção válida.`;
+          nextStage = "submenu"
       }
-    
-    break;
+
+      if (departmentName){
+        try {
+          const getDepartmentId = await pool.query(
+            "SELECT id FROM departments WHERE name = ?",
+            [departmentName]
+          );
+        } catch (error) {
+          console.log("Erro na definição do id do departamento")
+        }
+  
+        const transferRequestBody = {
+          contactId: contactId,
+          departmentId: getDepartmentId
+        }
+  
+        try {
+          transfer(transferRequestBody,res);
+          nextStage = "atending";
+        } catch {
+          console.log("Departamento não encontrado")
+          bodyBotMessage = `Departamento não encontrado! Por favor selecione novamente o departamento desejado
+            \n\n1 - Comercial / Vendas
+            \n2 - Instalação / Assistência Técnica
+            \n3 - Financeiro / Adm
+            \n4 - Projetos
+            \n5 - Compras
+            \n6 - Trabalhe Conosco`;
+          await sendMessage(contact, bodyBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
+        }
+  
+        switch (messageBody) {
+          case "1": // Comercial / Vendas
+            bodyBotMessage = `Qual produto você procura?
+            \n1 - Envidraçamento de sacadas/complementos
+            \n2 - Coberturas
+            \n3 - Cobertura com envidraçamento de sacadas
+            \n4 - Vidraçaria (Vidros/Box/Espelhos)
+            \n5 - Esquadrias de alumínio
+            \n6 - Guarda corpo e corrimão
+            \n7 - Fachadas
+            \n8 - Cortinas e persianas
+            \n9 - Manutenção
+            \n10 - Mais de um item acima.`
+            nextStage = "atendent";
+            console.log("Definiu switch 2.1")
+            break;
+      
+          case "2": // Instalação / Assistência Técnica
+            bodyBotMessage = `O que deseja?
+            \n1 - Saber o prazo de instalação do meu contrato
+            \n2 - Agendar Instalação
+            \n3 - Solicitar Assistência Técnica.`
+            nextStage = "atendent";
+            console.log("Definiu switch 2.2")
+            break;
+      
+          case "3": // Financeiro / Adm
+            bodyBotMessage = `O que deseja?
+            \n1 - Solicitar Boleto Bancário
+            \n2 - Informações financeiras referentes ao meu contrato.`
+            nextStage = "atendent";
+            console.log("Definiu switch 2.3")
+            break;
+      
+          case "4": // Projetos
+            bodyBotMessage = `Você ainda não recebeu seu projeto executivo? Entre em contato com seu consultor técnico para dar continuidade ao atendimento. Caso precise de suporte, informe seu nome, condomínio, apartamento e número do contrato, e redirecionaremos seu atendimento.`
+            nextStage = "atendent";
+            console.log("Definiu switch 2.4")
+            break;
+      
+          case "5": // Compras
+            bodyBotMessage = `Deseja vender para nós? Por favor, envie seu portfólio abaixo. Caso já seja fornecedor, informe seu nome, o nome do comprador e a empresa para contato.`
+            nextStage = "atendent";
+            console.log("Definiu switch 2.5")
+            break;
+      
+          case "6": // Trabalhe Conosco
+            bodyBotMessage = `Envie seu currículo atualizado abaixo. Se houver uma vaga disponível que corresponda ao seu perfil, entraremos em contato.`
+            nextStage = "welcome";
+            console.log("Definiu switch 2.6")
+            break;
+          default:
+            bodyBotMessage = `Desculpe, não entendi, poderia informar o número novamente?`
+            nextStage = "submenu";
+        }
+      }
+      break;
+      
 
     case "atendent":
       bodyBotMessage = `Estamos te redirecionando para um de nossos atendentes, por favor aguarde`
