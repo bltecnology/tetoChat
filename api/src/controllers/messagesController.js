@@ -551,9 +551,11 @@ export async function redirectBot(contact, messageBody, contactId) {
       [contactId]
     );
     const currentStage = stageRow[0]?.stage || "welcome";
+    console.log("Current Stage in: ",currentStage)
   } catch (error) {
     console.log("Erro ao recuperar stage dentro do redirect")
   }
+  console.log("Current Stage out: ",currentStage)
 
   switch (currentStage) {
     case "welcome":
