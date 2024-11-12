@@ -325,19 +325,14 @@ export const receiveMessage = async (request, response) => {
             allEntriesProcessed = false;
           }
 
+          console.log("Preparando redirecionamento")
+
           try {
             const [rows] = await pool.query(
               "SELECT stage FROM contacts WHERE id = ?",
               [contactId]
             );
-          
-            if (rows.length > 0) {
-              const stage = rows[0].stage;
-              console.log("Stage atual:", stage);
-              return stage; // Retorne o valor do stage se necessário para usá-lo em outras partes do código
-            } else {
-              console.log("Nenhum registro encontrado para o contactId:", contactId);
-            }
+            const welcome = rows[0].stage;
           } catch (error) {
             console.log("Erro ao buscar stage:", error);
           }
@@ -353,6 +348,7 @@ export const receiveMessage = async (request, response) => {
             console.log("Erro ao reiniciar stage");
           }
 
+          console.log("Redirecionamento preparado")
           try {
             console.log("Iniciando redirecionamento")
             redirectBot(contact.wa_id, messageBody, contactId);
