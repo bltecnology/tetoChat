@@ -354,7 +354,9 @@ export const receiveMessage = async (request, response) => {
           }
 
           try {
+            console.log("Iniciando redirecionamento")
             redirectBot(contact.wa_id, messageBody, contactId);
+            console.log("Redirecionamento finalizado")
           } catch {
             console.log("Erro ao redirecionar o cliente");
           }
