@@ -524,6 +524,7 @@ export async function getFile(req, res) {
 
 //QuickReponse
 export async function redirectBot(contact, messageBody, contactId) {
+  console.log("Entrou no redirect")
   const departmentName = "";
   const nextStage = 0;
 
@@ -542,10 +543,10 @@ export async function redirectBot(contact, messageBody, contactId) {
       \n5 - Compras
       \n6 - Trabalhe Conosco`;
       nextStage = "submenu";
+      console.log("Definiu switch 1")
     break;
 
     case "submenu":
-
       switch (messageBody) {
         case "1":
           departmentName = "Comercial";
@@ -578,7 +579,7 @@ export async function redirectBot(contact, messageBody, contactId) {
           [departmentName]
         );
       } catch (error) {
-        
+        console.log("Erro na definição do id do departamento")
       }
 
       const transferRequestBody = {
@@ -590,6 +591,7 @@ export async function redirectBot(contact, messageBody, contactId) {
         transfer(transferRequestBody,res);
         nextStage = "atending";
       } catch {
+        console.log("Departamento não encontrado")
         bodyBotMessage = `Departamento não encontrado! Por favor selecione novamente o departamento desejado
           \n\n1 - Comercial / Vendas
           \n2 - Instalação / Assistência Técnica
@@ -614,6 +616,7 @@ export async function redirectBot(contact, messageBody, contactId) {
           \n9 - Manutenção
           \n10 - Mais de um item acima.`
           nextStage = "atendent";
+          console.log("Definiu switch 2.1")
           break;
     
         case "2": // Instalação / Assistência Técnica
@@ -622,6 +625,7 @@ export async function redirectBot(contact, messageBody, contactId) {
           \n2 - Agendar Instalação
           \n3 - Solicitar Assistência Técnica.`
           nextStage = "atendent";
+          console.log("Definiu switch 2.2")
           break;
     
         case "3": // Financeiro / Adm
@@ -629,21 +633,25 @@ export async function redirectBot(contact, messageBody, contactId) {
           \n1 - Solicitar Boleto Bancário
           \n2 - Informações financeiras referentes ao meu contrato.`
           nextStage = "atendent";
+          console.log("Definiu switch 2.3")
           break;
     
         case "4": // Projetos
           bodyBotMessage = `Você ainda não recebeu seu projeto executivo? Entre em contato com seu consultor técnico para dar continuidade ao atendimento. Caso precise de suporte, informe seu nome, condomínio, apartamento e número do contrato, e redirecionaremos seu atendimento.`
           nextStage = "atendent";
+          console.log("Definiu switch 2.4")
           break;
     
         case "5": // Compras
           bodyBotMessage = `Deseja vender para nós? Por favor, envie seu portfólio abaixo. Caso já seja fornecedor, informe seu nome, o nome do comprador e a empresa para contato.`
           nextStage = "atendent";
+          console.log("Definiu switch 2.5")
           break;
     
         case "6": // Trabalhe Conosco
           bodyBotMessage = `Envie seu currículo atualizado abaixo. Se houver uma vaga disponível que corresponda ao seu perfil, entraremos em contato.`
           nextStage = "welcome";
+          console.log("Definiu switch 2.6")
           break;
         default:
           bodyBotMessage = `Desculpe, não entendi, poderia informar o número novamente?`
@@ -655,6 +663,7 @@ export async function redirectBot(contact, messageBody, contactId) {
     case "atendent":
       bodyBotMessage = `Estamos te redirecionando para um de nossos atendentes, por favor aguarde`
       nextStage = "atending";
+      console.log("Definiu switch 3")
     break;
   }
   
@@ -664,23 +673,21 @@ export async function redirectBot(contact, messageBody, contactId) {
     await sendMessage(contact.wa_id, bodyBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
     console.log("Initial bot message sent to", contact.wa_id);
 
-    try {
-      const actualStage = await pool.query(
-        "SELECT stage FROM contacts WHERE id = ?",
+    
+    const actualStage = await pool.query(
+      "SELECT stage FROM contacts WHERE id = ?",
+      [contactId]
+    );
+
+    if(actualStage != nextStage) {
+    } else {
+      await pool.query(
+        "UPDATE contacts SET stage = ? WHERE id = ?",
+        [nextStage],
         [contactId]
       );
-
-      if(actualStage != nextStage) {
-      } else {
-        await pool.query(
-          "UPDATE contacts SET stage = ? WHERE id = ?",
-          [nextStage],
-          [contactId]
-        );
-      }
-    } catch (error) {
-      
     }
+    
     
     // Update the database to mark the welcome message as sent
     await pool.query(
