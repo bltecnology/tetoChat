@@ -541,7 +541,7 @@ export async function getFile(req, res) {
 //QuickReponse
 export async function redirectBot(contact, messageBody, contactId) {
   console.log("Entrou no redirect")
-  const departmentName = "";
+  let departmentName = "";
   let nextStage = "welcome";
   let bodyBotMessage;
   let currentStage = "welcome";
