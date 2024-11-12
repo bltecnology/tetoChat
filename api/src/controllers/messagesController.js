@@ -3,6 +3,7 @@ import axios from "axios";
 import multer from 'multer';
 import FormData from "form-data";
 import 'dotenv/config';
+import { transfer } from "../controllers/transferController.js";
 
 // Configuração do multer para armazenar arquivo na memória
 const storage = multer.memoryStorage();
@@ -200,7 +201,6 @@ export const receiveMessage = async (request, response) => {
 
           // Obter ou criar o contato e definir contactId
           let contactId;
-          let isNewContact = false;
 
           try {
             const [contactRows] = await pool.query(
@@ -281,6 +281,14 @@ export const receiveMessage = async (request, response) => {
           // Insere a mensagem recebida no banco de dados
           const sql =
             "INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+          const lastMessage = "UPDATE contacts SET last_message = ? WHERE id = ?";
+
+          const lastMessageValues = [
+            messageBody,
+            contactId
+          ];
+
           const values = [
             data.metadata.phone_number_id,
             data.metadata.display_phone_number,
@@ -296,6 +304,7 @@ export const receiveMessage = async (request, response) => {
 
           try {
             await pool.query(sql, values);
+            await pool.query(lastMessage, lastMessageValues);
             console.log(`Mensagem inserida no banco de dados com ID: ${message.id}`);
 
             // Emite um evento para os clientes conectados via Socket.IO
@@ -311,16 +320,6 @@ export const receiveMessage = async (request, response) => {
               message_body: messageBody,
               contact_id: contactId,
             });
-
-            const bodyBotMessage = `Olá ${contact.profile.name}! Seja muito bem-vindo(a) ao atendimento digital da Teto Bello. Para direcioná-lo, selecione uma opção abaixo:\n\n1 - Comercial / Vendas\n2 - Instalação / Assistência Técnica\n3 - Financeiro / Adm\n4 - Projetos\n5 - Compras\n6 - Trabalhe Conosco`;
-
-            try {
-              await sendMessage(contact.wa_id, bodyBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
-              console.log("Initial bot message sent to", contact.wa_id);
-            } catch (error) {
-              console.error("Error sending initial bot message:", error);
-            }
-            
           } catch (err) {
             console.error("Erro ao inserir dados no banco de dados:", err);
             allEntriesProcessed = false;
@@ -328,33 +327,21 @@ export const receiveMessage = async (request, response) => {
         }
       }
     }
-    
-    
-    console.log("AQUI")
 
-
-    
-    console.log("AQUI")
-    console.log("Body",bodyBotMessage)
-    console.log("toPhone",contact.wa_id,)
-
-    const initialBotMessage = [
-      toPhone = contact.wa_id,
-      text = bodyBotMessage
-    ]
-
-    await send(
-      initialBotMessage,
-      process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
-    );
-    // async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket)
-
-    
-    console.log(contact.wa_id)
-    console.log(data.messages.from)
-
-    if (isNewContact){
-      welcomeBot(data.messages.from,values.messageBody, contactId)
+    try {
+      const welcome = await pool.query(
+        "SELECT stage FROM contacts WHERE id = ?",
+        [contactId]
+      );
+      if(welcome == "finished") {
+        await pool.query(
+          "UPDATE contacts SET stage = 'welcome' WHERE id = ?",
+          [contactId]
+        );
+      }
+      redirectBot(contact.wa_id, messageBody, contactId, stage)
+    } catch {
+      console.log("Erro ao redirecionar o cliente")
     }
 
     if (allEntriesProcessed) {
@@ -536,82 +523,183 @@ export async function getFile(req, res) {
 }
 
 //QuickReponse
-export async function welcomeBot(contact,userResponse, contactId) {
+export async function redirectBot(contact, messageBody, contactId) {
+  const departmentName = "";
+  const nextStage = 0;
 
-  let departamentoQueue;
+  const stage = await pool.query(
+    'SELECT stage FROM contacts WHERE id = ?',
+    [contactId]
+  );
 
-  switch (userResponse) {
-    case "1": // Comercial / Vendas
-      await sendMessage(
-        contact.wa_id,
-        `Seja muito bem-vindo(a) à Teto Bello! Vamos começar! Qual produto você procura?\n1 - Envidraçamento de sacadas/complementos\n2 - Coberturas\n3 - Cobertura com envidraçamento de sacadas\n4 - Vidraçaria (Vidros/Box/Espelhos)\n5 - Esquadrias de alumínio\n6 - Guarda corpo e corrimão\n7 - Fachadas\n8 - Cortinas e persianas\n9 - Manutenção\n10 - Mais de um item acima.`,
-        process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
+  switch (stage) {
+    case "welcome":
+      const bodyBotMessage = `Olá ${contact.profile.name}! Seja muito bem-vindo(a) ao atendimento digital da Teto Bello. Para direcioná-lo, selecione uma opção abaixo:
+      \n\n1 - Comercial / Vendas
+      \n2 - Instalação / Assistência Técnica
+      \n3 - Financeiro / Adm
+      \n4 - Projetos
+      \n5 - Compras
+      \n6 - Trabalhe Conosco`;
+      nextStage = "submenu";
+    break;
+
+    case "submenu":
+
+      switch (messageBody) {
+        case "1":
+          departmentName = "Comercial";
+        break;
+
+        case "2":
+          departmentName = "Financeiro";
+        break;
+        
+        case "3":
+          departmentName = "Instalação";
+        break;
+        
+        case "4":
+          departmentName = "Projetos";
+        break;
+        
+        case "5":
+          departmentName = "Compras";
+        break;
+        
+        case "6":
+          departmentName = "Trabalhe Conosco";
+        break;
+      }
+
+      try {
+        const getDepartmentId = await pool.query(
+          "SELECT id FROM departments WHERE name = ?",
+          [departmentName]
+        );
+      } catch (error) {
+        
+      }
+
+      const transferRequestBody = {
+        contactId: contactId,
+        departmentId: getDepartmentId
+      }
+
+      try {
+        transfer(transferRequestBody,res);
+        nextStage = "atending";
+      } catch {
+        bodyBotMessage = `Departamento não encontrado! Por favor selecione novamente o departamento desejado
+          \n\n1 - Comercial / Vendas
+          \n2 - Instalação / Assistência Técnica
+          \n3 - Financeiro / Adm
+          \n4 - Projetos
+          \n5 - Compras
+          \n6 - Trabalhe Conosco`;
+        await sendMessage(contact, bodyBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
+      }
+
+      switch (messageBody) {
+        case "1": // Comercial / Vendas
+          bodyBotMessage = `Qual produto você procura?
+          \n1 - Envidraçamento de sacadas/complementos
+          \n2 - Coberturas
+          \n3 - Cobertura com envidraçamento de sacadas
+          \n4 - Vidraçaria (Vidros/Box/Espelhos)
+          \n5 - Esquadrias de alumínio
+          \n6 - Guarda corpo e corrimão
+          \n7 - Fachadas
+          \n8 - Cortinas e persianas
+          \n9 - Manutenção
+          \n10 - Mais de um item acima.`
+          nextStage = "atendent";
+          break;
+    
+        case "2": // Instalação / Assistência Técnica
+          bodyBotMessage = `O que deseja?
+          \n1 - Saber o prazo de instalação do meu contrato
+          \n2 - Agendar Instalação
+          \n3 - Solicitar Assistência Técnica.`
+          nextStage = "atendent";
+          break;
+    
+        case "3": // Financeiro / Adm
+          bodyBotMessage = `O que deseja?
+          \n1 - Solicitar Boleto Bancário
+          \n2 - Informações financeiras referentes ao meu contrato.`
+          nextStage = "atendent";
+          break;
+    
+        case "4": // Projetos
+          bodyBotMessage = `Você ainda não recebeu seu projeto executivo? Entre em contato com seu consultor técnico para dar continuidade ao atendimento. Caso precise de suporte, informe seu nome, condomínio, apartamento e número do contrato, e redirecionaremos seu atendimento.`
+          nextStage = "atendent";
+          break;
+    
+        case "5": // Compras
+          bodyBotMessage = `Deseja vender para nós? Por favor, envie seu portfólio abaixo. Caso já seja fornecedor, informe seu nome, o nome do comprador e a empresa para contato.`
+          nextStage = "atendent";
+          break;
+    
+        case "6": // Trabalhe Conosco
+          bodyBotMessage = `Envie seu currículo atualizado abaixo. Se houver uma vaga disponível que corresponda ao seu perfil, entraremos em contato.`
+          nextStage = "welcome";
+          break;
+        default:
+          bodyBotMessage = `Desculpe, não entendi, poderia informar o número novamente?`
+          nextStage = "submenu";
+      }
+    
+    break;
+
+    case "atendent":
+      bodyBotMessage = `Estamos te redirecionando para um de nossos atendentes, por favor aguarde`
+      nextStage = "atending";
+    break;
+  }
+  
+
+  try {
+    // Send the initial bot message
+    await sendMessage(contact.wa_id, bodyBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
+    console.log("Initial bot message sent to", contact.wa_id);
+
+    try {
+      const actualStage = await pool.query(
+        "SELECT stage FROM contacts WHERE id = ?",
+        [contactId]
       );
 
-      departamentoQueue = "orcamentos";
+      if(actualStage != nextStage) {
+      } else {
+        await pool.query(
+          "UPDATE contacts SET stage = ? WHERE id = ?",
+          [nextStage],
+          [contactId]
+        );
+      }
+    } catch (error) {
       
-      break;
+    }
+    
+    // Update the database to mark the welcome message as sent
+    await pool.query(
+      "UPDATE contacts SET stage = ? WHERE id = ?",
+      [nextStage],
+      [contactId]
+    );
 
-    case "2": // Instalação / Assistência Técnica
-      await sendMessage(
-        contact.wa_id,
-        `O que deseja?\n1 - Saber o prazo de instalação do meu contrato\n2 - Agendar Instalação\n3 - Solicitar Assistência Técnica.\nPor favor, informe seu nome, nome do condomínio, número do apartamento e número do contrato.`,
-        process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
-      );
-
-      departamentoQueue = "instalacao";
-
-      break;
-
-    case "3": // Financeiro / Adm
-      await sendMessage(
-        contact.wa_id,
-        `O que deseja?\n1 - Solicitar Boleto Bancário\n2 - Informações financeiras referentes ao meu contrato.\nPor favor, informe seu nome, nome do condomínio, número do apartamento e número do contrato.`,
-        process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
-      );
-
-      departamentoQueue = "financeiro";
-
-      break;
-
-    case "4": // Projetos
-      await sendMessage(
-        contact.wa_id,
-        `Você ainda não recebeu seu projeto executivo? Entre em contato com seu consultor técnico para dar continuidade ao atendimento. Caso precise de suporte, informe seu nome, condomínio, apartamento e número do contrato, e redirecionaremos seu atendimento.`,
-        process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
-      );
-
-      departamentoQueue = "projetos";
-
-      break;
-
-    case "5": // Compras
-      await sendMessage(
-        contact.wa_id,
-        `Deseja vender para nós? Por favor, envie seu portfólio abaixo. Caso já seja fornecedor, informe seu nome, o nome do comprador e a empresa para contato.`,
-        process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
-      );
-
-      departamentoQueue = "compras";
-
-      break;
-
-    case "6": // Trabalhe Conosco
-      await sendMessage(
-        contact.wa_id,
-        `Envie seu currículo atualizado abaixo. Se houver uma vaga disponível que corresponda ao seu perfil, entraremos em contato.`,
-        process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
-      );
-      
-      
-      departamentoQueue = "trabalhe_conosco";
-
-      break;
+  } catch (error) {
+    console.error("Error sending initial bot message:", error);
+    return; // Exit if there's an error to avoid additional processing
   }
 
-  // Atualiza o status para evitar o loop
+  // Continue with the department-specific messaging logic
+  
+
+  // Update the contact's department to avoid reprocessing in case of future messages
   await pool.query(
-    `UPDATE contacts SET status = ${departamentoQueue} WHERE id = ?`,
-    [contactId]
+    `UPDATE contacts SET status = ?, initial_bot_sent = TRUE WHERE id = ?`,
+    [departamentoQueue, contactId]
   );
 }

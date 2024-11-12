@@ -30,7 +30,8 @@ CREATE TABLE IF NOT EXISTS contacts (
   cpf VARCHAR(11) UNIQUE,
   rg VARCHAR(10) UNIQUE,
   email VARCHAR(100) UNIQUE,
-  status VARCHAR(50)
+  status VARCHAR(50),
+  stage ENUM('welcome','submenu','atendent','atending','finished') DEFAULT 'welcome'
 );
 
 CREATE TABLE IF NOT EXISTS whatsapp_messages (
