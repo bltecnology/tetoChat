@@ -544,13 +544,14 @@ export async function redirectBot(contact, messageBody, contactId) {
   const departmentName = "";
   let nextStage = "welcome";
   let bodyBotMessage;
+  let currentStage = "welcome";
 
   try {
     let [stageRow] = await pool.query(
       'SELECT stage FROM contacts WHERE id = ?',
       [contactId]
     );
-    const currentStage = stageRow[0]?.stage || "welcome";
+    currentStage = stageRow[0]?.stage || "welcome";
     console.log("Current Stage in: ",currentStage)
   } catch (error) {
     console.log("Erro ao recuperar stage dentro do redirect")
@@ -601,9 +602,11 @@ export async function redirectBot(contact, messageBody, contactId) {
           nextStage = "submenu"
       }
 
+      const getDepartmentId = 0;
+      
       if (departmentName){
         try {
-          const getDepartmentId = await pool.query(
+          getDepartmentId = await pool.query(
             "SELECT id FROM departments WHERE name = ?",
             [departmentName]
           );
