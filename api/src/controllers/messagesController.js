@@ -333,12 +333,22 @@ export const receiveMessage = async (request, response) => {
         "SELECT stage FROM contacts WHERE id = ?",
         [contactId]
       );
+    } catch (error) {
+      console.log("Erro ao buscar stage")
+    }
+
+    try {
       if(welcome == "finished") {
         await pool.query(
           "UPDATE contacts SET stage = 'welcome' WHERE id = ?",
           [contactId]
         );
       }
+    } catch (error) {
+      console.log("Erro ao reiniciar stage")
+    }
+
+    try {
       redirectBot(contact.wa_id, messageBody, contactId, stage)
     } catch {
       console.log("Erro ao redirecionar o cliente")
