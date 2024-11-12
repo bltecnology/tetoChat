@@ -324,36 +324,36 @@ export const receiveMessage = async (request, response) => {
             console.error("Erro ao inserir dados no banco de dados:", err);
             allEntriesProcessed = false;
           }
+
+          console.log("ContactId: ", values)
+
+          try {
+            const welcome = await pool.query(
+              "SELECT stage FROM contacts WHERE phone = ?",
+              [contactId]
+            );
+          } catch (error) {
+            console.log("Erro ao buscar stage")
+          }
+
+          try {
+            if(welcome == "finished") {
+              await pool.query(
+                "UPDATE contacts SET stage = 'welcome' WHERE phone = ?",
+                [contactId]
+              );
+            }
+          } catch (error) {
+            console.log("Erro ao reiniciar stage")
+          }
+
+          try {
+            redirectBot(contact.wa_id, messageBody, contactId, stage)
+          } catch {
+            console.log("Erro ao redirecionar o cliente")
+          }
         }
       }
-    }
-
-    console.log("ContactId: ", values)
-
-    try {
-      const welcome = await pool.query(
-        "SELECT stage FROM contacts WHERE phone = ?",
-        [contactId]
-      );
-    } catch (error) {
-      console.log("Erro ao buscar stage")
-    }
-
-    try {
-      if(welcome == "finished") {
-        await pool.query(
-          "UPDATE contacts SET stage = 'welcome' WHERE phone = ?",
-          [contactId]
-        );
-      }
-    } catch (error) {
-      console.log("Erro ao reiniciar stage")
-    }
-
-    try {
-      redirectBot(contact.wa_id, messageBody, contactId, stage)
-    } catch {
-      console.log("Erro ao redirecionar o cliente")
     }
 
     if (allEntriesProcessed) {
