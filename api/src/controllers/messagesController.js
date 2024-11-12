@@ -707,10 +707,11 @@ export async function redirectBot(contact, messageBody, contactId) {
     console.log("Initial bot message sent to", contact.wa_id);
 
     
-    const actualStage = await pool.query(
+    const [rows] = await pool.query(
       "SELECT stage FROM contacts WHERE id = ?",
       [contactId]
     );
+    const actualStage = rows[0].stage;
 
     if(actualStage != nextStage) {
     } else {
@@ -720,15 +721,6 @@ export async function redirectBot(contact, messageBody, contactId) {
         [contactId]
       );
     }
-    
-    
-    // Update the database to mark the welcome message as sent
-    await pool.query(
-      "UPDATE contacts SET stage = ? WHERE id = ?",
-      [nextStage],
-      [contactId]
-    );
-
   } catch (error) {
     console.error("Error sending initial bot message:", error);
     return; // Exit if there's an error to avoid additional processing
