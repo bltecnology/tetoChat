@@ -328,7 +328,7 @@ export const receiveMessage = async (request, response) => {
       }
     }
 
-    console.log("ContactId: ",contactId)
+    console.log("ContactId: ", values)
 
     try {
       const welcome = await pool.query(
