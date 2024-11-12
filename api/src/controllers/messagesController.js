@@ -329,7 +329,7 @@ export const receiveMessage = async (request, response) => {
 
           try {
             const welcome = await pool.query(
-              "SELECT stage FROM contacts WHERE phone = ?",
+              "SELECT stage FROM contacts WHERE id = ?",
               [contactId]
             );
           } catch (error) {
@@ -339,7 +339,7 @@ export const receiveMessage = async (request, response) => {
           try {
             if(welcome == "finished") {
               await pool.query(
-                "UPDATE contacts SET stage = 'welcome' WHERE phone = ?",
+                "UPDATE contacts SET stage = 'welcome' WHERE id = ?",
                 [contactId]
               );
             }
