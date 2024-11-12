@@ -328,9 +328,11 @@ export const receiveMessage = async (request, response) => {
       }
     }
 
+    console.log("ContactId: ",contactId)
+
     try {
       const welcome = await pool.query(
-        "SELECT stage FROM contacts WHERE id = ?",
+        "SELECT stage FROM contacts WHERE phone = ?",
         [contactId]
       );
     } catch (error) {
@@ -340,7 +342,7 @@ export const receiveMessage = async (request, response) => {
     try {
       if(welcome == "finished") {
         await pool.query(
-          "UPDATE contacts SET stage = 'welcome' WHERE id = ?",
+          "UPDATE contacts SET stage = 'welcome' WHERE phone = ?",
           [contactId]
         );
       }
