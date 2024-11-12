@@ -716,21 +716,12 @@ export async function redirectBot(contact, messageBody, contactId) {
     if(actualStage != nextStage) {
       await pool.query(
         "UPDATE contacts SET stage = ? WHERE id = ?",
-        [nextStage],
-        [contactId]
+        [nextStage,
+        contactId]
       );
     }
   } catch (error) {
     console.error("Error sending initial bot message:", error);
     return; // Exit if there's an error to avoid additional processing
   }
-
-  // Continue with the department-specific messaging logic
-  
-
-  // Update the contact's department to avoid reprocessing in case of future messages
-  await pool.query(
-    `UPDATE contacts SET status = ?, initial_bot_sent = TRUE WHERE id = ?`,
-    [departamentoQueue, contactId]
-  );
 }
