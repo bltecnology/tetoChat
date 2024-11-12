@@ -714,7 +714,6 @@ export async function redirectBot(contact, messageBody, contactId) {
     const actualStage = rows[0].stage;
 
     if(actualStage != nextStage) {
-    } else {
       await pool.query(
         "UPDATE contacts SET stage = ? WHERE id = ?",
         [nextStage],
