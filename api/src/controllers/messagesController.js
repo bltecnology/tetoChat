@@ -622,7 +622,7 @@ export async function redirectBot(contact, messageBody, contactId) {
             },
             send: function(message) {
               this.message = message;
-              console.log("Response sent from transfer:", code, message);
+              console.log("Response sent from transfer with status:", this.statusCode, "and message:", message);
               return this;
             },
           };
