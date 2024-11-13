@@ -626,13 +626,9 @@ export async function redirectBot(contact, messageBody, contactId) {
           return; // Or handle the case where the department is not found
         }
   
-        const transferRequestBody = {
-          contactId: contactId,
-          departmentId: getDepartmentId
-        }
-  
         try {
-          await transfer(transferRequestBody,res);
+          const mockReq = { body: { contactId, departmentId: getDepartmentId } };
+          await transfer(mockReq, res);
           nextStage = "atending";
         } catch {
           console.log("Departamento não encontrado")
