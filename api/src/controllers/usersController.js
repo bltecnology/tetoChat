@@ -37,8 +37,8 @@ export const updateUser = async (req, res) => {
     const updatedUser = {
       name: name || user[0].name,
       email: email || user[0].email,
-      position: position || user[0].position,
-      department: department || user[0].department,
+      position_id: position || user[0].position,
+      department_id: department || user[0].department,
     };
 
     if (password) {
@@ -85,18 +85,6 @@ export const addUser = async (req, res) => {
     );
 
     const insertId = result.insertId;
-
-    // Criar uma tabela `chat` exclusiva para o usuário recém-criado
-    const chatTableName = `chat_user_${insertId}`;
-    const createChatTableQuery = `
-      CREATE TABLE IF NOT EXISTS ${chatTableName} (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        contact_id INT NOT NULL,
-        conversation_id INT NOT NULL,
-        FOREIGN KEY (contact_id) REFERENCES contacts(id)
-      )
-    `;
-    await pool.query(createChatTableQuery);
 
     res.status(201).send(`Usuário adicionado com sucesso. ID: ${insertId}`);
   } catch (error) {

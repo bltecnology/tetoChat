@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS departments (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(100) NOT NULL
+  name VARCHAR(100) NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS positions (
@@ -22,15 +22,16 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS contacts (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
-  phone VARCHAR(20) NOT NULL,
+  phone VARCHAR(20) NOT NULL UNIQUE,
   tag VARCHAR(20),
   note VARCHAR(280),
   profile_pic VARCHAR(255),
   last_message TEXT,
-  cpf VARCHAR(11),
-  rg VARCHAR(10),
-  email VARCHAR(100),
-  status VARCHAR(50)
+  cpf VARCHAR(11) UNIQUE,
+  rg VARCHAR(10) UNIQUE,
+  email VARCHAR(100) UNIQUE,
+  status VARCHAR(50),
+  stage ENUM('welcome','submenu','atendent','atending') DEFAULT 'welcome'
 );
 
 CREATE TABLE IF NOT EXISTS whatsapp_messages (
@@ -39,7 +40,7 @@ CREATE TABLE IF NOT EXISTS whatsapp_messages (
   display_phone_number VARCHAR(20),
   contact_name VARCHAR(100),
   wa_id VARCHAR(20),
-  message_id VARCHAR(280),
+  message_id VARCHAR(280) unique,
   message_from VARCHAR(20),
   message_timestamp VARCHAR(20),
   message_type VARCHAR(20),
@@ -49,6 +50,18 @@ CREATE TABLE IF NOT EXISTS whatsapp_messages (
   user_id INT,
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+CREATE TABLE IF NOT EXISTS media_files (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    message_id VARCHAR(280) NOT NULL,
+    file_type ENUM('image', 'audio', 'video', 'document') NOT NULL,  -- Tipo de arquivo
+    file_data LONGBLOB NOT NULL,  -- Dados binários do arquivo
+    file_name VARCHAR(255),       -- Nome original do arquivo (opcional)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (message_id) REFERENCES whatsapp_messages(message_id) ON DELETE CASCADE
+);
+
+
 
 CREATE TABLE IF NOT EXISTS quick_responses (
   id INT AUTO_INCREMENT PRIMARY KEY,

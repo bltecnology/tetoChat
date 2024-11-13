@@ -14,14 +14,15 @@ const LoginPage = () => {
     event.preventDefault();
 
     try {
-      const response = await axios.post('https://tetochat-8m0r.onrender.com/login', { email, password: senha });
+      const response = await axios.post('https://tetochat-nje1.onrender.com/login', { email, password: senha });
       const { token } = response.data;
       const { department } = response.data;
-      console.log(response.data);
       
       // Armazena o token no localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('department', department);
+      localStorage.setItem('email', email);
+      console.log(localStorage)
 
       // Configura o token em todas as requisições Axios
 
