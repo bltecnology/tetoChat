@@ -20,8 +20,8 @@ export const transfer = async (req, res) => {
         return res.status(404).send("Departamento não encontrado");
       }
       
-      const departmentName = `${department[0].name}`;
-      const tableName = `queueOf${department[0].name}`;
+      const departmentName = `${department[0].name.replace(/ /g, "_")}`;
+      const tableName = `queueOf${departmentName}`;
       const transferQuery = `
         INSERT INTO ${tableName} (contact_id, message_body, message_from, message_timestamp)
         SELECT contact_id, message_body, message_from, message_timestamp

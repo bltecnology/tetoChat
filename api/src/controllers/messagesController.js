@@ -173,7 +173,6 @@ export const receiveMessage = async (request, response) => {
       const changes = entry.changes;
       for (const change of changes) {
         const data = change.value;
-        // console.log(data.metadata.phone_number_id)
 
         if (data && data.messages && data.messages.length > 0) {
           const message = data.messages[0];
@@ -276,8 +275,6 @@ export const receiveMessage = async (request, response) => {
             continue;
           }
 
-          // console.log(message)
-          // console.log(messageBody)
           // Insere a mensagem recebida no banco de dados
           const sql =
             "INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -325,8 +322,6 @@ export const receiveMessage = async (request, response) => {
             allEntriesProcessed = false;
           }
 
-          console.log("Preparando redirecionamento")
-
           try {
             const [rows] = await pool.query(
               "SELECT stage FROM contacts WHERE id = ?",
@@ -348,11 +343,8 @@ export const receiveMessage = async (request, response) => {
             console.log("Erro ao reiniciar stage");
           }
 
-          console.log("Redirecionamento preparado")
           try {
-            console.log("Iniciando redirecionamento")
             redirectBot(contact, messageBody, contactId);
-            console.log("Redirecionamento finalizado")
           } catch {
             console.log("Erro ao redirecionar o cliente");
           }
@@ -399,7 +391,6 @@ export async function sendFile(req, res) {
       ...formData.getHeaders(),
       Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
     };
-    console.log(`TESTE TOKEN WHATSAPP Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`)
 
     // URL do endpoint da API do WhatsApp para envio de arquivos (verifique se a versão está correta)
     const url = 'https://graph.facebook.com/v21.0/408476129004761/media';
@@ -437,9 +428,6 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
       },
     });
     const fileData = fileResponse.data;
-    // console.log("Get lookaside Completa",fileResponse)
-    // console.log("Get lookaside Data",fileResponse.data)
-
 
     // Verifica o tamanho do arquivo baixado
     const fileSize = Buffer.byteLength(fileData);
@@ -540,7 +528,6 @@ export async function getFile(req, res) {
 
 //QuickReponse
 export async function redirectBot(contact, messageBody, contactId) {
-  console.log("Entrou no redirect")
   let departmentName = "";
   let nextStage = "welcome";
   let bodyBotMessage;
@@ -552,11 +539,9 @@ export async function redirectBot(contact, messageBody, contactId) {
       [contactId]
     );
     currentStage = stageRow[0]?.stage || "welcome";
-    console.log("Current Stage in: ",currentStage)
   } catch (error) {
     console.log("Erro ao recuperar stage dentro do redirect")
   }
-  console.log("Current Stage out: ",currentStage)
 
   switch (currentStage) {
     case "welcome":
@@ -568,12 +553,12 @@ export async function redirectBot(contact, messageBody, contactId) {
       \n5 - Compras
       \n6 - Trabalhe Conosco`;
       nextStage = "submenu";
-      console.log("Definiu switch 1")
+      console.log(`Switch ${currentStage}`)
     break;
 
     
     case "submenu":
-      console.log("MessageBody Departamento",messageBody)
+      console.log("Selected Departament",messageBody)
       switch (messageBody) {
         case "1":
           departmentName = "Comercial";
@@ -670,7 +655,7 @@ export async function redirectBot(contact, messageBody, contactId) {
             \n9 - Manutenção
             \n10 - Mais de um item acima.`
             nextStage = "atendent";
-            console.log("Definiu switch 2.1")
+            console.log(`Switch ${currentStage}.${messageBody}`)
             break;
       
           case "2": // Instalação / Assistência Técnica
@@ -679,7 +664,7 @@ export async function redirectBot(contact, messageBody, contactId) {
             \n2 - Agendar Instalação
             \n3 - Solicitar Assistência Técnica.`
             nextStage = "atendent";
-            console.log("Definiu switch 2.2")
+            console.log(`Switch ${currentStage}.${messageBody}`)
             break;
       
           case "3": // Financeiro / Adm
@@ -687,25 +672,25 @@ export async function redirectBot(contact, messageBody, contactId) {
             \n1 - Solicitar Boleto Bancário
             \n2 - Informações financeiras referentes ao meu contrato.`
             nextStage = "atendent";
-            console.log("Definiu switch 2.3")
+            console.log(`Switch ${currentStage}.${messageBody}`)
             break;
       
           case "4": // Projetos
             bodyBotMessage = `Você ainda não recebeu seu projeto executivo? Entre em contato com seu consultor técnico para dar continuidade ao atendimento. Caso precise de suporte, informe seu nome, condomínio, apartamento e número do contrato, e redirecionaremos seu atendimento.`
             nextStage = "atendent";
-            console.log("Definiu switch 2.4")
+            console.log(`Switch ${currentStage}.${messageBody}`)
             break;
       
           case "5": // Compras
             bodyBotMessage = `Deseja vender para nós? Por favor, envie seu portfólio abaixo. Caso já seja fornecedor, informe seu nome, o nome do comprador e a empresa para contato.`
             nextStage = "atendent";
-            console.log("Definiu switch 2.5")
+            console.log(`Switch ${currentStage}.${messageBody}`)
             break;
       
           case "6": // Trabalhe Conosco
             bodyBotMessage = `Envie seu currículo atualizado abaixo. Se houver uma vaga disponível que corresponda ao seu perfil, entraremos em contato.`
             nextStage = "welcome";
-            console.log("Definiu switch 2.6")
+            console.log(`Switch ${currentStage}.${messageBody}`)
             break;
           default:
             bodyBotMessage = `Desculpe, não entendi, poderia informar o número novamente?`
@@ -718,7 +703,7 @@ export async function redirectBot(contact, messageBody, contactId) {
     case "atendent":
       bodyBotMessage = `Estamos te redirecionando para um de nossos atendentes, por favor aguarde`
       nextStage = "atending";
-      console.log("Definiu switch 3")
+      console.log(`Switch ${currentStage}`)
     break;
   }
   
