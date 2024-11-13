@@ -622,15 +622,18 @@ export async function redirectBot(contact, messageBody, contactId) {
             },
             send: function(message) {
               this.message = message;
+              console.log("Response sent from transfer:", code, message);
               return this;
             },
           };
 
           // Executa a função `transfer` com `mockReq` e `mockRes`
+          console.log("Calling transfer with:", mockReq.body);
           await transfer(mockReq, mockRes);
+          console.log("Transfer completed successfully with status:", mockRes.statusCode);
           nextStage = "atending";
         } catch {
-          console.log("Departamento não encontrado")
+          console.log("Error in calling transfer:", error);
           bodyBotMessage = `Departamento não encontrado! Por favor selecione novamente o departamento desejado
             \n\n1 - Comercial / Vendas
             \n2 - Instalação / Assistência Técnica
