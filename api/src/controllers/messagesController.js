@@ -604,11 +604,13 @@ export async function redirectBot(contact, messageBody, contactId) {
           nextStage = "submenu"
       }
 
+      // Declare departmentRows and getDepartmentId in the outer scope
+      let departmentRows = [];
       let getDepartmentId = 0;
       
       if (departmentName){
         try {
-          let [departmentRows] = await pool.query(
+          [departmentRows] = await pool.query(
             "SELECT id FROM departments WHERE name = ?",
             [departmentName]
           );
