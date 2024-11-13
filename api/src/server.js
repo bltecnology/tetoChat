@@ -18,7 +18,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "https://tetochat-nje1.onrender.com",
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"],
     credentials: true
   },
@@ -28,7 +28,7 @@ const io = new Server(server, {
 global.io = io;
 
 app.use(cors({
-    origin: "https://tetochat-nje1.onrender.com", 
+    origin: "http://localhost:5173", 
     methods: ['GET', 'POST', 'PUT', 'DELETE'], 
     credentials: true 
 }));
