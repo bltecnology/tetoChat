@@ -3,9 +3,6 @@ import pool from "../models/db.js";
 
 export const transfer = async (req, res) => {
     const { contactId, departmentId } = req.body;
-    console.log("Body function transfer",req.body)
-    console.log("Selected Department function transfer",departmentId)
-    console.log("Contact Id function transfer",contactId)
     const id = departmentId;
     if (!contactId || !departmentId) {
       return res

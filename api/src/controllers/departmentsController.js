@@ -13,7 +13,6 @@ export const getDepartments = async (req, res) => {
 
 export const addDepartment = async (req, res) => {
   const { name } = req.body;
-  console.log("aaa");
 
   if (!name) {
     return res.status(400).send("O nome do departamento é obrigatório");
@@ -26,7 +25,7 @@ export const addDepartment = async (req, res) => {
     );
     const insertId = result.insertId;
 
-    const tableName = `queueOf${name}`;
+    const tableName = `queueOf${name.replace(/ /g, "_")}`;
     const createTableQuery = `
       CREATE TABLE IF NOT EXISTS ${tableName} (
         id INT AUTO_INCREMENT PRIMARY KEY,
