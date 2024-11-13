@@ -571,7 +571,9 @@ export async function redirectBot(contact, messageBody, contactId) {
       console.log("Definiu switch 1")
     break;
 
+    
     case "submenu":
+      console.log("MessageBody Departamento",messageBody)
       switch (messageBody) {
         case "1":
           departmentName = "Comercial";
@@ -606,12 +608,20 @@ export async function redirectBot(contact, messageBody, contactId) {
       
       if (departmentName){
         try {
-          getDepartmentId = await pool.query(
+          const [departmentRows] = await pool.query(
             "SELECT id FROM departments WHERE name = ?",
             [departmentName]
           );
         } catch (error) {
           console.log("Erro na definição do id do departamento")
+        }
+
+        if (departmentRows.length > 0) {
+          const getDepartmentId = departmentRows[0].id;
+          console.log("Department ID retrieved:", getDepartmentId);
+        } else {
+          console.log("No department found with the name:", departmentName);
+          return; // Or handle the case where the department is not found
         }
   
         const transferRequestBody = {
