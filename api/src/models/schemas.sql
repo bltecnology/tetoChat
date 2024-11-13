@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS contacts (
   rg VARCHAR(10) UNIQUE,
   email VARCHAR(100) UNIQUE,
   status VARCHAR(50),
-  stage ENUM('welcome','submenu','atendent','atending','finished') DEFAULT 'welcome'
+  stage ENUM('welcome','submenu','atendent','atending') DEFAULT 'welcome'
 );
 
 CREATE TABLE IF NOT EXISTS whatsapp_messages (

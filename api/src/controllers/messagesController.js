@@ -628,7 +628,21 @@ export async function redirectBot(contact, messageBody, contactId) {
   
         try {
           const mockReq = { body: { contactId, departmentId: getDepartmentId } };
-          await transfer(mockReq, res);
+  
+          // Simulação de `res` com métodos para capturar o resultado
+          const mockRes = {
+            status: function(code) {
+              this.statusCode = code;
+              return this;
+            },
+            send: function(message) {
+              this.message = message;
+              return this;
+            },
+          };
+
+          // Executa a função `transfer` com `mockReq` e `mockRes`
+          await transfer(mockReq, mockRes);
           nextStage = "atending";
         } catch {
           console.log("Departamento não encontrado")
