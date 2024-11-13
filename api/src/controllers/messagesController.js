@@ -604,11 +604,11 @@ export async function redirectBot(contact, messageBody, contactId) {
           nextStage = "submenu"
       }
 
-      const getDepartmentId = 0;
+      let getDepartmentId = 0;
       
       if (departmentName){
         try {
-          const [departmentRows] = await pool.query(
+          let [departmentRows] = await pool.query(
             "SELECT id FROM departments WHERE name = ?",
             [departmentName]
           );
@@ -617,7 +617,7 @@ export async function redirectBot(contact, messageBody, contactId) {
         }
 
         if (departmentRows.length > 0) {
-          const getDepartmentId = departmentRows[0].id;
+          getDepartmentId = departmentRows[0].id;
           console.log("Department ID retrieved:", getDepartmentId);
         } else {
           console.log("No department found with the name:", departmentName);
@@ -630,7 +630,7 @@ export async function redirectBot(contact, messageBody, contactId) {
         }
   
         try {
-          transfer(transferRequestBody,res);
+          await transfer(transferRequestBody,res);
           nextStage = "atending";
         } catch {
           console.log("Departamento não encontrado")
