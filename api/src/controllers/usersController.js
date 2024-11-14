@@ -92,3 +92,11 @@ export const addUser = async (req, res) => {
     res.status(500).send('Erro ao salvar usuário');
   }
 };
+
+export const updatePassword = async (req, res) => {
+
+}
+
+export const getOneUser = async (req, res) => {
+  
+}

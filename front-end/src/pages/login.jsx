@@ -14,7 +14,7 @@ const LoginPage = () => {
     event.preventDefault();
 
     try {
-      const response = await axios.post('https://tetochat-nje1.onrender.com/login', { email, password: senha });
+      const response = await axios.post('https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/login', { email, password: senha });
       const { token } = response.data;
       const { department } = response.data;
       

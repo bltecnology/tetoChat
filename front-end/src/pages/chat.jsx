@@ -18,7 +18,7 @@ import { format } from "date-fns";
 import defaultProfilePic from "../assets/defaultProfile.png";
 import { useNavigate } from "react-router-dom";
 
-const socket = io("https://tetochat-nje1.onrender.com");
+const socket = io("https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com");
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
@@ -45,7 +45,7 @@ const Chat = () => {
   const loadMessages = async (contactId) => {
     try {
       const response = await axios.get(
-        `https://tetochat-nje1.onrender.com/messages?contactId=${contactId}`,
+        `https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/messages?contactId=${contactId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -63,7 +63,7 @@ const Chat = () => {
   const fetchChats = async () => {
     try {
       const response = await axios.get(
-        `https://tetochat-nje1.onrender.com/getUserChats?userId=${localStorage.getItem(
+        `https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/getUserChats?userId=${localStorage.getItem(
           "userId"
         )}`,
         {
@@ -91,7 +91,7 @@ const Chat = () => {
       console.log(departmentTable);
       
       const response = await axios.get(
-        `https://tetochat-nje1.onrender.com/queue/${departmentTable}`,
+        `https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/queue/${departmentTable}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -109,7 +109,7 @@ const Chat = () => {
   const fetchContacts = async () => {
     try {
       const response = await axios.get(
-        "https://tetochat-nje1.onrender.com/contacts",
+        "https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/contacts",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -171,7 +171,7 @@ const Chat = () => {
       try {
         // Enviar a mensagem ao backend
         const response = await axios.post(
-          "https://tetochat-nje1.onrender.com/send",
+          "https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/send",
           {
             toPhone: selectedContact.phone,
             text: newMessage,
@@ -209,7 +209,7 @@ const Chat = () => {
     try {
       // Enviar o contato para outro departamento
       await axios.post(
-        "https://tetochat-nje1.onrender.com/transfer",
+        "https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/transfer",
         {
           contactId: selectedContact.id,
           departmentId: selectedDepartmentId.selectedDepartment, // id do departamento selecionado
@@ -525,7 +525,7 @@ import EmojiPicker from "emoji-picker-react";
 import { format } from "date-fns";
 import defaultProfilePic from "../assets/defaultProfile.png";
 
-const socket = io("https://tetochat-nje1.onrender.com");
+const socket = io("https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com");
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
@@ -553,7 +553,7 @@ const Chat = () => {
   const loadMessages = async (contactId) => {
     try {
       const response = await axios.get(
-        `https://tetochat-nje1.onrender.com/messages?contactId=${contactId}`,
+        `https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/messages?contactId=${contactId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -574,7 +574,7 @@ const Chat = () => {
     
     try {
       const response = await axios.get(
-        `https://tetochat-nje1.onrender.com/getUserChats/${department}`,
+        `https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/getUserChats/${department}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -597,7 +597,7 @@ const Chat = () => {
       
       
       const response = await axios.get(
-        `https://tetochat-nje1.onrender.com/queue/${departmentTable}`,
+        `https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/queue/${departmentTable}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -614,7 +614,7 @@ const Chat = () => {
   const fetchContacts = async () => {
     try {
       const response = await axios.get(
-        "https://tetochat-nje1.onrender.com/contacts",
+        "https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/contacts",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -688,7 +688,7 @@ const Chat = () => {
       try {
         // Enviar a mensagem ao backend
         const response = await axios.post(
-          "https://tetochat-nje1.onrender.com/send",
+          "https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/send",
           {
             toPhone: selectedContact.phone,
             text: newMessage,
@@ -708,7 +708,7 @@ const Chat = () => {
   
           // Remover o contato da fila usando queueOut
           await axios.delete(
-            `https://tetochat-nje1.onrender.com/queue/${localStorage.getItem("department")}`,
+            `https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/queue/${localStorage.getItem("department")}`,
             {
               data: { idContact: selectedContact.id },
               headers: {
@@ -743,7 +743,7 @@ const Chat = () => {
     try {
       // Enviar o contato para outro departamento
       await axios.post(
-        "https://tetochat-nje1.onrender.com/transfer",
+        "https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/transfer",
         {
           contactId: selectedContact.id,
           departmentId: selectedDepartmentId.selectedDepartment, // id do departamento selecionado
