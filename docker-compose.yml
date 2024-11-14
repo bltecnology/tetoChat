@@ -1,18 +1,8 @@
 services:
-  api:
-    container_name: api-tetoChat
-    build: ./api
-    restart: always
-    ports:
-      - '3001:3001'
-    env_file:
-      - ./api/.env
 
   frontend:
     container_name: front-tetoChat
     build: ./front-end
-    depends_on:
-      - api
     volumes:
       - front-volume:/var/www/html
   nginx:
@@ -23,7 +13,6 @@ services:
     volumes:
       - front-volume:/var/www/html
     depends_on:
-      - api
       - frontend
 
 
