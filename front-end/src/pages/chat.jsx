@@ -602,7 +602,6 @@ const Chat = () => {
                         {message.message_type !== "image" && message.message_type !== "audio" && message.message_type !== "document" && (
                           <span className="text-sm">{message.message_body}</span>
                         )}
-
                         {/* Exibe o timestamp da mensagem */}
                         <span className="text-xs text-gray-500 block memt-1">
                           {format(new Date(parseInt(message.message_timestamp) * 1000), "HH:mm")}
