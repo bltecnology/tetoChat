@@ -31,7 +31,7 @@ const Users = () => {
     const confirmDelete = window.confirm("Você realmente deseja excluir este usuário?");
     if (confirmDelete) {
       try {
-        await axios.delete(`https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/users/${userId}`);
+        await axios.delete(`http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/users/${userId}`);
         setUsers(users.filter(user => user.id !== userId));
       } catch (error) {
         console.error('Erro ao excluir usuário:', error.message);
@@ -43,7 +43,7 @@ const Users = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get('https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/users');
+        const response = await axios.get('http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/users');
         console.log(response.data);  // Log the response
         setUsers(response.data);
       } catch (error) {

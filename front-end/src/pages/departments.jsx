@@ -16,7 +16,7 @@ const Departments = () => {
     const fetchDepartments = async () => {
       try {
         const response = await axios.get(
-          "https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/departments"
+          "http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/departments"
         );
         setDepartments(response.data);
       } catch (error) {
@@ -30,7 +30,7 @@ const Departments = () => {
   const addDepartment = async (name) => {
     try {
       const response = await axios.post(
-        "https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/departments",
+        "http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/departments",
         { name }
       );
       setDepartments([...departments, response.data]);
@@ -47,7 +47,7 @@ const Departments = () => {
     if (confirmDelete) {
       try {
         await axios.delete(
-          `https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/departments/${departmentId}`
+          `http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/departments/${departmentId}`
         );
         setDepartments(departments.filter((department) => department.id !== departmentId));
       } catch (error) {

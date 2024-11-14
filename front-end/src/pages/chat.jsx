@@ -16,7 +16,7 @@ import EmojiPicker from "emoji-picker-react";
 import { format } from "date-fns";
 import defaultProfilePic from "../assets/defaultProfile.png";
 
-const socket = io("https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com");
+const socket = io("http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001");
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
@@ -56,7 +56,7 @@ const Chat = () => {
   const loadMessages = async (contactId) => {
     try {
       const response = await axios.get(
-        `https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/messages?contactId=${contactId}`,
+        `http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/messages?contactId=${contactId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -77,7 +77,7 @@ const Chat = () => {
 
     try {
       const response = await axios.get(
-        `https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/getUserChats/${department}`,
+        `http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/getUserChats/${department}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -100,7 +100,7 @@ const Chat = () => {
 
 
       const response = await axios.get(
-        `https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/queue/${departmentTable}`,
+        `http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/queue/${departmentTable}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -117,7 +117,7 @@ const Chat = () => {
   const fetchContacts = async () => {
     try {
       const response = await axios.get(
-        "https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/contacts",
+        "http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/contacts",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -177,7 +177,7 @@ const Chat = () => {
     if (!imageUrls[messageId]) {
       try {
         const response = await axios.get(
-          `https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/file/${messageId}`,
+          `http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/file/${messageId}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -196,7 +196,7 @@ const Chat = () => {
     if (!documentUrls[messageId]) {
       try {
         const response = await axios.get(
-          `https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/file/${messageId}`,
+          `http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/file/${messageId}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -266,7 +266,7 @@ const Chat = () => {
     if (!audioUrls[messageId]) {
       try {
         const response = await axios.get(
-          `https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/file/${messageId}`,
+          `http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/file/${messageId}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -299,7 +299,7 @@ const Chat = () => {
       try {
         // Enviar a mensagem ao backend
         const response = await axios.post(
-          "https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/send",
+          "http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/send",
           {
             toPhone: selectedContact.phone,
             text: newMessage,
@@ -319,7 +319,7 @@ const Chat = () => {
 
           // Remover o contato da fila usando queueOut
           await axios.delete(
-            `https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/queue/${localStorage.getItem("department")}`,
+            `http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/queue/${localStorage.getItem("department")}`,
             {
               data: { idContact: selectedContact.id },
               headers: {
@@ -354,7 +354,7 @@ const Chat = () => {
     try {
       // Enviar o contato para outro departamento
       await axios.post(
-        "https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/transfer",
+        "http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/transfer",
         {
           contactId: selectedContact.id,
           departmentId: selectedDepartmentId.selectedDepartment, // id do departamento selecionado

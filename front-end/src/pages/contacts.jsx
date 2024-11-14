@@ -20,7 +20,7 @@ const Contacts = () => {
     const fetchContacts = async () => {
       try {
         const response = await axios.get(
-          "https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/contacts"
+          "http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/contacts"
         );
         setContacts(response.data);
       } catch (error) {
@@ -34,7 +34,7 @@ const Contacts = () => {
   const addContact = async () => {
     try {
       const response = await axios.get(
-        "https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/contacts"
+        "http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/contacts"
       );
       setContacts(response.data);
       setIsModalOpen(false);
@@ -50,7 +50,7 @@ const Contacts = () => {
     if (confirmDelete) {
       try {
         await axios.delete(
-          `https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/contacts/${contactId}`
+          `http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/contacts/${contactId}`
         );
         setContacts(contacts.filter((contact) => contact.id !== contactId));
       } catch (error) {

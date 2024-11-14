@@ -15,7 +15,7 @@ const ModalUsers = ({ isOpen, onClose, onSave, user }) => {
     if (isOpen) {
       const fetchDepartments = async () => {
         try {
-          const response = await axios.get('https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/departments');
+          const response = await axios.get('http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/departments');
           setDepartments(response.data);
         } catch (error) {
           console.error('Erro ao buscar departamentos:', error);
@@ -24,7 +24,7 @@ const ModalUsers = ({ isOpen, onClose, onSave, user }) => {
 
       const fetchPositions = async () => {
         try {
-          const response = await axios.get('https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/positions'); // Endpoint para posições
+          const response = await axios.get('http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/positions'); // Endpoint para posições
           setPositions(response.data);
         } catch (error) {
           console.error('Erro ao buscar posições:', error);
@@ -63,10 +63,10 @@ const ModalUsers = ({ isOpen, onClose, onSave, user }) => {
     try {
       if (user) {
         // Atualizar usuário existente
-        await axios.put(`https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/users/${user.id}`, updatedUser);
+        await axios.put(`http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/users/${user.id}`, updatedUser);
       } else {
         // Criar novo usuário
-        const response = await axios.post('https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/users', updatedUser);
+        const response = await axios.post('http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/users', updatedUser);
         updatedUser.id = response.data.id;
       }
       onSave(updatedUser);
