@@ -597,7 +597,6 @@ const Chat = () => {
                             </button>
                           </div>
                         )}
-
                         {/* Exibe o corpo da mensagem de texto, se não for imagem ou áudio */}
                         {message.message_type !== "image" && message.message_type !== "audio" && message.message_type !== "document" && (
                           <span className="text-sm">{message.message_body}</span>
