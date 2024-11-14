@@ -26,6 +26,7 @@ services:
       - api
       - frontend
 
+
 volumes:
   front-volume:
 
