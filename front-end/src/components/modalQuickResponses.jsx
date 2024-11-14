@@ -9,7 +9,7 @@ const ModalQuickResponses = ({ isOpen, onClose, onSave }) => {
     useEffect(() => {
         const fetchDepartments = async () => {
             try {
-                const response = await axios.get('https://tetochat-nje1.onrender.com/departments');
+                const response = await axios.get('https://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com/departments');
                 setDepartments(response.data);
             } catch (error) {
                 console.error('Erro ao buscar departamentos:', error);
