@@ -8,7 +8,7 @@
     useEffect(() => {
         const fetchDepartments = async () => {
         try {
-            const response = await axios.get('http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/departments');
+            const response = await axios.get('https://tetochat-k3bt.onrender.com/departments');
             setDepartments(response.data);
         } catch (error) {
             console.error('Erro ao buscar departamentos:', error);
@@ -21,7 +21,7 @@
     const handleTransfer = async () => {
         if (selectedDepartment && contactId) {
         try {
-            await axios.post('http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/transfer', {
+            await axios.post('https://tetochat-k3bt.onrender.com/transfer', {
             contactId: contactId,
             departmentId: selectedDepartment,
             });

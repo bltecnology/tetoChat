@@ -22,7 +22,7 @@
       };
 
       try {
-        await axios.post('http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/contacts', newContact);
+        await axios.post('https://tetochat-k3bt.onrender.com/contacts', newContact);
         onSave(); // Atualizar a lista de contatos no componente pai
         onClose();
       } catch (error) {

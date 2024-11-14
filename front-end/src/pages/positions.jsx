@@ -21,7 +21,7 @@ const Positions = () => {
   const fetchPositions = async () => {
     try {
       const response = await axios.get(
-        "http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/positions"
+        "https://tetochat-k3bt.onrender.com/positions"
       );
       setPositions(response.data);
     } catch (error) {
@@ -38,7 +38,7 @@ const Positions = () => {
   const addPosition = async (name) => {
     try {
       const response = await axios.post(
-        "http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/positions",
+        "https://tetochat-k3bt.onrender.com/positions",
         { name }
       );
 
@@ -54,7 +54,7 @@ const Positions = () => {
   const editPosition = async (positionId, newName) => {
     try {
       const response = await axios.put(
-        `http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/positions/${positionId}`,
+        `https://tetochat-k3bt.onrender.com/positions/${positionId}`,
         { name: newName }
       );
 
@@ -83,7 +83,7 @@ const Positions = () => {
     if (confirmDelete) {
       try {
         await axios.delete(
-          `http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com:3001/positions/${positionId}`
+          `https://tetochat-k3bt.onrender.com/positions/${positionId}`
         );
 
         // Atualiza a lista de cargos após exclusão
