@@ -17,13 +17,21 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: {},
+  cors: {
+    origin: ["http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com","http://localhost"],
+    methods: ["GET", "POST"],
+    credentials: true
+  },
   path: "/socket.io" // Define o path explicitamente
 });
 
 global.io = io;
 
-app.use(cors({}));
+app.use(cors({
+    origin: ["http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com","http://localhost"], 
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], 
+    credentials: true 
+}));
 
 app.use(express.json());
 
