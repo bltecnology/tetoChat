@@ -716,43 +716,45 @@ export async function redirectBot(contact, messageBody, contactId) {
     await sendMessage(contact, bodyBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
 
     console.log(
-      process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
+      process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,'\n',
 
-      process.env.DISPLAY_PHONE_NUMBER,
+      process.env.DISPLAY_PHONE_NUMBER,'\n',
 
-      "BOT",
+      "BOT",'\n',
 
-      contact,
+      contact,'\n',
 
-      `msg-${Date.now()}`,
+      `msg-${Date.now()}`,'\n',
 
-      "me",
+      "me",'\n',
 
-      Math.floor(Date.now() / 1000).toString(),
+      Math.floor(Date.now() / 1000).toString(),'\n',
 
-      "text",
+      "text",'\n',
 
-      bodyBotMessage,
+      bodyBotMessage,'\n',
 
-      contactId,
+      contactId,'\n'
     )
 
     const insertMessageQuery = `
-      INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    await pool.query(insertMessageQuery, [
-      process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
-      process.env.DISPLAY_PHONE_NUMBER,
-      "BOT",
-      contact,
-      `msg-${Date.now()}`,
-      "me",
-      Math.floor(Date.now() / 1000).toString(),
-      "text",
-      bodyBotMessage,
-      contactId,
-    ]);
+    const values = [
+      process.env.WHATSAPP_BUSINESS_ACCOUNT_ID, // phone_number_id
+      process.env.DISPLAY_PHONE_NUMBER,        // display_phone_number
+      "BOT",                                   // contact_name
+      contact.wa_id,                           // wa_id
+      `msg-${Date.now()}`,                     // message_id
+      "me",                                    // message_from
+      Math.floor(Date.now() / 1000).toString(), // message_timestamp
+      "text",                                  // message_type
+      bodyBotMessage,                          // message_body
+      contactId,                               // contact_id
+      null                                     // user_id is explicitly null
+    ];
+    await pool.query(insertMessageQuery, values);
 
     console.log("Initial bot message sent to", contact.wa_id);
 
