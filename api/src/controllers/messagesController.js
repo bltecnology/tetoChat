@@ -740,8 +740,8 @@ export async function redirectBot(contact, messageBody, contactId) {
     )
 
     const insertMessageQuery = `
-      INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     await pool.query(insertMessageQuery, [
       process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
@@ -754,7 +754,6 @@ export async function redirectBot(contact, messageBody, contactId) {
       "text",
       text,
       contactId,
-      userId,
     ]);
 
     console.log("Initial bot message sent to", contact.wa_id);
