@@ -415,8 +415,9 @@ async function sendMedia(toPhone, fileBuffer, fileType, fileName, whatsappBusine
 
   // Step 1: Upload media to WhatsApp server
   const mediaUploadUrl = `https://graph.facebook.com/v21.0/${whatsappBusinessAccountId}/media`;
+
   const formData = new FormData();
-  formData.append("file", fileBuffer, { filename: fileName, contentType: fileType });
+  formData.append("file", fileBuffer, { filename: fileName, contentType: mimeType });
   formData.append("messaging_product", "whatsapp");
 
   try {
@@ -431,6 +432,8 @@ async function sendMedia(toPhone, fileBuffer, fileType, fileName, whatsappBusine
 
     // Step 2: Send media message with media ID
     const messageUrl = `https://graph.facebook.com/v21.0/${whatsappBusinessAccountId}/messages`;
+    const fileType = determineFileType(fileMimeType); // Dynamically determine the WhatsApp file type
+
     const data = {
       messaging_product: "whatsapp",
       to: toPhone,
@@ -821,4 +824,16 @@ export async function redirectBot(contact, messageBody, contactId) {
     console.error("Error sending initial bot message:", error);
     return; // Exit if there's an error to avoid additional processing
   }
+}
+
+function determineFileType(mimeType) {
+  if (mimeType.startsWith("image/")) return "image";
+  if (mimeType.startsWith("video/")) return "video";
+  if (mimeType.startsWith("audio/")) return "audio";
+  if (mimeType === "application/pdf") return "document";
+  if (mimeType.startsWith("application/vnd.") || mimeType.startsWith("application/msword") || mimeType.startsWith("text/")) {
+    return "document";
+  }
+  // Default to "document" if the file type is unknown
+  return "document";
 }
