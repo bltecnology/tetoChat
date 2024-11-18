@@ -713,7 +713,18 @@ export async function redirectBot(contact, messageBody, contactId) {
 
   try {
     // Send the initial bot message
-    await sendMessage(contact.wa_id, bodyBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
+    await sendMessage(contact, bodyBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
+
+    let contactId;
+    if (contactRows.length > 0) {
+      contactId = contactRows[0].id;
+    } else {
+      const [result] = await pool.query(
+        "INSERT INTO contacts (name, phone) VALUES (?, ?)",
+        ["API", toPhone]
+      );
+      contactId = result.insertId;
+    }
 
     console.log(
       process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
@@ -721,21 +732,21 @@ export async function redirectBot(contact, messageBody, contactId) {
       process.env.DISPLAY_PHONE_NUMBER,
 
       "BOT",
-      
-      toPhone,
-      
+
+      contact,
+
       `msg-${Date.now()}`,
-      
+
       "me",
-      
+
       Math.floor(Date.now() / 1000).toString(),
-      
+
       "text",
-      
+
       text,
-      
+
       contactId,
-      
+
       userId
     )
 
