@@ -333,19 +333,27 @@ export const receiveMessage = async (request, response) => {
             console.log("Erro ao buscar stage:", error);
           }
 
-          try {
-            if(welcome == "finished") {
+          if(welcome == "finished") {
+            try {
               await pool.query(
                 "UPDATE contacts SET stage = 'welcome' WHERE id = ?",
                 [contactId]
               );
+            } catch (error) {
+              console.log("Erro ao reiniciar stage");
             }
-          } catch (error) {
-            console.log("Erro ao reiniciar stage");
           }
 
           try {
-            redirectBot(req, contact, messageBody, contactId);
+            
+            console.log("Argumentos passados para redirectBot:", {
+              reqUser: req.user,
+              contact,
+              messageBody,
+              contactId,
+            });
+            
+            await redirectBot(req, contact, messageBody, contactId);
           } catch {
             console.log("Erro ao redirecionar o cliente");
           }
@@ -490,6 +498,17 @@ export async function getFile(req, res) {
 
 //QuickReponse
 export async function redirectBot(req, contact, messageBody, contactId) {
+  
+  if (!req || !req.user || !contact || !contact.profile) {
+    console.error("Parâmetros inválidos passados para redirectBot:", {
+      req: req ? "OK" : "Faltando",
+      user: req?.user ? "OK" : "Faltando",
+      contact: contact ? "OK" : "Faltando",
+      profile: contact?.profile ? "OK" : "Faltando",
+    });
+    return;
+  }
+  
   let departmentName = "";
   let nextStage = "welcome";
   let bodyBotMessage;
