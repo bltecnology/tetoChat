@@ -367,46 +367,130 @@ export const receiveMessage = async (request, response) => {
 };
 
 // Função sendFile corrigida
-export async function sendFile(req, res) {
-  try {
-    // Verifica se o arquivo está presente no request
-    if (!req.file) {
-      return res.status(400).json({ error: "Arquivo não encontrado" });
-    }
+// export async function sendFile(req, res) {
+//   try {
+//     // Verifica se o arquivo está presente no request
+//     if (!req.file) {
+//       return res.status(400).json({ error: "Arquivo não encontrado" });
+//     }
 
-    // Cria uma nova instância de FormData
-    const formData = new FormData();
+//     // Cria uma nova instância de FormData
+//     const formData = new FormData();
 
-    // Anexa o arquivo ao FormData usando o buffer ao invés de um caminho de arquivo
-    formData.append("file", req.file.buffer, {
-      filename: req.file.originalname,
-      contentType: req.file.mimetype
-    });
+//     // Anexa o arquivo ao FormData usando o buffer ao invés de um caminho de arquivo
+//     formData.append("file", req.file.buffer, {
+//       filename: req.file.originalname,
+//       contentType: req.file.mimetype
+//     });
 
-    // Inclui o campo necessário para especificar o produto de mensagens
-    formData.append("messaging_product", "whatsapp");
+//     // Inclui o campo necessário para especificar o produto de mensagens
+//     formData.append("messaging_product", "whatsapp");
 
-    // Configura as opções de headers, incluindo o token de autenticação e o content-type para FormData
-    const headers = {
-      ...formData.getHeaders(),
-      Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
-    };
+//     // Configura as opções de headers, incluindo o token de autenticação e o content-type para FormData
+//     const headers = {
+//       ...formData.getHeaders(),
+//       Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
+//     };
 
-    // URL do endpoint da API do WhatsApp para envio de arquivos (verifique se a versão está correta)
-    const url = 'https://graph.facebook.com/v21.0/408476129004761/media';
+//     // URL do endpoint da API do WhatsApp para envio de arquivos (verifique se a versão está correta)
+//     const url = 'https://graph.facebook.com/v21.0/408476129004761/media';
 
-    // Envia o arquivo usando uma requisição POST
-    const response = await axios.post(url, formData, { headers });
+//     // Envia o arquivo usando uma requisição POST
+//     const response = await axios.post(url, formData, { headers });
     
 
-    // Responde com sucesso se o arquivo for enviado corretamente
-    res.status(200).json({ message: "Arquivo enviado com sucesso", data: response.data });
+//     // Responde com sucesso se o arquivo for enviado corretamente
+//     res.status(200).json({ message: "Arquivo enviado com sucesso", data: response.data });
 
+//   } catch (error) {
+//     console.error("Erro ao enviar arquivo:", error);
+//     res.status(500).json({ error: "Falha ao enviar o arquivo" });
+//   }
+// }
+
+
+// Generalized sendMedia function
+async function sendMedia(toPhone, fileBuffer, fileType, fileName, whatsappBusinessAccountId, socket) {
+  console.log(`Iniciando envio de arquivo (${fileType}) para o WhatsApp`);
+
+  // Step 1: Upload media to WhatsApp server
+  const mediaUploadUrl = `https://graph.facebook.com/v21.0/${whatsappBusinessAccountId}/media`;
+  const formData = new FormData();
+  formData.append("file", fileBuffer, { filename: fileName, contentType: fileType });
+  formData.append("messaging_product", "whatsapp");
+
+  try {
+    const uploadHeaders = {
+      ...formData.getHeaders(),
+      Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+    };
+    const mediaResponse = await axios.post(mediaUploadUrl, formData, { headers: uploadHeaders });
+
+    const mediaId = mediaResponse.data.id;
+    console.log(`Arquivo enviado ao WhatsApp com ID: ${mediaId}`);
+
+    // Step 2: Send media message with media ID
+    const messageUrl = `https://graph.facebook.com/v21.0/${whatsappBusinessAccountId}/messages`;
+    const data = {
+      messaging_product: "whatsapp",
+      to: toPhone,
+      type: fileType,
+      [fileType]: { id: mediaId },  // Dynamically assign media type field
+    };
+
+    const messageHeaders = {
+      Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+    };
+    const messageResponse = await axios.post(messageUrl, data, { headers: messageHeaders });
+
+    console.log(`Mensagem de mídia enviada para o WhatsApp: ${fileType} para ${toPhone}`);
+
+    // Emit message event if socket is present
+    if (socket) {
+      socket.emit("new_message", {
+        phone_number_id: whatsappBusinessAccountId,
+        to: toPhone,
+        media_type: fileType,
+        file_name: fileName,
+        timestamp: new Date().getTime(),
+      });
+    }
+
+    return messageResponse.data;
   } catch (error) {
-    console.error("Erro ao enviar arquivo:", error);
-    res.status(500).json({ error: "Falha ao enviar o arquivo" });
+    console.error(`Erro ao enviar arquivo de mídia para o WhatsApp: ${error}`);
+    throw error;  // Propagate the error
   }
 }
+
+// Controller to handle media file requests
+export async function sendFile(req, res) {
+  console.log('Full Request Body:', req.body);
+  console.log('Full Request File:', req.file);
+  try {
+      console.log('Incoming file:', req.file); // Log incoming file for debugging
+
+      if (!req.file) {
+          return res.status(400).json({ error: 'Arquivo não encontrado' });
+      }
+
+      const { toPhone, whatsappBusinessAccountId } = req.body;
+      const fileBuffer = req.file.buffer;
+      const fileName = req.file.originalname;
+      const fileType = req.file.mimetype.split('/')[0]; // 'image', 'video', etc.
+
+      console.log(`File details: Name - ${fileName}, Type - ${fileType}`);
+
+      await sendMedia(toPhone, fileBuffer, fileType, fileName, whatsappBusinessAccountId);
+
+      return res.status(200).json({ message: 'Arquivo enviado com sucesso' });
+  } catch (error) {
+      console.error('Error in sendFile:', error);
+      return res.status(500).json({ error: 'Falha ao enviar o arquivo' });
+  }
+}
+
+
 
 export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
   try {
@@ -444,45 +528,6 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     console.error('Erro ao salvar arquivo de mídia:', error);
   }
 }
-
-// Função para recuperar um arquivo do banco de dados
-// export async function getFile(req, res) {
-//   const { messageId } = req.params;
-
-//   try {
-//     const [rows] = await pool.query(
-//       'SELECT file_type, file_data, file_name FROM media_files WHERE message_id = ?',
-//       [messageId]
-//     );
-
-//     if (rows.length === 0) {
-//       return res.status(404).json({ error: 'Arquivo não encontrado' });
-//     }
-
-//     const file = rows[0];
-//     const mimeType = {
-//       image: 'image/jpeg',
-//       audio: 'audio/mpeg',
-//       video: 'video/mp4',
-//       document: 'application/pdf'
-//     }[file.file_type] || 'application/octet-stream';
-
-//     res.set('Content-Type', mimeType);
-//     res.set('Content-Disposition', `inline; filename="${file.file_name}"`);
-    
-//     // Verifica se os dados não estão vazios
-//     if (file.file_data && file.file_data.length > 0) {
-//       console.log("Tamanho do arquivo recuperado:", file.file_data.length);
-//       res.send(Buffer.from(file.file_data));  // Converte para Buffer antes de enviar
-//     } else {
-//       console.error("Dados do arquivo estão vazios ou inválidos.");
-//       res.status(500).json({ error: 'Erro ao recuperar dados do arquivo' });
-//     }
-//   } catch (error) {
-//     console.error("Erro ao recuperar arquivo:", error);
-//     res.status(500).json({ error: 'Erro ao recuperar arquivo' });
-//   }
-// }
 
 // Function to retrieve a file from the database
 export async function getFile(req, res) {
