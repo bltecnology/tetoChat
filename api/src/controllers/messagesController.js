@@ -4,6 +4,7 @@ import multer from 'multer';
 import FormData from "form-data";
 import 'dotenv/config';
 import { transfer } from "../controllers/transferController.js";
+import jwt from "jsonwebtoken";
 
 // Configuração do multer para armazenar arquivo na memória
 const storage = multer.memoryStorage();
@@ -445,45 +446,6 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
   }
 }
 
-// Função para recuperar um arquivo do banco de dados
-// export async function getFile(req, res) {
-//   const { messageId } = req.params;
-
-//   try {
-//     const [rows] = await pool.query(
-//       'SELECT file_type, file_data, file_name FROM media_files WHERE message_id = ?',
-//       [messageId]
-//     );
-
-//     if (rows.length === 0) {
-//       return res.status(404).json({ error: 'Arquivo não encontrado' });
-//     }
-
-//     const file = rows[0];
-//     const mimeType = {
-//       image: 'image/jpeg',
-//       audio: 'audio/mpeg',
-//       video: 'video/mp4',
-//       document: 'application/pdf'
-//     }[file.file_type] || 'application/octet-stream';
-
-//     res.set('Content-Type', mimeType);
-//     res.set('Content-Disposition', `inline; filename="${file.file_name}"`);
-    
-//     // Verifica se os dados não estão vazios
-//     if (file.file_data && file.file_data.length > 0) {
-//       console.log("Tamanho do arquivo recuperado:", file.file_data.length);
-//       res.send(Buffer.from(file.file_data));  // Converte para Buffer antes de enviar
-//     } else {
-//       console.error("Dados do arquivo estão vazios ou inválidos.");
-//       res.status(500).json({ error: 'Erro ao recuperar dados do arquivo' });
-//     }
-//   } catch (error) {
-//     console.error("Erro ao recuperar arquivo:", error);
-//     res.status(500).json({ error: 'Erro ao recuperar arquivo' });
-//   }
-// }
-
 // Function to retrieve a file from the database
 export async function getFile(req, res) {
   const { messageId } = req.params;
@@ -531,7 +493,7 @@ export async function redirectBot(contact, messageBody, contactId) {
   let departmentName = "";
   let nextStage = "welcome";
   let bodyBotMessage;
-  let currentStage = "welcome";
+  let currentStage;
 
   try {
     let [stageRow] = await pool.query(
@@ -712,26 +674,43 @@ export async function redirectBot(contact, messageBody, contactId) {
   
 
   try {
-    // Send the initial bot message
-    await sendMessage(contact.wa_id, bodyBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
-    console.log("Initial bot message sent to", contact.wa_id);
+    const userId = req.user?.id; // Obter ID do usuário autenticado
 
-    
-    const [rows] = await pool.query(
-      "SELECT stage FROM contacts WHERE id = ?",
-      [contactId]
-    );
-    const actualStage = rows[0].stage;
-
-    if(actualStage != nextStage) {
-      await pool.query(
-        "UPDATE contacts SET stage = ? WHERE id = ?",
-        [nextStage,
-        contactId]
-      );
+    if (!userId) {
+      console.error("Usuário não autenticado.");
+      return;
     }
+
+    const mockReq = {
+      user: req.user, // Passa o usuário autenticado diretamente
+      body: {
+        toPhone: contact.wa_id,
+        text: bodyBotMessage,
+      },
+    };
+
+    const mockRes = {
+      status: function (statusCode) {
+        this.statusCode = statusCode;
+        return this;
+      },
+      send: function (data) {
+        console.log("Resposta do send:", data);
+        return this;
+      },
+    };
+
+    // Chamar `send` para enviar e salvar a mensagem
+    await send(mockReq, mockRes);
+
+    // Atualizar o estágio do contato
+    await pool.query('UPDATE contacts SET stage = ? WHERE id = ?', [
+      nextStage,
+      contactId,
+    ]);
+
+    console.log(`Mensagem enviada e salva no banco. Próximo estágio: ${nextStage}`);
   } catch (error) {
-    console.error("Error sending initial bot message:", error);
-    return; // Exit if there's an error to avoid additional processing
+    console.error("Erro ao processar redirectBot:", error);
   }
 }
