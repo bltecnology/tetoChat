@@ -345,18 +345,20 @@ export const receiveMessage = async (request, response) => {
             }
           }
 
-          if (!req || !contact || !messageBody || !contactId) {
-            console.error("Dados insuficientes para chamar redirectBot:", {
-                reqExists: !!req,
-                contactExists: !!contact,
-                messageBodyExists: !!messageBody,
-                contactIdExists: !!contactId,
-            });
-            return;
+          console.log("Argumentos para redirectBot:", {
+            requestUser: request?.user,
+            contact,
+            messageBody,
+            contactId,
+          });
+          
+          if (!request || !contact || !messageBody || !contactId) {
+              console.error("Dados insuficientes para chamar redirectBot:");
+              return;
           }
           
           try {
-              await redirectBot(req, contact, messageBody, contactId);
+              await redirectBot(request, contact, messageBody, contactId);
           } catch (error) {
               console.error("Erro ao redirecionar o cliente:", error);
           }
@@ -500,14 +502,14 @@ export async function getFile(req, res) {
 }
 
 //QuickReponse
-export async function redirectBot(req, contact, messageBody, contactId) {
+export async function redirectBot(request, contact, messageBody, contactId) {
   
-  if (!req || !req.user || !contact || !contact.profile) {
+  if (!request || !request.user || !contact || !contact.profile) {
     console.error("Parâmetros inválidos passados para redirectBot:", {
-      req: req ? "OK" : "Faltando",
-      user: req?.user ? "OK" : "Faltando",
-      contact: contact ? "OK" : "Faltando",
-      profile: contact?.profile ? "OK" : "Faltando",
+        request: request ? "OK" : "Faltando",
+        user: request?.user ? "OK" : "Faltando",
+        contact: contact ? "OK" : "Faltando",
+        profile: contact?.profile ? "OK" : "Faltando",
     });
     return;
   }
