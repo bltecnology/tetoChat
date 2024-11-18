@@ -735,8 +735,6 @@ export async function redirectBot(contact, messageBody, contactId) {
       bodyBotMessage,
 
       contactId,
-
-      userId
     )
 
     const insertMessageQuery = `
