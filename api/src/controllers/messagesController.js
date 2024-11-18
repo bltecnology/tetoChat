@@ -714,6 +714,49 @@ export async function redirectBot(contact, messageBody, contactId) {
   try {
     // Send the initial bot message
     await sendMessage(contact.wa_id, bodyBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
+
+    console.log(
+      process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
+
+      process.env.DISPLAY_PHONE_NUMBER,
+
+      "BOT",
+      
+      toPhone,
+      
+      `msg-${Date.now()}`,
+      
+      "me",
+      
+      Math.floor(Date.now() / 1000).toString(),
+      
+      "text",
+      
+      text,
+      
+      contactId,
+      
+      userId
+    )
+
+    const insertMessageQuery = `
+      INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    await pool.query(insertMessageQuery, [
+      process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
+      process.env.DISPLAY_PHONE_NUMBER,
+      "BOT",
+      toPhone,
+      `msg-${Date.now()}`,
+      "me",
+      Math.floor(Date.now() / 1000).toString(),
+      "text",
+      text,
+      contactId,
+      userId,
+    ]);
+
     console.log("Initial bot message sent to", contact.wa_id);
 
     
