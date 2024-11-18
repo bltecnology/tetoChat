@@ -345,20 +345,8 @@ export const receiveMessage = async (request, response) => {
             }
           }
 
-          console.log("Argumentos para redirectBot:", {
-            requestUser: request?.user,
-            contact,
-            messageBody,
-            contactId,
-          });
-          
-          if (!request || !contact || !messageBody || !contactId) {
-              console.error("Dados insuficientes para chamar redirectBot:");
-              return;
-          }
-          
           try {
-              await redirectBot(request, contact, messageBody, contactId);
+              await redirectBot(contact, messageBody, contactId);
           } catch (error) {
               console.error("Erro ao redirecionar o cliente:", error);
           }
@@ -502,17 +490,17 @@ export async function getFile(req, res) {
 }
 
 //QuickReponse
-export async function redirectBot(request, contact, messageBody, contactId) {
+export async function redirectBot(contact, messageBody, contactId) {
   
-  if (!request || !request.user || !contact || !contact.profile) {
-    console.error("Parâmetros inválidos passados para redirectBot:", {
-        request: request ? "OK" : "Faltando",
-        user: request?.user ? "OK" : "Faltando",
-        contact: contact ? "OK" : "Faltando",
-        profile: contact?.profile ? "OK" : "Faltando",
-    });
-    return;
-  }
+  // if (!request || !request.user || !contact || !contact.profile) {
+  //   console.error("Parâmetros inválidos passados para redirectBot:", {
+  //       request: request ? "OK" : "Faltando",
+  //       user: request?.user ? "OK" : "Faltando",
+  //       contact: contact ? "OK" : "Faltando",
+  //       profile: contact?.profile ? "OK" : "Faltando",
+  //   });
+  //   return;
+  // }
   
   let departmentName = "";
   let nextStage = "welcome";
@@ -698,15 +686,15 @@ export async function redirectBot(request, contact, messageBody, contactId) {
   
 
   try {
-    const userId = req.user?.id; // Obter ID do usuário autenticado
+    // const userId = req.user?.id; // Obter ID do usuário autenticado
 
-    if (!userId) {
-      console.error("Usuário não autenticado.");
-      return;
-    }
+    // if (!userId) {
+    //   console.error("Usuário não autenticado.");
+    //   return;
+    // }
 
     const mockReq = {
-      user: req.user, // Passa o usuário autenticado diretamente
+      // user: req.user, // Passa o usuário autenticado diretamente
       body: {
         toPhone: contact.wa_id,
         text: bodyBotMessage,
