@@ -323,12 +323,13 @@ export const receiveMessage = async (request, response) => {
             allEntriesProcessed = false;
           }
 
+          let welcome;
           try {
             const [rows] = await pool.query(
               "SELECT stage FROM contacts WHERE id = ?",
               [contactId]
             );
-            const welcome = rows[0].stage;
+            welcome = rows[0].stage;
           } catch (error) {
             console.log("Erro ao buscar stage:", error);
           }
@@ -345,7 +346,7 @@ export const receiveMessage = async (request, response) => {
           }
 
           try {
-            
+
             console.log("Argumentos passados para redirectBot:", {
               reqUser: req.user,
               contact,
