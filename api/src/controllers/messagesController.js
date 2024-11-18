@@ -345,7 +345,7 @@ export const receiveMessage = async (request, response) => {
           }
 
           try {
-            redirectBot(contact, messageBody, contactId);
+            redirectBot(req, contact, messageBody, contactId);
           } catch {
             console.log("Erro ao redirecionar o cliente");
           }
@@ -489,7 +489,7 @@ export async function getFile(req, res) {
 }
 
 //QuickReponse
-export async function redirectBot(contact, messageBody, contactId) {
+export async function redirectBot(req, contact, messageBody, contactId) {
   let departmentName = "";
   let nextStage = "welcome";
   let bodyBotMessage;
