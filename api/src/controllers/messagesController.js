@@ -732,7 +732,7 @@ export async function redirectBot(contact, messageBody, contactId) {
 
       "text",
 
-      text,
+      bodyBotMessage,
 
       contactId,
 
