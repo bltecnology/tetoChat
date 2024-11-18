@@ -345,18 +345,20 @@ export const receiveMessage = async (request, response) => {
             }
           }
 
-          try {
-
-            console.log("Argumentos passados para redirectBot:", {
-              reqUser: req.user,
-              contact,
-              messageBody,
-              contactId,
+          if (!req || !contact || !messageBody || !contactId) {
+            console.error("Dados insuficientes para chamar redirectBot:", {
+                reqExists: !!req,
+                contactExists: !!contact,
+                messageBodyExists: !!messageBody,
+                contactIdExists: !!contactId,
             });
-            
-            await redirectBot(req, contact, messageBody, contactId);
-          } catch {
-            console.log("Erro ao redirecionar o cliente");
+            return;
+          }
+          
+          try {
+              await redirectBot(req, contact, messageBody, contactId);
+          } catch (error) {
+              console.error("Erro ao redirecionar o cliente:", error);
           }
         }
       }
