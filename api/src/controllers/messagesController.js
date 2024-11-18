@@ -745,12 +745,12 @@ export async function redirectBot(contact, messageBody, contactId) {
       process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
       process.env.DISPLAY_PHONE_NUMBER,
       "BOT",
-      toPhone,
+      contact,
       `msg-${Date.now()}`,
       "me",
       Math.floor(Date.now() / 1000).toString(),
       "text",
-      text,
+      bodyBotMessage,
       contactId,
     ]);
 
