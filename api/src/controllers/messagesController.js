@@ -410,8 +410,8 @@ export const receiveMessage = async (request, response) => {
 
 
 // Generalized sendMedia function
-async function sendMedia(toPhone, fileBuffer, fileType, fileName, whatsappBusinessAccountId, socket) {
-  console.log(`Iniciando envio de arquivo (${fileType}) para o WhatsApp`);
+async function sendMedia(toPhone, fileBuffer, mimeType, fileName, whatsappBusinessAccountId, socket) {
+  console.log(`Iniciando envio de arquivo (${mimeType}) para o WhatsApp`);
 
   // Step 1: Upload media to WhatsApp server
   const mediaUploadUrl = `https://graph.facebook.com/v21.0/${whatsappBusinessAccountId}/media`;
@@ -431,9 +431,13 @@ async function sendMedia(toPhone, fileBuffer, fileType, fileName, whatsappBusine
     console.log(`Arquivo enviado ao WhatsApp com ID: ${mediaId}`);
 
     // Step 2: Send media message with media ID
-    const messageUrl = `https://graph.facebook.com/v21.0/${whatsappBusinessAccountId}/messages`;
-    const fileType = determineFileType(fileMimeType); // Dynamically determine the WhatsApp file type
+    const fileType = determineFileType(mimeType); // Dynamically determine the WhatsApp file type
 
+    if (!fileType) {
+      throw new Error(`Unsupported file type: ${mimeType}`);
+    }
+
+    const messageUrl = `https://graph.facebook.com/v21.0/${whatsappBusinessAccountId}/messages`;
     const data = {
       messaging_product: "whatsapp",
       to: toPhone,
@@ -466,6 +470,19 @@ async function sendMedia(toPhone, fileBuffer, fileType, fileName, whatsappBusine
   }
 }
 
+// Helper function to determine WhatsApp file type from MIME type
+function determineFileType(mimeType) {
+  if (mimeType.startsWith("image/")) return "image";
+  if (mimeType.startsWith("video/")) return "video";
+  if (mimeType.startsWith("audio/")) return "audio";
+  if (mimeType === "application/pdf") return "document";
+  if (mimeType.startsWith("application/vnd.") || mimeType.startsWith("application/msword") || mimeType.startsWith("text/")) {
+    return "document";
+  }
+  // Default to "document" if the file type is unknown
+  return "document";
+}
+
 // Controller to handle media file requests
 export async function sendFile(req, res) {
   console.log('Full Request Body:', req.body);
@@ -480,11 +497,11 @@ export async function sendFile(req, res) {
       const { toPhone, whatsappBusinessAccountId } = req.body;
       const fileBuffer = req.file.buffer;
       const fileName = req.file.originalname;
-      const fileType = req.file.mimetype.split('/')[0]; // 'image', 'video', etc.
+      const mimeType = req.file.mimetype; // Correctly retrieve MIME type
 
-      console.log(`File details: Name - ${fileName}, Type - ${fileType}`);
+      console.log(`File details: Name - ${fileName}, Type - ${mimeType}`);
 
-      await sendMedia(toPhone, fileBuffer, fileType, fileName, whatsappBusinessAccountId);
+      await sendMedia(toPhone, fileBuffer, mimeType, fileName, whatsappBusinessAccountId);
 
       return res.status(200).json({ message: 'Arquivo enviado com sucesso' });
   } catch (error) {
@@ -492,6 +509,7 @@ export async function sendFile(req, res) {
       return res.status(500).json({ error: 'Falha ao enviar o arquivo' });
   }
 }
+
 
 
 
@@ -824,16 +842,4 @@ export async function redirectBot(contact, messageBody, contactId) {
     console.error("Error sending initial bot message:", error);
     return; // Exit if there's an error to avoid additional processing
   }
-}
-
-function determineFileType(mimeType) {
-  if (mimeType.startsWith("image/")) return "image";
-  if (mimeType.startsWith("video/")) return "video";
-  if (mimeType.startsWith("audio/")) return "audio";
-  if (mimeType === "application/pdf") return "document";
-  if (mimeType.startsWith("application/vnd.") || mimeType.startsWith("application/msword") || mimeType.startsWith("text/")) {
-    return "document";
-  }
-  // Default to "document" if the file type is unknown
-  return "document";
 }
