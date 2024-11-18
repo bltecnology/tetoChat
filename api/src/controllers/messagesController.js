@@ -723,12 +723,12 @@ export async function redirectBot(contact, messageBody, contactId) {
     );
     const actualStage = rows[0].stage;
 
-    if(actualStage != nextStage) {
+    if(actualStage != "atending" && actualStage != nextStage) {
       await pool.query(
         "UPDATE contacts SET stage = ? WHERE id = ?",
         [nextStage,
-        contactId]
-      );
+          contactId]
+        );
     }
   } catch (error) {
     console.error("Error sending initial bot message:", error);
