@@ -549,7 +549,6 @@ export async function sendFile(req, res) {
 
       console.log(`Media file saved. ID: ${mediaId}`);
 
-
       return res.status(200).json({ message: 'Arquivo enviado com sucesso' });
   } catch (error) {
       console.error('Error in sendFile:', error);

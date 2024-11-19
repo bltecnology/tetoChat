@@ -7,6 +7,7 @@ import { positionsRoutes } from "./routes/positionsRoutes.js";
 import { messagesRoutes } from "./routes/messagesRoutes.js";
 import { loginRoutes } from "./routes/loginRoutes.js";
 import { transferRoutes } from "./routes/transferRoutes.js";
+import { quickResponsesRoutes } from "./routes/quickResponsesRoutes.js";
 import { Server } from "socket.io";
 import http from "http";
 import path from "path";
@@ -42,6 +43,7 @@ app.use(departmentsRoutes);
 app.use(positionsRoutes);
 app.use(messagesRoutes);
 app.use(transferRoutes);
+app.use(quickResponsesRoutes);
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 io.on("connection", (socket) => {
