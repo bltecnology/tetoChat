@@ -463,7 +463,7 @@ async function sendMedia(toPhone, fileBuffer, mimeType, fileName, whatsappBusine
       });
     }
 
-    return messageResponse.data;
+    return messageResponse.data, { id: mediaId };
   } catch (error) {
     console.error(`Erro ao enviar arquivo de mídia para o WhatsApp: ${error}`);
     throw error;  // Propagate the error
@@ -501,7 +501,40 @@ export async function sendFile(req, res) {
 
       console.log(`File details: Name - ${fileName}, Type - ${mimeType}`);
 
-      await sendMedia(toPhone, fileBuffer, mimeType, fileName, whatsappBusinessAccountId);
+      const sendMediaResponse = await sendMedia(toPhone, fileBuffer, mimeType, fileName, whatsappBusinessAccountId);
+
+      const mediaId = sendMediaResponse.id; // Ensure this is returned by sendMedia
+      const fileType = determineFileType(mimeType);
+
+      console.log(`Media sent. ID: ${mediaId}, Type: ${fileType}`);
+
+      // Step 3: Call saveMediaFile to save the media in the database
+      const fileUrl = `https://graph.facebook.com/v21.0/${mediaId}`; // Construct the file URL using mediaId
+      await saveMediaFile(mediaId, fileType, fileUrl, fileName);
+
+      const messageId = `msg-${Date.now()}`; // Generate a unique message ID
+      const messageTimestamp = Math.floor(Date.now() / 1000).toString(); // Current timestamp in seconds
+      const insertMessageQuery = `
+        INSERT INTO whatsapp_messages 
+          (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+      const values = [
+        whatsappBusinessAccountId,          // phone_number_id
+        process.env.DISPLAY_PHONE_NUMBER,   // display_phone_number
+        "API",                              // contact_name (you can modify this if needed)
+        toPhone,                            // wa_id
+        messageId,                          // Generated message_id
+        "me",                               // message_from (indicating the sender)
+        messageTimestamp,                   // Timestamp
+        fileType,                           // Message type (e.g., image, video, etc.)
+        fileName,                           // Message body (file name)
+        contactId,                          // Contact ID
+      ];
+
+      await pool.query(insertMessageQuery, values);
+
+      console.log(`Media message saved. ID: ${messageId}, Contact ID: ${contactId}`);
 
       return res.status(200).json({ message: 'Arquivo enviado com sucesso' });
   } catch (error) {
