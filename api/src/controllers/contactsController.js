@@ -1,4 +1,3 @@
-
 import pool from '../models/db.js';
 
 export const addContact = async (req, res) => {
@@ -63,3 +62,46 @@ export const getUserChats = async (req, res) => {
   }
 };
 
+export const getStage = async (req, res) => {
+  const contactId = req.params.id;
+  if (!contactId) {
+    return res.status(400).send("Id não pode ser vazio!");
+  }
+  try {
+    const [result] = await pool.query(
+      "SELECT stage FROM contacts WHERE id = ?",
+      [contactId]
+    );
+
+    if (result.length === 0) {
+      return res.status(404).send("Contato não encontrado");
+    }
+
+    return res.status(200).send(JSON.stringify(result[0]));
+  } catch (error) {
+    console.error("Erro ao buscar stage:", error);
+    res.status(500).send("Erro ao buscar stage");
+  }
+};
+
+export const updateStage = async (req, res) => {
+  const contactId = req.params.id;
+  const stage = req.query.stage;
+  if (!stage) {
+    return res.status(400).send("Stage não pode ser vazio!");
+  } else {
+    if (!contactId) {
+      return res.status(400).send("Id não pode ser vazio!");
+    }
+  }
+  try {
+      await pool.query(
+        "UPDATE contacts SET stage = ? where id = ?",
+        [stage, contactId]
+      );
+      res.status(200).send(`Stage atualizado com sucesso.`);
+  } catch (error) {
+      console.error("Erro ao aualizar stage:", error);
+      res.status(500).send("Erro ao stage");
+  }
+};

@@ -23,8 +23,8 @@ export const addQuickResponse = async (req, res) => {
 
 export const getQuickResponses = async (req, res) => {
   try {
-    const [contacts] = await pool.query("SELECT * FROM quick_responses");
-    res.status(200).json(contacts);
+    const [quickResponses] = await pool.query("SELECT * FROM quick_responses");
+    res.status(200).json(quickResponses);
   } catch (error) {
     console.error("Erro ao buscar mensagems rápidas:", error);
     res.status(500).send("Erro ao buscar mensagems rápidas");
@@ -57,49 +57,13 @@ export const updateQuickResponse = async (req, res) => {
         return res.status(400).send("Departamento não pode ser vazio!");
     }
     try {
-        const [result] = await pool.query(
+        await pool.query(
           "UPDATE quick_responses SET text = ?, department_id = ? where id = ?",
-          [text, department]
+          [text, department, quickResponseId]
         );
-        const insertId = result.insertId;
-        res.status(201).send(`Mensagem rápida atualizada com sucesso. ID: ${insertId}`);
+        res.status(200).send(`Mensagem rápida atualizada com sucesso.`);
     } catch (error) {
         console.error("Erro ao aualizar mensagem rápida:", error);
         res.status(500).send("Erro ao mensagem rápida");
     }
 };
-
-export const updateUser = async (req, res) => {
-    const userId = req.params.id;
-    const { name, email, password, position, department } = req.body;
-  
-    try {
-        await pool.query("UPDATE users SET ? WHERE id = ?", [updatedUser, userId]);
-      const [user] = await pool.query("UPDATE quick_responses SET  users WHERE id = ?", [
-        userId,
-      ]);
-  
-      if (user.length === 0) {
-        return res.status(404).send("Usuário não encontrado");
-      }
-  
-      const updatedUser = {
-        name: name || user[0].name,
-        email: email || user[0].email,
-        position_id: position || user[0].position,
-        department_id: department || user[0].department,
-      };
-  
-      if (password) {
-        updatedUser.password = password;
-      }
-  
-      await pool.query("UPDATE users SET ? WHERE id = ?", [updatedUser, userId]);
-  
-      res.status(200).send("Usuário atualizado com sucesso");
-    } catch (error) {
-      console.error("Erro ao atualizar usuário:", error);
-      res.status(500).send("Erro ao atualizar usuário");
-    }
-  };
-
