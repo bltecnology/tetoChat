@@ -501,10 +501,45 @@ export async function sendFile(req, res) {
 
       console.log(`File details: Name - ${fileName}, Type - ${mimeType}`);
 
+      // Step 1: Retrieve or create the contact
+      let contactId;
+      const [contactRows] = await pool.query("SELECT id FROM contacts WHERE phone = ?", [toPhone]);
+      if (contactRows.length > 0) {
+        contactId = contactRows[0].id;
+      } else {
+        const [result] = await pool.query("INSERT INTO contacts (name, phone) VALUES (?, ?)", ["API", toPhone]);
+        contactId = result.insertId;
+      }
+
+      // Step 2: Create a message entry in `whatsapp_messages`
+      const messageId = `msg-${Date.now()}`; // Unique message ID
+      const messageTimestamp = Math.floor(Date.now() / 1000).toString(); // Current timestamp
+      const fileType = determineFileType(mimeType);
+
+      const insertMessageQuery = `
+        INSERT INTO whatsapp_messages 
+          (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+      const messageValues = [
+        whatsappBusinessAccountId,          // phone_number_id
+        process.env.DISPLAY_PHONE_NUMBER,   // display_phone_number
+        "API",                              // contact_name
+        toPhone,                            // wa_id
+        messageId,                          // message_id
+        "me",                               // message_from
+        messageTimestamp,                   // message_timestamp
+        fileType,                           // message_type (e.g., image, video, etc.)
+        fileName,                           // message_body (e.g., file name)
+        contactId,                          // contact_id
+      ];
+
+      await pool.query(insertMessageQuery, messageValues);
+      console.log(`Message saved. ID: ${messageId}, Contact ID: ${contactId}`);
+
       const sendMediaResponse = await sendMedia(toPhone, fileBuffer, mimeType, fileName, whatsappBusinessAccountId);
 
       const mediaId = sendMediaResponse.id; // Ensure this is returned by sendMedia
-      const fileType = determineFileType(mimeType);
 
       console.log(`Media sent. ID: ${mediaId}, Type: ${fileType}`);
 
@@ -512,29 +547,8 @@ export async function sendFile(req, res) {
       const fileUrl = `https://graph.facebook.com/v21.0/${mediaId}`; // Construct the file URL using mediaId
       await saveMediaFile(mediaId, fileType, fileUrl, fileName);
 
-      const messageId = `msg-${Date.now()}`; // Generate a unique message ID
-      const messageTimestamp = Math.floor(Date.now() / 1000).toString(); // Current timestamp in seconds
-      const insertMessageQuery = `
-        INSERT INTO whatsapp_messages 
-          (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `;
-      const values = [
-        whatsappBusinessAccountId,          // phone_number_id
-        process.env.DISPLAY_PHONE_NUMBER,   // display_phone_number
-        "API",                              // contact_name (you can modify this if needed)
-        toPhone,                            // wa_id
-        messageId,                          // Generated message_id
-        "me",                               // message_from (indicating the sender)
-        messageTimestamp,                   // Timestamp
-        fileType,                           // Message type (e.g., image, video, etc.)
-        fileName,                           // Message body (file name)
-        contactId,                          // Contact ID
-      ];
+      console.log(`Media file saved. ID: ${mediaId}`);
 
-      await pool.query(insertMessageQuery, values);
-
-      console.log(`Media message saved. ID: ${messageId}, Contact ID: ${contactId}`);
 
       return res.status(200).json({ message: 'Arquivo enviado com sucesso' });
   } catch (error) {
@@ -542,9 +556,6 @@ export async function sendFile(req, res) {
       return res.status(500).json({ error: 'Falha ao enviar o arquivo' });
   }
 }
-
-
-
 
 export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
   try {
