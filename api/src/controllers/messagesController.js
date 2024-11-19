@@ -91,10 +91,21 @@ export const send = async (req, res) => {
     if (contactRows.length > 0) {
       contactId = contactRows[0].id;
     } else {
-      const [result] = await pool.query(
-        "INSERT INTO contacts (name, phone) VALUES (?, ?)",
-        ["API", toPhone]
-      );
+      const profilePictureUrl = contact?.profile?.profile_picture?.url || null;
+      let insertQuery;
+      let insertValues;
+      if (profilePictureUrl) {
+        const response = await axios.get(profilePictureUrl, { responseType: "arraybuffer" });
+        const imageBlob = response.data;
+        // Prepare query and values if profile picture is available
+        insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
+        insertValues = ["API", toPhone, imageBlob];
+      } else {
+        // Prepare query and values if profile picture is not available
+        insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
+        insertValues = ["API", toPhone];
+      }
+      const [result] = await pool.query(insertQuery, insertValues);
       contactId = result.insertId;
     }
 
@@ -209,10 +220,21 @@ export const receiveMessage = async (request, response) => {
             if (contactRows.length > 0) {
               contactId = contactRows[0].id;
             } else {
-              const [result] = await pool.query(
-                "INSERT INTO contacts (name, phone) VALUES (?, ?)",
-                [contact.profile.name, contact.wa_id]
-              );
+              const profilePictureUrl = contact?.profile?.profile_picture?.url || null;
+              let insertQuery;
+              let insertValues;
+              if (profilePictureUrl) {
+                const response = await axios.get(profilePictureUrl, { responseType: "arraybuffer" });
+                const imageBlob = response.data;
+                // Prepare query and values if profile picture is available
+                insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
+                insertValues = ["API", toPhone, imageBlob];
+              } else {
+                // Prepare query and values if profile picture is not available
+                insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
+                insertValues = ["API", toPhone];
+              }
+              const [result] = await pool.query(insertQuery, insertValues);
               contactId = result.insertId;
               isNewContact = true;
             }
@@ -507,7 +529,21 @@ export async function sendFile(req, res) {
       if (contactRows.length > 0) {
         contactId = contactRows[0].id;
       } else {
-        const [result] = await pool.query("INSERT INTO contacts (name, phone) VALUES (?, ?)", ["API", toPhone]);
+        const profilePictureUrl = contact?.profile?.profile_picture?.url || null;
+        let insertQuery;
+        let insertValues;
+        if (profilePictureUrl) {
+          const response = await axios.get(profilePictureUrl, { responseType: "arraybuffer" });
+          const imageBlob = response.data;
+          // Prepare query and values if profile picture is available
+          insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
+          insertValues = ["API", toPhone, imageBlob];
+        } else {
+          // Prepare query and values if profile picture is not available
+          insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
+          insertValues = ["API", toPhone];
+        }
+        const [result] = await pool.query(insertQuery, insertValues);
         contactId = result.insertId;
       }
 
