@@ -537,12 +537,14 @@ export async function sendFile(req, res) {
       console.log(`Media sent. ID: ${mediaId}, Type: ${fileType}`);
 
       // Step 3: Call saveMediaFile to save the media in the database
-      const fileUrl = `https://graph.facebook.com/v21.0/${mediaId}`; // Construct the file URL using mediaId
-      await saveMediaFile(mediaId, fileType, fileUrl, fileName);
-
-      console.log(`Media file saved. ID: ${mediaId}`);
-
-      return res.status(200).json({ message: 'Arquivo enviado com sucesso' });
+      await pool.query(
+        "INSERT INTO media_files (message_id, file_type, file_data, file_name) VALUES (?, ?, ?, ?)",
+        [messageId, fileType, fileBuffer, fileName]
+      );
+  
+      console.log("File saved directly in the database.");
+  
+      return res.status(200).json({ message: "Arquivo enviado e salvo com sucesso" });
   } catch (error) {
       console.error('Error in sendFile:', error);
       return res.status(500).json({ error: 'Falha ao enviar o arquivo' });
@@ -613,9 +615,9 @@ export async function getFile(req, res) {
     
     // Check if file data is not empty or null
     if (file.file_data && file.file_data.length > 0) {
-      console.log("File size:", file.file_data.length);
-      console.log("Retrieved file type:", file.file_type);
-      console.log("MIME type set in response:", mimeType);
+      // console.log("File size:", file.file_data.length);
+      // console.log("Retrieved file type:", file.file_type);
+      // console.log("MIME type set in response:", mimeType);
 
       res.send(Buffer.from(file.file_data));  // Send as buffer
     } else {
