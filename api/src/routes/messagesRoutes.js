@@ -14,7 +14,7 @@ messagesRoutes.get("/messages", authenticateJWT, getMessages);
 messagesRoutes.post("/send", authenticateJWT, send);
 messagesRoutes.post("/webhook", receiveMessage);
 messagesRoutes.get("/webhook", getWebhook);
-messagesRoutes.post('/send-file', upload.single('file'), sendFile);
-messagesRoutes.get('/file/:messageId', getFile);
+messagesRoutes.post('/send-file', upload.single('file'), authenticateJWT, sendFile);
+messagesRoutes.get('/file/:messageId', authenticateJWT, getFile);
 
 export { messagesRoutes };

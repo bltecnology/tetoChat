@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS contacts (
   phone VARCHAR(20) NOT NULL UNIQUE,
   tag VARCHAR(20),
   note VARCHAR(280),
-  profile_pic VARCHAR(255),
+  profile_pic LONGBLOB,
   last_message TEXT,
   cpf VARCHAR(11) UNIQUE,
   rg VARCHAR(10) UNIQUE,

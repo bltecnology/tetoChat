@@ -91,10 +91,21 @@ export const send = async (req, res) => {
     if (contactRows.length > 0) {
       contactId = contactRows[0].id;
     } else {
-      const [result] = await pool.query(
-        "INSERT INTO contacts (name, phone) VALUES (?, ?)",
-        ["API", toPhone]
-      );
+      const profilePictureUrl = contact?.profile?.profile_picture?.url || null;
+      let insertQuery;
+      let insertValues;
+      if (profilePictureUrl) {
+        const response = await axios.get(profilePictureUrl, { responseType: "arraybuffer" });
+        const imageBlob = response.data;
+        // Prepare query and values if profile picture is available
+        insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
+        insertValues = ["API", toPhone, imageBlob];
+      } else {
+        // Prepare query and values if profile picture is not available
+        insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
+        insertValues = ["API", toPhone];
+      }
+      const [result] = await pool.query(insertQuery, insertValues);
       contactId = result.insertId;
     }
 
@@ -209,10 +220,21 @@ export const receiveMessage = async (request, response) => {
             if (contactRows.length > 0) {
               contactId = contactRows[0].id;
             } else {
-              const [result] = await pool.query(
-                "INSERT INTO contacts (name, phone) VALUES (?, ?)",
-                [contact.profile.name, contact.wa_id]
-              );
+              const profilePictureUrl = contact?.profile?.profile_picture?.url || null;
+              let insertQuery;
+              let insertValues;
+              if (profilePictureUrl) {
+                const response = await axios.get(profilePictureUrl, { responseType: "arraybuffer" });
+                const imageBlob = response.data;
+                // Prepare query and values if profile picture is available
+                insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
+                insertValues = ["API", toPhone, imageBlob];
+              } else {
+                // Prepare query and values if profile picture is not available
+                insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
+                insertValues = ["API", toPhone];
+              }
+              const [result] = await pool.query(insertQuery, insertValues);
               contactId = result.insertId;
               isNewContact = true;
             }
@@ -367,44 +389,206 @@ export const receiveMessage = async (request, response) => {
 };
 
 // Função sendFile corrigida
-export async function sendFile(req, res) {
-  try {
-    // Verifica se o arquivo está presente no request
-    if (!req.file) {
-      return res.status(400).json({ error: "Arquivo não encontrado" });
-    }
+// export async function sendFile(req, res) {
+//   try {
+//     // Verifica se o arquivo está presente no request
+//     if (!req.file) {
+//       return res.status(400).json({ error: "Arquivo não encontrado" });
+//     }
 
-    // Cria uma nova instância de FormData
-    const formData = new FormData();
+//     // Cria uma nova instância de FormData
+//     const formData = new FormData();
 
-    // Anexa o arquivo ao FormData usando o buffer ao invés de um caminho de arquivo
-    formData.append("file", req.file.buffer, {
-      filename: req.file.originalname,
-      contentType: req.file.mimetype
-    });
+//     // Anexa o arquivo ao FormData usando o buffer ao invés de um caminho de arquivo
+//     formData.append("file", req.file.buffer, {
+//       filename: req.file.originalname,
+//       contentType: req.file.mimetype
+//     });
 
-    // Inclui o campo necessário para especificar o produto de mensagens
-    formData.append("messaging_product", "whatsapp");
+//     // Inclui o campo necessário para especificar o produto de mensagens
+//     formData.append("messaging_product", "whatsapp");
 
-    // Configura as opções de headers, incluindo o token de autenticação e o content-type para FormData
-    const headers = {
-      ...formData.getHeaders(),
-      Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
-    };
+//     // Configura as opções de headers, incluindo o token de autenticação e o content-type para FormData
+//     const headers = {
+//       ...formData.getHeaders(),
+//       Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
+//     };
 
-    // URL do endpoint da API do WhatsApp para envio de arquivos (verifique se a versão está correta)
-    const url = 'https://graph.facebook.com/v21.0/408476129004761/media';
+//     // URL do endpoint da API do WhatsApp para envio de arquivos (verifique se a versão está correta)
+//     const url = 'https://graph.facebook.com/v21.0/408476129004761/media';
 
-    // Envia o arquivo usando uma requisição POST
-    const response = await axios.post(url, formData, { headers });
+//     // Envia o arquivo usando uma requisição POST
+//     const response = await axios.post(url, formData, { headers });
     
 
-    // Responde com sucesso se o arquivo for enviado corretamente
-    res.status(200).json({ message: "Arquivo enviado com sucesso", data: response.data });
+//     // Responde com sucesso se o arquivo for enviado corretamente
+//     res.status(200).json({ message: "Arquivo enviado com sucesso", data: response.data });
 
+//   } catch (error) {
+//     console.error("Erro ao enviar arquivo:", error);
+//     res.status(500).json({ error: "Falha ao enviar o arquivo" });
+//   }
+// }
+
+
+// Generalized sendMedia function
+async function sendMedia(toPhone, fileBuffer, mimeType, fileName, whatsappBusinessAccountId, socket) {
+  console.log(`Iniciando envio de arquivo (${mimeType}) para o WhatsApp`);
+
+  // Step 1: Upload media to WhatsApp server
+  const mediaUploadUrl = `https://graph.facebook.com/v21.0/${whatsappBusinessAccountId}/media`;
+
+  const formData = new FormData();
+  formData.append("file", fileBuffer, { filename: fileName, contentType: mimeType });
+  formData.append("messaging_product", "whatsapp");
+
+  try {
+    const uploadHeaders = {
+      ...formData.getHeaders(),
+      Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+    };
+    const mediaResponse = await axios.post(mediaUploadUrl, formData, { headers: uploadHeaders });
+
+    const mediaId = mediaResponse.data.id;
+    console.log(`Arquivo enviado ao WhatsApp com ID: ${mediaId}`);
+
+    // Step 2: Send media message with media ID
+    const fileType = determineFileType(mimeType); // Dynamically determine the WhatsApp file type
+
+    if (!fileType) {
+      throw new Error(`Unsupported file type: ${mimeType}`);
+    }
+
+    const messageUrl = `https://graph.facebook.com/v21.0/${whatsappBusinessAccountId}/messages`;
+    const data = {
+      messaging_product: "whatsapp",
+      to: toPhone,
+      type: fileType,
+      [fileType]: { id: mediaId },  // Dynamically assign media type field
+    };
+
+    const messageHeaders = {
+      Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+    };
+    const messageResponse = await axios.post(messageUrl, data, { headers: messageHeaders });
+
+    console.log(`Mensagem de mídia enviada para o WhatsApp: ${fileType} para ${toPhone}`);
+
+    // Emit message event if socket is present
+    if (socket) {
+      socket.emit("new_message", {
+        phone_number_id: whatsappBusinessAccountId,
+        to: toPhone,
+        media_type: fileType,
+        file_name: fileName,
+        timestamp: new Date().getTime(),
+      });
+    }
+
+    return messageResponse.data, { id: mediaId };
   } catch (error) {
-    console.error("Erro ao enviar arquivo:", error);
-    res.status(500).json({ error: "Falha ao enviar o arquivo" });
+    console.error(`Erro ao enviar arquivo de mídia para o WhatsApp: ${error}`);
+    throw error;  // Propagate the error
+  }
+}
+
+// Helper function to determine WhatsApp file type from MIME type
+function determineFileType(mimeType) {
+  if (mimeType.startsWith("image/")) return "image";
+  if (mimeType.startsWith("video/")) return "video";
+  if (mimeType.startsWith("audio/")) return "audio";
+  if (mimeType === "application/pdf") return "document";
+  if (mimeType.startsWith("application/vnd.") || mimeType.startsWith("application/msword") || mimeType.startsWith("text/")) {
+    return "document";
+  }
+  // Default to "document" if the file type is unknown
+  return "document";
+}
+
+// Controller to handle media file requests
+export async function sendFile(req, res) {
+  console.log('Full Request Body:', req.body);
+  console.log('Full Request File:', req.file);
+  try {
+      console.log('Incoming file:', req.file); // Log incoming file for debugging
+
+      if (!req.file) {
+          return res.status(400).json({ error: 'Arquivo não encontrado' });
+      }
+
+      const { toPhone, whatsappBusinessAccountId } = req.body;
+      const fileBuffer = req.file.buffer;
+      const fileName = req.file.originalname;
+      const mimeType = req.file.mimetype; // Correctly retrieve MIME type
+
+      console.log(`File details: Name - ${fileName}, Type - ${mimeType}`);
+
+      // Step 1: Retrieve or create the contact
+      let contactId;
+      const [contactRows] = await pool.query("SELECT id FROM contacts WHERE phone = ?", [toPhone]);
+      if (contactRows.length > 0) {
+        contactId = contactRows[0].id;
+      } else {
+        const profilePictureUrl = contact?.profile?.profile_picture?.url || null;
+        let insertQuery;
+        let insertValues;
+        if (profilePictureUrl) {
+          const response = await axios.get(profilePictureUrl, { responseType: "arraybuffer" });
+          const imageBlob = response.data;
+          // Prepare query and values if profile picture is available
+          insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
+          insertValues = ["API", toPhone, imageBlob];
+        } else {
+          // Prepare query and values if profile picture is not available
+          insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
+          insertValues = ["API", toPhone];
+        }
+        const [result] = await pool.query(insertQuery, insertValues);
+        contactId = result.insertId;
+      }
+
+      // Step 2: Create a message entry in `whatsapp_messages`
+      const messageId = `msg-${Date.now()}`; // Unique message ID
+      const messageTimestamp = Math.floor(Date.now() / 1000).toString(); // Current timestamp
+      const fileType = determineFileType(mimeType);
+
+      const insertMessageQuery = `
+        INSERT INTO whatsapp_messages 
+          (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+      const messageValues = [
+        whatsappBusinessAccountId,          // phone_number_id
+        process.env.DISPLAY_PHONE_NUMBER,   // display_phone_number
+        "API",                              // contact_name
+        toPhone,                            // wa_id
+        messageId,                          // message_id
+        "me",                               // message_from
+        messageTimestamp,                   // message_timestamp
+        fileType,                           // message_type (e.g., image, video, etc.)
+        fileName,                           // message_body (e.g., file name)
+        contactId,                          // contact_id
+      ];
+
+      await pool.query(insertMessageQuery, messageValues);
+      console.log(`Message saved. ID: ${messageId}, Contact ID: ${contactId}`);
+
+      const sendMediaResponse = await sendMedia(toPhone, fileBuffer, mimeType, fileName, whatsappBusinessAccountId);
+
+      const mediaId = sendMediaResponse.id; // Ensure this is returned by sendMedia
+
+      console.log(`Media sent. ID: ${mediaId}, Type: ${fileType}`);
+
+      // Step 3: Call saveMediaFile to save the media in the database
+      const fileUrl = `https://graph.facebook.com/v21.0/${mediaId}`; // Construct the file URL using mediaId
+      await saveMediaFile(mediaId, fileType, fileUrl, fileName);
+
+      console.log(`Media file saved. ID: ${mediaId}`);
+
+      return res.status(200).json({ message: 'Arquivo enviado com sucesso' });
+  } catch (error) {
+      console.error('Error in sendFile:', error);
+      return res.status(500).json({ error: 'Falha ao enviar o arquivo' });
   }
 }
 
@@ -444,45 +628,6 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     console.error('Erro ao salvar arquivo de mídia:', error);
   }
 }
-
-// Função para recuperar um arquivo do banco de dados
-// export async function getFile(req, res) {
-//   const { messageId } = req.params;
-
-//   try {
-//     const [rows] = await pool.query(
-//       'SELECT file_type, file_data, file_name FROM media_files WHERE message_id = ?',
-//       [messageId]
-//     );
-
-//     if (rows.length === 0) {
-//       return res.status(404).json({ error: 'Arquivo não encontrado' });
-//     }
-
-//     const file = rows[0];
-//     const mimeType = {
-//       image: 'image/jpeg',
-//       audio: 'audio/mpeg',
-//       video: 'video/mp4',
-//       document: 'application/pdf'
-//     }[file.file_type] || 'application/octet-stream';
-
-//     res.set('Content-Type', mimeType);
-//     res.set('Content-Disposition', `inline; filename="${file.file_name}"`);
-    
-//     // Verifica se os dados não estão vazios
-//     if (file.file_data && file.file_data.length > 0) {
-//       console.log("Tamanho do arquivo recuperado:", file.file_data.length);
-//       res.send(Buffer.from(file.file_data));  // Converte para Buffer antes de enviar
-//     } else {
-//       console.error("Dados do arquivo estão vazios ou inválidos.");
-//       res.status(500).json({ error: 'Erro ao recuperar dados do arquivo' });
-//     }
-//   } catch (error) {
-//     console.error("Erro ao recuperar arquivo:", error);
-//     res.status(500).json({ error: 'Erro ao recuperar arquivo' });
-//   }
-// }
 
 // Function to retrieve a file from the database
 export async function getFile(req, res) {
@@ -528,10 +673,10 @@ export async function getFile(req, res) {
 
 //QuickReponse
 export async function redirectBot(contact, messageBody, contactId) {
-  let departmentName = "";
-  let nextStage = "welcome";
+  let departmentName;
+  let nextStage;
   let bodyBotMessage;
-  let currentStage = "welcome";
+  let currentStage;
 
   try {
     let [stageRow] = await pool.query(
@@ -713,7 +858,49 @@ export async function redirectBot(contact, messageBody, contactId) {
 
   try {
     // Send the initial bot message
-    await sendMessage(contact.wa_id, bodyBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
+    await sendMessage(contact, bodyBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
+
+    console.log(
+      process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,'\n',
+
+      process.env.DISPLAY_PHONE_NUMBER,'\n',
+
+      "BOT",'\n',
+
+      contact,'\n',
+
+      `msg-${Date.now()}`,'\n',
+
+      "me",'\n',
+
+      Math.floor(Date.now() / 1000).toString(),'\n',
+
+      "text",'\n',
+
+      bodyBotMessage,'\n',
+
+      contactId,'\n'
+    )
+
+    const insertMessageQuery = `
+      INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    const values = [
+      process.env.WHATSAPP_BUSINESS_ACCOUNT_ID, // phone_number_id
+      process.env.DISPLAY_PHONE_NUMBER,        // display_phone_number
+      "BOT",                                   // contact_name
+      contact.wa_id,                           // wa_id
+      `msg-${Date.now()}`,                     // message_id
+      "me",                                    // message_from
+      Math.floor(Date.now() / 1000).toString(), // message_timestamp
+      "text",                                  // message_type
+      bodyBotMessage,                          // message_body
+      contactId,                               // contact_id
+      null                                     // user_id is explicitly null
+    ];
+    await pool.query(insertMessageQuery, values);
+
     console.log("Initial bot message sent to", contact.wa_id);
 
     
@@ -723,12 +910,12 @@ export async function redirectBot(contact, messageBody, contactId) {
     );
     const actualStage = rows[0].stage;
 
-    if(actualStage != nextStage) {
+    if(actualStage != "atending" && actualStage != nextStage) {
       await pool.query(
         "UPDATE contacts SET stage = ? WHERE id = ?",
         [nextStage,
-        contactId]
-      );
+          contactId]
+        );
     }
   } catch (error) {
     console.error("Error sending initial bot message:", error);
