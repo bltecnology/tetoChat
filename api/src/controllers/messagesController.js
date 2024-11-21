@@ -388,49 +388,6 @@ export const receiveMessage = async (request, response) => {
   }
 };
 
-// Função sendFile corrigida
-// export async function sendFile(req, res) {
-//   try {
-//     // Verifica se o arquivo está presente no request
-//     if (!req.file) {
-//       return res.status(400).json({ error: "Arquivo não encontrado" });
-//     }
-
-//     // Cria uma nova instância de FormData
-//     const formData = new FormData();
-
-//     // Anexa o arquivo ao FormData usando o buffer ao invés de um caminho de arquivo
-//     formData.append("file", req.file.buffer, {
-//       filename: req.file.originalname,
-//       contentType: req.file.mimetype
-//     });
-
-//     // Inclui o campo necessário para especificar o produto de mensagens
-//     formData.append("messaging_product", "whatsapp");
-
-//     // Configura as opções de headers, incluindo o token de autenticação e o content-type para FormData
-//     const headers = {
-//       ...formData.getHeaders(),
-//       Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
-//     };
-
-//     // URL do endpoint da API do WhatsApp para envio de arquivos (verifique se a versão está correta)
-//     const url = 'https://graph.facebook.com/v21.0/408476129004761/media';
-
-//     // Envia o arquivo usando uma requisição POST
-//     const response = await axios.post(url, formData, { headers });
-    
-
-//     // Responde com sucesso se o arquivo for enviado corretamente
-//     res.status(200).json({ message: "Arquivo enviado com sucesso", data: response.data });
-
-//   } catch (error) {
-//     console.error("Erro ao enviar arquivo:", error);
-//     res.status(500).json({ error: "Falha ao enviar o arquivo" });
-//   }
-// }
-
-
 // Generalized sendMedia function
 async function sendMedia(toPhone, fileBuffer, mimeType, fileName, whatsappBusinessAccountId, socket) {
   console.log(`Iniciando envio de arquivo (${mimeType}) para o WhatsApp`);
