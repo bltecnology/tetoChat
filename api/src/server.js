@@ -54,5 +54,8 @@ io.on("connection", (socket) => {
   });
 });
 
+app.get('/healthz', (req, res) => res.send('OK'));
+
+
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
