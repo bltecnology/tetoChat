@@ -11,7 +11,7 @@ const TransmissionModal = ({ isOpen, onClose }) => {
   // Função para buscar contatos do banco de dados
   const fetchContacts = async () => {
     try {
-      const response = await axios.get("https://tetochat-k3bt.onrender.com/contacts", {
+      const response = await axios.get("https://tetochat-pgus.onrender.com/contacts", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -73,7 +73,7 @@ const TransmissionModal = ({ isOpen, onClose }) => {
       // Enviar a mensagem para cada contato selecionado
       for (const contactPhone of selectedContacts) {
         formData.set("toPhone", contactPhone); // Telefone do contato
-        await axios.post("https://tetochat-k3bt.onrender.com/send", formData, {
+        await axios.post("https://tetochat-pgus.onrender.com/send", formData, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
             "Content-Type": "multipart/form-data",

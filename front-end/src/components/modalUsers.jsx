@@ -15,7 +15,7 @@ const ModalUsers = ({ isOpen, onClose, onSave, user }) => {
     if (isOpen) {
       const fetchDepartments = async () => {
         try {
-          const response = await axios.get('https://tetochat-k3bt.onrender.com/departments');
+          const response = await axios.get('https://tetochat-pgus.onrender.com/departments');
           setDepartments(response.data);
         } catch (error) {
           console.error('Erro ao buscar departamentos:', error);
@@ -24,7 +24,7 @@ const ModalUsers = ({ isOpen, onClose, onSave, user }) => {
 
       const fetchPositions = async () => {
         try {
-          const response = await axios.get('https://tetochat-k3bt.onrender.com/positions'); // Endpoint para posições
+          const response = await axios.get('https://tetochat-pgus.onrender.com/positions'); // Endpoint para posições
           setPositions(response.data);
         } catch (error) {
           console.error('Erro ao buscar posições:', error);
@@ -63,10 +63,10 @@ const ModalUsers = ({ isOpen, onClose, onSave, user }) => {
     try {
       if (user) {
         // Atualizar usuário existente
-        await axios.put(`https://tetochat-k3bt.onrender.com/users/${user.id}`, updatedUser);
+        await axios.put(`https://tetochat-pgus.onrender.com/users/${user.id}`, updatedUser);
       } else {
         // Criar novo usuário
-        const response = await axios.post('https://tetochat-k3bt.onrender.com/users', updatedUser);
+        const response = await axios.post('https://tetochat-pgus.onrender.com/users', updatedUser);
         updatedUser.id = response.data.id;
       }
       onSave(updatedUser);

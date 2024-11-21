@@ -16,7 +16,7 @@ import EmojiPicker from "emoji-picker-react";
 import { format } from "date-fns";
 import defaultProfilePic from "../assets/defaultProfile.png";
 
-const socket = io("https://tetochat-k3bt.onrender.com");
+const socket = io("https://tetochat-pgus.onrender.com");
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
@@ -57,7 +57,7 @@ const Chat = () => {
   const loadMessages = async (contactId) => {
     try {
       const response = await axios.get(
-        `https://tetochat-k3bt.onrender.com/messages?contactId=${contactId}`,
+        `https://tetochat-pgus.onrender.com/messages?contactId=${contactId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -78,7 +78,7 @@ const Chat = () => {
 
     try {
       const response = await axios.get(
-        `https://tetochat-k3bt.onrender.com/getUserChats/${department}`,
+        `https://tetochat-pgus.onrender.com/getUserChats/${department}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -101,7 +101,7 @@ const Chat = () => {
 
 
       const response = await axios.get(
-        `https://tetochat-k3bt.onrender.com/queue/${departmentTable}`,
+        `https://tetochat-pgus.onrender.com/queue/${departmentTable}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -118,7 +118,7 @@ const Chat = () => {
   const fetchContacts = async () => {
     try {
       const response = await axios.get(
-        "https://tetochat-k3bt.onrender.com/contacts",
+        "https://tetochat-pgus.onrender.com/contacts",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -178,7 +178,7 @@ const Chat = () => {
     if (!imageUrls[messageId]) {
       try {
         const response = await axios.get(
-          `https://tetochat-k3bt.onrender.com/file/${messageId}`,
+          `https://tetochat-pgus.onrender.com/file/${messageId}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -197,7 +197,7 @@ const Chat = () => {
     if (!documentUrls[messageId]) {
       try {
         const response = await axios.get(
-          `https://tetochat-k3bt.onrender.com/file/${messageId}`,
+          `https://tetochat-pgus.onrender.com/file/${messageId}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -267,7 +267,7 @@ const Chat = () => {
     if (!audioUrls[messageId]) {
       try {
         const response = await axios.get(
-          `https://tetochat-k3bt.onrender.com/file/${messageId}`,
+          `https://tetochat-pgus.onrender.com/file/${messageId}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -300,7 +300,7 @@ const Chat = () => {
       try {
         // Enviar a mensagem ao backend
         const response = await axios.post(
-          "https://tetochat-k3bt.onrender.com/send",
+          "https://tetochat-pgus.onrender.com/send",
           {
             toPhone: selectedContact.phone,
             text: newMessage,
@@ -320,7 +320,7 @@ const Chat = () => {
 
           // Remover o contato da fila usando queueOut
           await axios.delete(
-            `https://tetochat-k3bt.onrender.com/queue/${localStorage.getItem("department")}`,
+            `https://tetochat-pgus.onrender.com/queue/${localStorage.getItem("department")}`,
             {
               data: { idContact: selectedContact.id },
               headers: {
@@ -355,7 +355,7 @@ const Chat = () => {
     try {
       // Enviar o contato para outro departamento
       await axios.post(
-        "https://tetochat-k3bt.onrender.com/transfer",
+        "https://tetochat-pgus.onrender.com/transfer",
         {
           contactId: selectedContact.id,
           departmentId: selectedDepartmentId.selectedDepartment, // id do departamento selecionado

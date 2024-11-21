@@ -22,7 +22,7 @@
       };
 
       try {
-        await axios.post('https://tetochat-k3bt.onrender.com/contacts', newContact);
+        await axios.post('https://tetochat-pgus.onrender.com/contacts', newContact);
         onSave(); // Atualizar a lista de contatos no componente pai
         onClose();
       } catch (error) {

@@ -20,7 +20,7 @@ const Modal = ({ isOpen, onClose, onSave }) => {
 
     const handleSave = async () => {
         try {
-            const response = await fetch('https://tetochat-k3bt.onrender.com/positions', {
+            const response = await fetch('https://tetochat-pgus.onrender.com/positions', {
 
                 method: 'POST',
                 headers: {
