@@ -34,6 +34,7 @@ const Chat = () => {
   const [audioUrls, setAudioUrls] = useState({});
   const [documentUrls, setDocumentUrls] = useState({});
   const [documentNames, setDocumentNames] = useState({});
+  
 
 
   const handleImageClick = (imageUrl) => {
@@ -573,6 +574,7 @@ const Chat = () => {
                       >
                         {/* Renderiza imagem se existir */}
                         {message.message_type === "image" && imageUrls[message.message_id] && (
+                          
                           <img
                             src={imageUrls[message.message_id]}
                             alt=""
@@ -621,14 +623,14 @@ const Chat = () => {
                   <FiSmile size={24} />
                 </button>
                 {showEmojiPicker && (
-                  <div className="absolute bottom-20 left-10 z-50">
-                    <EmojiPicker
-                      onEmojiClick={(event, emojiObject) =>
-                        setNewMessage(newMessage + emojiObject.emoji)
-                      }
-                    />
-                  </div>
-                )}
+  <div className="absolute bottom-20 left-10 z-50">
+    <EmojiPicker
+      onEmojiClick={(emojiObject) => 
+        setNewMessage(newMessage + emojiObject.emoji) // Access emoji directly
+      }
+    />
+  </div>
+)}
 
                 <input
                   type="text"
