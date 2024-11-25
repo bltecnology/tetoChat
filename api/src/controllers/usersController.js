@@ -121,6 +121,10 @@ export const updateProfilePicture = async (req, res) => {
     ...formData.getHeaders(),
   };
 
+  console.log("Uploading profile picture:");
+  console.log("Headers:", headers);
+  console.log("URL:", url);
+
   try {
     const response = await axios.post(url, formData, { headers });
     res.status(200).send({
@@ -134,4 +138,4 @@ export const updateProfilePicture = async (req, res) => {
       error: error.response?.data || error.message,
     });
   }
-}
+};
