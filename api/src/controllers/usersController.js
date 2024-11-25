@@ -1,5 +1,13 @@
 import bcrypt from 'bcryptjs';
 import pool from '../models/db.js';
+import express from "express";
+import axios from "axios";
+import multer from "multer";
+import 'dotenv/config';
+
+// Multer configuration for file upload
+const storage = multer.memoryStorage();
+export const upload = multer({ storage });
 
 const saltRounds = 10;
 
