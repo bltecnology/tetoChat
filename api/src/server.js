@@ -19,7 +19,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com","http://localhost:5173","https://tetochat-pgus.onrender.com"],
+    origin: ["teto-chat.vercel.app","http://localhost:5173","https://tetochat-pgus.onrender.com"],
     methods: ["GET", "POST"],
     credentials: true
   },
