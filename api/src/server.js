@@ -19,7 +19,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["teto-chat.vercel.app","http://localhost:5173","https://tetochat-pgus.onrender.com","https://teto-chat-7fsq1058t-bltecnologys-projects.vercel.app"],
+    origin: ["teto-chat.vercel.app","http://localhost:5173","https://tetochat-pgus.onrender.com","https://teto-chat-7fsq1058t-bltecnologys-projects.vercel.app","https://tetochat-svsn.onrender.com"],
     methods: ["GET", "POST"],
     credentials: true
   },
@@ -29,7 +29,7 @@ const io = new Server(server, {
 global.io = io;
 
 app.use(cors({
-    origin: ["teto-chat.vercel.app","http://localhost:5173","https://tetochat-pgus.onrender.com","https://teto-chat-7fsq1058t-bltecnologys-projects.vercel.app"], 
+    origin: ["teto-chat.vercel.app","http://localhost:5173","https://tetochat-pgus.onrender.com","https://teto-chat-7fsq1058t-bltecnologys-projects.vercel.app","https://tetochat-svsn.onrender.com"], 
     methods: ['GET', 'POST', 'PUT', 'DELETE'], 
     credentials: true 
 }));
