@@ -9,4 +9,5 @@ usersRoutes.post("/users", addUser);
 usersRoutes.put("/users/:id", updateUser);
 usersRoutes.post("/updateProfilePicture", upload.single("photo"), authenticateJWT, updateProfilePicture);
 
+
 export { usersRoutes };
