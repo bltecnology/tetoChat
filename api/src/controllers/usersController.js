@@ -102,7 +102,7 @@ export const addUser = async (req, res) => {
 };
 
 export const updateProfilePicture = async (req, res) => {
-  const whatsappBusinessAccountId = process.env.whatsappBusinessAccountId;
+  const { whatsappBusinessAccountId } = req.body;
 
   if (!whatsappBusinessAccountId || !req.file) {
     return res.status(400).send("Missing required fields: `whatsappBusinessAccountId` or `photo` file");
