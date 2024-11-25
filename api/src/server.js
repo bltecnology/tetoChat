@@ -46,6 +46,11 @@ app.use(transferRoutes);
 app.use(quickResponsesRoutes);
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+app.get('/healthz', (req, res) => {
+  res.status(200).send('OK');
+});
+
+
 io.on("connection", (socket) => {
   console.log("Novo cliente conectado:", socket.id);
 
