@@ -110,7 +110,7 @@ export const updateProfilePicture = async (req, res) => {
     return res.status(400).send("Missing required fields: `whatsappBusinessAccountId` or `photo` file");
   }
 
-  const url = `https://graph.facebook.com/v16.0/${whatsappBusinessAccountId}/settings/profile/photo`;
+  const url = `https://graph.facebook.com/v21.0/${whatsappBusinessAccountId}/settings/profile/photo`;
 
   const formData = new FormData();
   formData.append("file", req.file.buffer, {
