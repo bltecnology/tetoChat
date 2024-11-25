@@ -7,7 +7,7 @@ const usersRoutes = express.Router();
 usersRoutes.get("/users", getUsers);
 usersRoutes.post("/users", addUser);
 usersRoutes.put("/users/:id", updateUser);
-usersRoutes.post("/updateProfilePicture", upload.single("photo"), authenticateJWT, updateProfilePicture);
+usersRoutes.post("/updateProfilePicture", upload.single("photo"), updateProfilePicture);
 
 
 export { usersRoutes };
