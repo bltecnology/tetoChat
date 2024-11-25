@@ -4,7 +4,7 @@ import {
   FiPhoneForwarded,
   FiSmile,
   FiPaperclip,
-  FiMic,
+  FiSend,
   FiMoreVertical,
   FiDownload,
 } from "react-icons/fi";
@@ -16,7 +16,7 @@ import EmojiPicker from "emoji-picker-react";
 import { format } from "date-fns";
 import defaultProfilePic from "../assets/defaultProfile.png";
 
-const socket = io("https://tetochat-k3bt.onrender.com");
+const socket = io("https://tetochat-pgus.onrender.com");
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
@@ -34,7 +34,7 @@ const Chat = () => {
   const [audioUrls, setAudioUrls] = useState({});
   const [documentUrls, setDocumentUrls] = useState({});
   const [documentNames, setDocumentNames] = useState({});
-  
+
 
 
   const handleImageClick = (imageUrl) => {
@@ -57,7 +57,7 @@ const Chat = () => {
   const loadMessages = async (contactId) => {
     try {
       const response = await axios.get(
-        `https://tetochat-k3bt.onrender.com/messages?contactId=${contactId}`,
+        `https://tetochat-pgus.onrender.com/messages?contactId=${contactId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -78,7 +78,7 @@ const Chat = () => {
 
     try {
       const response = await axios.get(
-        `https://tetochat-k3bt.onrender.com/getUserChats/${department}`,
+        `https://tetochat-pgus.onrender.com/getUserChats/${department}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -101,7 +101,7 @@ const Chat = () => {
 
 
       const response = await axios.get(
-        `https://tetochat-k3bt.onrender.com/queue/${departmentTable}`,
+        `https://tetochat-pgus.onrender.com/queue/${departmentTable}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -118,7 +118,7 @@ const Chat = () => {
   const fetchContacts = async () => {
     try {
       const response = await axios.get(
-        "https://tetochat-k3bt.onrender.com/contacts",
+        "https://tetochat-pgus.onrender.com/contacts",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -178,7 +178,7 @@ const Chat = () => {
     if (!imageUrls[messageId]) {
       try {
         const response = await axios.get(
-          `https://tetochat-k3bt.onrender.com/file/${messageId}`,
+          `https://tetochat-pgus.onrender.com/file/${messageId}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -197,7 +197,7 @@ const Chat = () => {
     if (!documentUrls[messageId]) {
       try {
         const response = await axios.get(
-          `https://tetochat-k3bt.onrender.com/file/${messageId}`,
+          `https://tetochat-pgus.onrender.com/file/${messageId}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -267,7 +267,7 @@ const Chat = () => {
     if (!audioUrls[messageId]) {
       try {
         const response = await axios.get(
-          `https://tetochat-k3bt.onrender.com/file/${messageId}`,
+          `https://tetochat-pgus.onrender.com/file/${messageId}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -282,6 +282,52 @@ const Chat = () => {
       }
     }
   };
+  const handleAudioUpload = async (event) => {
+    const file = event.target.files[0]; // Captura o arquivo selecionado
+    if (!file || !selectedContact) return; // Certifica-se de que há um arquivo e um contato selecionado
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("toPhone", selectedContact.phone);
+    formData.append("whatsappBusinessAccountId", "408476129004761"); // Atualize com o ID correto
+    formData.append("fileType", "audio");
+
+    try {
+      const response = await axios.post(
+        "https://tetochat-pgus.onrender.com/send-file", // Endpoint para envio de arquivos
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // Token JWT
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        const newMessage = {
+          id: `msg-${Date.now()}`, // Gera um ID temporário
+          message_body: file.name, // O nome do arquivo
+          message_from: "me",
+          message_type: "audio", // Tipo de mensagem
+          message_timestamp: Math.floor(Date.now() / 1000).toString(),
+          contact_id: selectedContact.id,
+          message_id: response.data.message_id, // ID do backend
+        };
+
+        // Atualiza o estado com a nova mensagem
+        setMessages((prevMessages) => [...prevMessages, newMessage]);
+
+        // Carrega o áudio para exibição imediata
+        fetchAudio(newMessage.message_id);
+
+        scrollToBottom(); // Rola para o final do chat
+      }
+    } catch (error) {
+      console.error("Erro ao enviar áudio:", error);
+    }
+  };
+
 
   const handleSendMessage = async () => {
     if (selectedContact && newMessage.trim() !== "") {
@@ -300,7 +346,7 @@ const Chat = () => {
       try {
         // Enviar a mensagem ao backend
         const response = await axios.post(
-          "https://tetochat-k3bt.onrender.com/send",
+          "https://tetochat-pgus.onrender.com/send",
           {
             toPhone: selectedContact.phone,
             text: newMessage,
@@ -320,7 +366,7 @@ const Chat = () => {
 
           // Remover o contato da fila usando queueOut
           await axios.delete(
-            `https://tetochat-k3bt.onrender.com/queue/${localStorage.getItem("department")}`,
+            `https://tetochat-pgus.onrender.com/queue/${localStorage.getItem("department")}`,
             {
               data: { idContact: selectedContact.id },
               headers: {
@@ -355,7 +401,7 @@ const Chat = () => {
     try {
       // Enviar o contato para outro departamento
       await axios.post(
-        "https://tetochat-k3bt.onrender.com/transfer",
+        "https://tetochat-pgus.onrender.com/transfer",
         {
           contactId: selectedContact.id,
           departmentId: selectedDepartmentId.selectedDepartment, // id do departamento selecionado
@@ -390,6 +436,38 @@ const Chat = () => {
       setChatContacts((prevChats) => [...prevChats, contact]);
     }
   };
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0]; // Pega o primeiro arquivo selecionado
+    if (!file || !selectedContact) return; // Verifica se existe um arquivo e um contato selecionado
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("toPhone", selectedContact.phone);
+    formData.append("whatsappBusinessAccountId", "408476129004761"); // Atualize com o ID correto
+    formData.append("fileType", file.type.startsWith("image/") ? "image" : "document");
+
+    try {
+      const response = await axios.post(
+        "https://tetochat-pgus.onrender.com/send-file", // URL do endpoint
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // Token JWT
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        console.log("Arquivo enviado com sucesso");
+        // Opcional: Atualize as mensagens após enviar o arquivo
+        loadMessages(selectedContact.id);
+      }
+    } catch (error) {
+      console.error("Erro ao enviar arquivo:", error);
+    }
+  };
+
 
   return (
     <div className="flex flex-col h-screen">
@@ -574,7 +652,7 @@ const Chat = () => {
                       >
                         {/* Renderiza imagem se existir */}
                         {message.message_type === "image" && imageUrls[message.message_id] && (
-                          
+
                           <img
                             src={imageUrls[message.message_id]}
                             alt=""
@@ -620,17 +698,18 @@ const Chat = () => {
                   className="text-gray-500 hover:text-gray-700 mr-3"
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                 >
+
                   <FiSmile size={24} />
                 </button>
                 {showEmojiPicker && (
-  <div className="absolute bottom-20 left-10 z-50">
-    <EmojiPicker
-      onEmojiClick={(emojiObject) => 
-        setNewMessage(newMessage + emojiObject.emoji) // Access emoji directly
-      }
-    />
-  </div>
-)}
+                  <div className="absolute bottom-20 left-10 z-50">
+                    <EmojiPicker
+                      onEmojiClick={(emojiObject) =>
+                        setNewMessage(newMessage + emojiObject.emoji) // Access emoji directly
+                      }
+                    />
+                  </div>
+                )}
 
                 <input
                   type="text"
@@ -645,15 +724,20 @@ const Chat = () => {
                   className="text-gray-500 hover:text-gray-700 ml-3"
                   onClick={handleSendMessage}
                 >
-                  <FiPaperclip size={24} />
+                  <FiSend size={24} />
                 </button>
-
                 <button
                   className="text-gray-500 hover:text-gray-700 ml-3"
-                  onClick={handleSendMessage}
+                  onClick={() => document.getElementById('fileInput').click()}
                 >
-                  <FiMic size={24} />
+                  <FiPaperclip size={24} />
                 </button>
+                <input
+                  id="fileInput"
+                  type="file"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                />
               </div>
             </>
           ) : (

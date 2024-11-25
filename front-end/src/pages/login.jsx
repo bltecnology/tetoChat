@@ -14,7 +14,7 @@ const LoginPage = () => {
     event.preventDefault();
 
     try {
-      const response = await axios.post('https://tetochat-k3bt.onrender.com/login', { email, password: senha });
+      const response = await axios.post('https://tetochat-pgus.onrender.com/login', { email, password: senha });
       console.log(response);
       
       const { token } = response.data;
