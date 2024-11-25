@@ -92,3 +92,38 @@ export const addUser = async (req, res) => {
     res.status(500).send('Erro ao salvar usuário');
   }
 };
+
+export const updateProfilePicture = async (req, res) => {
+  const whatsappBusinessAccountId = process.env.whatsappBusinessAccountId;
+
+  if (!whatsappBusinessAccountId || !req.file) {
+    return res.status(400).send("Missing required fields: `whatsappBusinessAccountId` or `photo` file");
+  }
+
+  const url = `https://graph.facebook.com/v16.0/${whatsappBusinessAccountId}/settings/profile/photo`;
+
+  const formData = new FormData();
+  formData.append("file", req.file.buffer, {
+    filename: req.file.originalname,
+    contentType: req.file.mimetype,
+  });
+
+  const headers = {
+    Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+    ...formData.getHeaders(),
+  };
+
+  try {
+    const response = await axios.post(url, formData, { headers });
+    res.status(200).send({
+      message: "Profile picture updated successfully",
+      response: response.data,
+    });
+  } catch (error) {
+    console.error("Error updating profile picture:", error.response?.data || error.message);
+    res.status(500).send({
+      message: "Failed to update profile picture",
+      error: error.response?.data || error.message,
+    });
+  }
+}
