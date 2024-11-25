@@ -1,5 +1,15 @@
 import bcrypt from 'bcryptjs';
 import pool from '../models/db.js';
+import express from "express";
+import axios from "axios";
+import multer from "multer";
+import 'dotenv/config';
+import FormData from 'form-data';
+
+
+// Multer configuration for file upload
+const storage = multer.memoryStorage();
+export const upload = multer({ storage });
 
 const saltRounds = 10;
 
@@ -90,5 +100,44 @@ export const addUser = async (req, res) => {
   } catch (error) {
     console.error('Erro ao salvar usuário:', error);
     res.status(500).send('Erro ao salvar usuário');
+  }
+};
+
+export const updateProfilePicture = async (req, res) => {
+  const { whatsappBusinessAccountId } = req.body;
+
+  if (!whatsappBusinessAccountId || !req.file) {
+    return res.status(400).send("Missing required fields: `whatsappBusinessAccountId` or `photo` file");
+  }
+
+  const url = `https://graph.facebook.com/v21.0/${whatsappBusinessAccountId}/settings/profile/photo`;
+
+  const formData = new FormData();
+  formData.append("file", req.file.buffer, {
+    filename: req.file.originalname,
+    contentType: req.file.mimetype,
+  });
+
+  const headers = {
+    Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+    ...formData.getHeaders(),
+  };
+
+  console.log("Uploading profile picture:");
+  console.log("Headers:", headers);
+  console.log("URL:", url);
+
+  try {
+    const response = await axios.post(url, formData, { headers });
+    res.status(200).send({
+      message: "Profile picture updated successfully",
+      response: response.data,
+    });
+  } catch (error) {
+    console.error("Error updating profile picture:", error.response?.data || error.message);
+    res.status(500).send({
+      message: "Failed to update profile picture",
+      error: error.response?.data || error.message,
+    });
   }
 };

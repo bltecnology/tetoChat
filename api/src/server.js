@@ -29,7 +29,7 @@ const io = new Server(server, {
 global.io = io;
 
 app.use(cors({
-    origin: ["http://ec2-52-67-45-214.sa-east-1.compute.amazonaws.com","http://localhost:5173","https://tetochat-pgus.onrender.com"], 
+    origin: ["teto-chat.vercel.app","http://localhost:5173","https://tetochat-pgus.onrender.com"], 
     methods: ['GET', 'POST', 'PUT', 'DELETE'], 
     credentials: true 
 }));
@@ -45,6 +45,11 @@ app.use(messagesRoutes);
 app.use(transferRoutes);
 app.use(quickResponsesRoutes);
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+app.get('/healthz', (req, res) => {
+  res.status(200).send('OK');
+});
+
 
 io.on("connection", (socket) => {
   console.log("Novo cliente conectado:", socket.id);
