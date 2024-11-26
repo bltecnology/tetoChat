@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Header from "../components/header";
 import Background from "../components/background";
-import { GrAdd, GrMoreVertical } from "react-icons/gr";
+import { GrAdd, GrMoreVertical, GrRefresh } from "react-icons/gr";
 import MainContainer from "../components/mainContainer";
 import ModalContacts from "../components/modalContacts";
 import {
@@ -43,24 +43,24 @@ const Contacts = () => {
     }
   };
 
-  const handleDeleteContact = async (contactId) => {
-    const confirmDelete = window.confirm(
-      "Você realmente deseja excluir este Contato?"
-    );
-    if (confirmDelete) {
-      try {
-        await axios.delete(
-          `https://tetochat-pgus.onrender.com/contacts/${contactId}`
-        );
-        setContacts(contacts.filter((contact) => contact.id !== contactId));
-      } catch (error) {
-        console.error("Erro ao excluir contato:", error.message);
-        alert(
-          "Erro ao excluir o contato. Verifique o console para mais detalhes."
-        );
-      }
-    }
-  };
+  // const handleDeleteContact = async (contactId) => {
+  //   const confirmDelete = window.confirm(
+  //     "Você realmente deseja excluir este Contato?"
+  //   );
+  //   if (confirmDelete) {
+  //     try {
+  //       await axios.delete(
+  //         `https://tetochat-pgus.onrender.com/contacts/${contactId}`
+  //       );
+  //       setContacts(contacts.filter((contact) => contact.id !== contactId));
+  //     } catch (error) {
+  //       console.error("Erro ao excluir contato:", error.message);
+  //       alert(
+  //         "Erro ao excluir o contato. Verifique o console para mais detalhes."
+  //       );
+  //     }
+  //   }
+  // };
 
   return (
     <div>
@@ -69,10 +69,11 @@ const Contacts = () => {
         text="Contatos"
         btn1={
           <GrAdd
-            className="rounded-full hover:bg-gray-400 hover:scale-110 transition-transform transition-colors duration-300"
             onClick={() => setIsModalOpen(true)}
           />
         }
+        btn3={<GrRefresh />} 
+
       >
         <MainContainer
           p1="Nome"
@@ -82,41 +83,33 @@ const Contacts = () => {
           p5="Email"
           p6="Ações"
           content={
-            <div>
+            <>
               {contacts.map((contact) => (
-                <div
-                  key={contact.id}
-                  className="flex justify-between items-center border-b py-2"
-                >
-                  <div className="w-1/5">{contact.name}</div>
-                  <div className="w-1/5">{contact.phone}</div>
-                  <div className="w-1/5">{contact.tag}</div>
-                  <div className="w-1/5">{contact.note}</div>
-                  <div className="w-1/5">{contact.email}</div>
-                  <div className="w-1/5 flex justify-end">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button className="p-2 rounded">
-                          <GrMoreVertical className="cursor-pointer" />
+
+                <tr key={contact.id} className="odd:bg-white 0 even:bg-gray-50 0 border-b ">
+                  <td className="px-6 py-4">{contact.name}</td>
+                  <td className="px-6 py-4">{contact.phone}</td>
+                  <td className="px-6 py-4">{contact.tag}</td>
+                  <td className="px-6 py-4">{contact.note}</td>
+                  <td className="px-6 py-4">{contact.email}</td>
+                  <td className="px-6 py-4"><a href="">   <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-2 rounded">
+                        <GrMoreVertical className="cursor-pointer" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="bg-white text-black mt-2 w-48">
+                      <DropdownMenuItem className="hover:bg-gray-200 text-center">
+                        <button onClick={() => handleEditContact(contact)}>
+                          Editar
                         </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="bg-white text-black mt-2 w-48">
-                        <DropdownMenuItem className="hover:bg-gray-200 text-center">
-                          <button onClick={() => handleEditContact(contact)}>
-                            Editar
-                          </button>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="hover:bg-gray-200 text-center">
-                          <button onClick={() => handleDeleteContact(contact.id)}>
-                            Excluir
-                          </button>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
+                      </DropdownMenuItem>
+
+                    </DropdownMenuContent>
+                  </DropdownMenu></a></td>
+                </tr>
               ))}
-            </div>
+            </>
           }
         />
       </Background>

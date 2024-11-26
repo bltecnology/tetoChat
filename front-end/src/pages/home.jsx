@@ -34,18 +34,7 @@ const Home = () => {
                             <ButtonCard icon={<FaTags />} text="Departamentos" />
                         </Link>
                     </div>
-                    <div className="flex justify-center gap-24 items-center">
-                        <Link to="/statistics" className="flex-1 mx-2">
-                            <ButtonCard icon={<FaChartBar />} text="Estatísticas de Atendimento" />
-                        </Link>
-                        <Link to="/connectedDevices">
-                            <ButtonCard icon={<FaMobileAlt />} text="Dispositivos conectados" />
-                        </Link>
-                        {/* Botão de Transmissão */}
-                        <div onClick={openModal} className="cursor-pointer">
-                            <ButtonCard icon={<FaRss />} text="Transmissão" />
-                        </div>
-                    </div>
+                    
                 </div>
             </div>
 

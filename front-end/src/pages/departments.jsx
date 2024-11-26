@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Header from "../components/header";
 import Background from "../components/background";
-import { GrAdd, GrMoreVertical } from "react-icons/gr";
+import { GrAdd, GrMoreVertical, GrRefresh } from "react-icons/gr";
 import MainContainer from "../components/mainContainer";
 import ModalDepartments from "../components/modalDepartments";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@radix-ui/react-dropdown-menu';
@@ -66,46 +66,27 @@ const Departments = () => {
         text="Departamentos"
         btn1={
           <GrAdd
-            className="rounded-full hover:bg-gray-400 hover:scale-110 transition-transform transition-colors duration-300"
+           
             onClick={() => setIsModalOpen(true)}
           />
         }
+        btn3={<GrRefresh />} 
+
       >
         <MainContainer
           p1="Nome"
-          p6="Ações"
+          p2="Ações"
           content={
-            <div>
+            <>
               {departments.map((department) => (
-                <div
-                  key={department.id}
-                  className="flex justify-between items-center border-b py-2"
-                >
-                  <div>{department.name}</div>
-                  <div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button className="p-2 rounded">
-                          <GrMoreVertical className="cursor-pointer" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="bg-white text-black mt-2 w-48">
-                        <DropdownMenuItem className="hover:bg-gray-200 text-center">
-                          <button onClick={() => (null)}>
-                            Editar
-                          </button>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="hover:bg-gray-200 text-center">
-                          <button onClick={() => handleDeleteDepartment(department.id)}>
-                            Excluir
-                          </button>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
+
+                <tr key={department.id} className="odd:bg-white 0 even:bg-gray-50 0 border-b ">
+                  <td className="px-6 py-4">{department.name}</td>
+                  <td className="px-6 py-4"><a href=""> Editar</a></td>
+                </tr>
+
               ))}
-            </div>
+            </>
           }
         />
       </Background>

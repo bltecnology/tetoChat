@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiEye, FiMenu, FiBell, FiUser } from "react-icons/fi";
 import {
@@ -7,10 +7,23 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@radix-ui/react-dropdown-menu";
+import axios from "axios";
 
 
 const Header = () => {
-
+  const navigate = useNavigate();
+  useEffect( () => {
+     axios.get(
+      `https://tetochat-pgus.onrender.com/confirm-token`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    ).catch(() => {
+   navigate("/login");
+    })
+  }, [])
   return (
     <div className="flex items-center justify-between p-1 bg-red-700 text-white">
       <div className="flex items-center">
@@ -19,10 +32,8 @@ const Header = () => {
         </Link>
       </div>
       <div className="flex items-center">
-        <div className="mr-8">
-          <FiEye size={24} className="hover:rotate-y-360" />
-        </div>
-        <div className="relative mr-8">
+       
+        <div className="relative mr-12">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className=" p-2 rounded">
@@ -45,14 +56,8 @@ const Header = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <div className="mr-8">
-          <FiBell size={24} className="hover:rotate-y-360" />
-        </div>
-        <div className="mr-8">
-          <Link to="/account">
-            <FiUser size={24} className="hover:rotate-y-360" />
-          </Link>
-        </div>
+        
+       
       </div>
     </div>
   );

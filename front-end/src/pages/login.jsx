@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
@@ -8,25 +8,38 @@ const LoginPage = () => {
   const [senha, setSenha] = useState('');
   const [showPassword, setShowPassword] = useState(false); // Estado para controlar a visibilidade da senha
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true); // Estado para controlar a renderização
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkToken = async () => {
+      try {
+        await axios.get('https://tetochat-pgus.onrender.com/confirm-token', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+        navigate('/home');
+      } catch (error) {
+        console.error('Token inválido ou não encontrado:', error);
+      } finally {
+        setLoading(false); // Finaliza o carregamento após a verificação
+      }
+    };
+    checkToken();
+  }, [navigate]);
 
   const handleLogin = async (event) => {
     event.preventDefault();
-
     try {
       const response = await axios.post('https://tetochat-pgus.onrender.com/login', { email, password: senha });
-      console.log(response);
-      
-      const { token } = response.data;
-      const { department } = response.data;
-      
+
+      const { token, department } = response.data;
+
       // Armazena o token no localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('department', department);
       localStorage.setItem('email', email);
-      console.log(localStorage)
-
-      // Configura o token em todas as requisições Axios
 
       navigate('/home');
     } catch (error) {
@@ -34,6 +47,15 @@ const LoginPage = () => {
       setError('Email ou senha inválidos.');
     }
   };
+
+  // Renderiza um indicador de carregamento enquanto o useEffect não termina
+  if (loading) {
+    return (
+      <div className="flex h-screen justify-center items-center">
+        <p className="text-red-700 text-xl font-semibold">Carregando...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-white">
@@ -60,7 +82,7 @@ const LoginPage = () => {
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="senha"></label>
               <div className="relative">
                 <input
-                  type={showPassword ? 'text' : 'password'} // Alterna entre texto e senha
+                  type={showPassword ? 'text' : 'password'}
                   id="senha"
                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
                   placeholder="Senha"
@@ -70,9 +92,9 @@ const LoginPage = () => {
                 <button
                   type="button"
                   className="absolute inset-y-0 right-0 px-3 py-2 text-blue-500 text-sm focus:outline-none"
-                  onClick={() => setShowPassword(!showPassword)} // Alterna o estado de exibição da senha
+                  onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? <FaEyeSlash /> : <FaEye />} {/* Alterna entre os ícones */}
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
               </div>
             </div>
@@ -83,9 +105,7 @@ const LoginPage = () => {
             </div>
             <div className="mt-6 flex justify-center">
               <button type='submit'
-               className='bg-red-700 text-white
-               rounded-full w-60 h-12 hover:bg-red-900
-               '>
+                className='bg-red-700 text-white rounded-full w-60 h-12 hover:bg-red-900'>
                 Entrar
               </button>
             </div>
