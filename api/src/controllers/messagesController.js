@@ -99,11 +99,11 @@ export const send = async (req, res) => {
         const imageBlob = response.data;
         // Prepare query and values if profile picture is available
         insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
-        insertValues = ["API", toPhone, imageBlob];
+        insertValues = [contact.profile.name, contact.wa_id, imageBlob];
       } else {
         // Prepare query and values if profile picture is not available
         insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
-        insertValues = ["API", toPhone];
+        insertValues = [contact.profile.name, contact.wa_id];
       }
       const [result] = await pool.query(insertQuery, insertValues);
       contactId = result.insertId;
@@ -228,11 +228,11 @@ export const receiveMessage = async (request, response) => {
                 const imageBlob = response.data;
                 // Prepare query and values if profile picture is available
                 insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
-                insertValues = ["API", toPhone, imageBlob];
+                insertValues = [contact.profile.name, contact.wa_id, imageBlob];
               } else {
                 // Prepare query and values if profile picture is not available
                 insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
-                insertValues = ["API", toPhone];
+                insertValues = [contact.profile.name, contact.wa_id];
               }
               const [result] = await pool.query(insertQuery, insertValues);
               contactId = result.insertId;
@@ -537,11 +537,11 @@ export async function sendFile(req, res) {
           const imageBlob = response.data;
           // Prepare query and values if profile picture is available
           insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
-          insertValues = ["API", toPhone, imageBlob];
+          insertValues = [contact.profile.name, contact.wa_id, imageBlob];
         } else {
           // Prepare query and values if profile picture is not available
           insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
-          insertValues = ["API", toPhone];
+          insertValues = [contact.profile.name, contact.wa_id];
         }
         const [result] = await pool.query(insertQuery, insertValues);
         contactId = result.insertId;
