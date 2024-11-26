@@ -23,7 +23,7 @@ export const addQuickResponse = async (req, res) => {
 
 export const getQuickResponses = async (req, res) => {
   try {
-    const [quickResponses] = await pool.query("SELECT * FROM quick_responses");
+    const [quickResponses] = await pool.query("SELECT q.id, q.text, q.department_id, d.name FROM quick_responses q inner join departments d on q.department_id = d.id;");
     res.status(200).json(quickResponses);
   } catch (error) {
     console.error("Erro ao buscar mensagems rápidas:", error);
