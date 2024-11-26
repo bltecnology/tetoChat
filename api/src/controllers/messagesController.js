@@ -91,6 +91,7 @@ export const send = async (req, res) => {
     if (contactRows.length > 0) {
       contactId = contactRows[0].id;
     } else {
+      console.log(contact.profile)
       const profilePictureUrl = contact?.profile?.profile_picture?.url || null;
       let insertQuery;
       let insertValues;
@@ -405,8 +406,6 @@ export const receiveMessage = async (request, response) => {
   }
 };
 
-// Função sendFile corrigida
-// export async function sendFile(req, res) {
 //   try {
 //     // Verifica se o arquivo está presente no request
 //     if (!req.file) {
@@ -524,10 +523,9 @@ function determineFileType(mimeType) {
 
 // Controller to handle media file requests
 export async function sendFile(req, res) {
-  console.log('Full Request Body:', req.body);
-  console.log('Full Request File:', req.file);
+  
   try {
-      console.log('Incoming file:', req.file); // Log incoming file for debugging
+    console.log("Recebendo arquivo:", req.file);
 
       if (!req.file) {
           return res.status(400).json({ error: 'Arquivo não encontrado' });
@@ -620,6 +618,16 @@ export async function sendFile(req, res) {
 
 export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
   try {
+
+    const [messageExists] = await pool.query(
+      "SELECT message_id FROM whatsapp_messages WHERE message_id = ?",
+      [messageId]
+    );
+
+    if (messageExists.length === 0) {
+      throw new Error(`O message_id ${messageId} não existe em whatsapp_messages.`);
+    }
+
     // Adiciona o token de acesso como parâmetro na URL
     const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
     const fileUrlWithToken = `${fileUrl}?access_token=${accessToken}`;
