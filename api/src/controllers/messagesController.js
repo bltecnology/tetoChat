@@ -91,19 +91,29 @@ export const send = async (req, res) => {
     if (contactRows.length > 0) {
       contactId = contactRows[0].id;
     } else {
+      console.log("Informações do contato",contact)
       const profilePictureUrl = contact?.profile?.profile_picture?.url || null;
       let insertQuery;
       let insertValues;
       if (profilePictureUrl) {
-        const response = await axios.get(profilePictureUrl, { responseType: "arraybuffer" });
-        const imageBlob = response.data;
-        // Prepare query and values if profile picture is available
-        insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
-        insertValues = ["API", toPhone, imageBlob];
+        try {
+          // Baixa a imagem como arraybuffer
+          const response = await axios.get(profilePictureUrl, { responseType: "arraybuffer" });
+          const imageBlob = Buffer.from(response.data); // Converte para Buffer
+  
+          // Prepara a query de inserção com profile_pic
+          insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
+          insertValues = [contact.profile.name, contact.wa_id, imageBlob];
+        } catch (imageError) {
+          console.error("Erro ao baixar a imagem de profile_pic:", imageError);
+          // Se a imagem falhar, insere sem a profile_pic
+          insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
+          insertValues = [contact.profile.name, contact.wa_id];
+        }
       } else {
         // Prepare query and values if profile picture is not available
         insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
-        insertValues = ["API", toPhone];
+        insertValues = [contact.profile.name, contact.wa_id];
       }
       const [result] = await pool.query(insertQuery, insertValues);
       contactId = result.insertId;
@@ -172,263 +182,349 @@ export const getWebhook = function (req, res) {
 };
 
 // Receber mensagem (Webhook)
+// export const receiveMessage = async (request, response) => {
+//   console.log("Incoming webhook: " + JSON.stringify(request.body));
+
+//   const entries = request.body.entry;
+
+//   if (entries && entries.length > 0) {
+//     let allEntriesProcessed = true;
+
+//     for (const entry of entries) {
+//       const changes = entry.changes;
+//       for (const change of changes) {
+//         const data = change.value;
+
+//         if (data && data.messages && data.messages.length > 0) {
+//           const message = data.messages[0];
+//           const contact =
+//             data.contacts && data.contacts.length > 0 ? data.contacts[0] : null;
+
+//           console.log(`Processando mensagem com ID: ${message.id} de ${contact.wa_id}`);
+
+//           // Verifique se a mensagem já foi processada
+//           const [messageExists] = await pool.query(
+//             "SELECT id FROM whatsapp_messages WHERE message_id = ?",
+//             [message.id]
+//           );
+
+//           if (messageExists.length > 0) {
+//             console.log(`Mensagem já processada com ID: ${message.id}`);
+//             continue; // Ignora esta mensagem
+//           }
+
+//           if (!contact || !contact.profile || !contact.wa_id || !message) {
+//             console.error("Dados inválidos recebidos:", JSON.stringify(request.body));
+//             allEntriesProcessed = false;
+//             continue;
+//           }
+
+//           // Obter ou criar o contato e definir contactId
+//           let contactId;
+
+//           try {
+//             const [contactRows] = await pool.query(
+//               "SELECT id FROM contacts WHERE phone = ?",
+//               [contact.wa_id]
+//             );
+//             if (contactRows.length > 0) {
+//               contactId = contactRows[0].id;
+//             } else {
+//               const profilePictureUrl = contact?.profile?.profile_picture?.url || null;
+//               let insertQuery;
+//               let insertValues;
+//               if (profilePictureUrl) {
+//                 try {
+//                   // Baixa a imagem como arraybuffer
+//                   const response = await axios.get(profilePictureUrl, { responseType: "arraybuffer" });
+//                   const imageBlob = Buffer.from(response.data); // Converte para Buffer
+          
+//                   // Prepara a query de inserção com profile_pic
+//                   insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
+//                   insertValues = [contact.profile.name, contact.wa_id, imageBlob];
+//                 } catch (imageError) {
+//                   console.error("Erro ao baixar a imagem de profile_pic:", imageError);
+//                   // Se a imagem falhar, insere sem a profile_pic
+//                   insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
+//                   insertValues = [contact.profile.name, contact.wa_id];
+//                 }
+//               } else {
+//                 // Prepare query and values if profile picture is not available
+//                 insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
+//                 insertValues = [contact.profile.name, contact.wa_id];
+//               }
+//               const [result] = await pool.query(insertQuery, insertValues);
+//               contactId = result.insertId;
+//             }
+//           } catch (err) {
+//             console.error("Erro ao buscar ou criar contato:", err);
+//             allEntriesProcessed = false;
+//             continue;
+//           }
+
+          
+
+//           // Processamento de diferentes tipos de mensagem
+//           let messageBody;
+//           if (message.type === "text" && message.text) {
+//             messageBody = message.text.body;
+//             console.log("Mensagem de texto recebida:", messageBody);
+
+//           } else if (message.type === "image" && message.image) {
+//             const imageId = message.image.id;
+//             const mimeType = message.image.mime_type;
+//             messageBody = `[imagem: ${imageId}]`;
+//             console.log(`Mensagem de imagem recebida: ID da imagem - ${imageId}, Tipo MIME - ${mimeType}`);
+
+//             // Salva a imagem usando saveMediaFile
+//             const fileUrl = `https://graph.facebook.com/v21.0/${imageId}`;
+//             await saveMediaFile(message.id, 'image', fileUrl, `${imageId}.jpg`);
+
+//           } else if (message.type === "video" && message.video) {
+//             const videoId = message.video.id;
+//             const mimeType = message.video.mime_type;
+//             messageBody = `[vídeo: ${videoId}]`;
+//             console.log(`Mensagem de vídeo recebida: ID do vídeo - ${videoId}, Tipo MIME - ${mimeType}`);
+
+//             // Salva o vídeo usando saveMediaFile
+//             const fileUrl = `https://graph.facebook.com/v21.0/${videoId}`;
+//             await saveMediaFile(message.id, 'video', fileUrl, `${videoId}.mp4`);
+
+//           } else if (message.type === "document" && message.document) {
+//             const documentId = message.document.id;
+//             const mimeType = message.document.mime_type;
+//             const fileName = message.document.filename;
+//             messageBody = `[documento: ${documentId}, nome: ${fileName}]`;
+//             console.log(`Mensagem de documento recebida: ID do documento - ${documentId}, Nome do arquivo - ${fileName}, Tipo MIME - ${mimeType}`);
+
+//             // Salva o documento usando saveMediaFile
+//             const fileUrl = `https://graph.facebook.com/v21.0/${documentId}`;
+//             await saveMediaFile(message.id, 'document', fileUrl, fileName);
+
+//           } else if (message.type === "audio" && message.audio) {
+//             const audioId = message.audio.id;
+//             const mimeType = message.audio.mime_type;
+//             messageBody = `[áudio: ${audioId}]`;
+//             console.log(`Mensagem de áudio recebida: ID do áudio - ${audioId}, Tipo MIME - ${mimeType}`);
+
+//             // Salva o áudio usando saveMediaFile
+//             const fileUrl = `https://graph.facebook.com/v21.0/${audioId}`;
+//             await saveMediaFile(message.id, 'audio', fileUrl, `${audioId}.mp3`);
+
+//           } else {
+//             console.error("Tipo de mensagem não suportado:", message.type);
+//             allEntriesProcessed = false;
+//             continue;
+//           }
+
+//           // Insere a mensagem recebida no banco de dados
+//           const sql =
+//             "INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+//           const lastMessage = "UPDATE contacts SET last_message = ? WHERE id = ?";
+
+//           const lastMessageValues = [
+//             messageBody,
+//             contactId
+//           ];
+
+//           const values = [
+//             data.metadata.phone_number_id,
+//             data.metadata.display_phone_number,
+//             contact.profile.name,
+//             contact.wa_id,
+//             message.id,
+//             message.from,
+//             message.timestamp,
+//             message.type,
+//             messageBody,
+//             contactId,
+//           ];
+
+//           try {
+//             await pool.query(sql, values);
+//             await pool.query(lastMessage, lastMessageValues);
+//             console.log(`Mensagem inserida no banco de dados com ID: ${message.id}`);
+
+//             // Emite um evento para os clientes conectados via Socket.IO
+//             global.io.emit("new_message", {
+//               phone_number_id: data.metadata.phone_number_id,
+//               display_phone_number: data.metadata.display_phone_number,
+//               contact_name: contact.profile.name,
+//               wa_id: contact.wa_id,
+//               message_id: message.id,
+//               message_from: message.from,
+//               message_timestamp: message.timestamp,
+//               message_type: message.type,
+//               message_body: messageBody,
+//               contact_id: contactId,
+//             });
+//           } catch (err) {
+//             console.error("Erro ao inserir dados no banco de dados:", err);
+//             allEntriesProcessed = false;
+//           }
+
+//           try {
+//             const [rows] = await pool.query(
+//               "SELECT stage FROM contacts WHERE id = ?",
+//               [contactId]
+//             );
+//             const welcome = rows[0].stage;
+//           } catch (error) {
+//             console.log("Erro ao buscar stage:", error);
+//           }
+
+//           try {
+//             if(welcome == "finished") {
+//               await pool.query(
+//                 "UPDATE contacts SET stage = 'welcome' WHERE id = ?",
+//                 [contactId]
+//               );
+//             }
+//           } catch (error) {
+//             console.log("Erro ao reiniciar stage");
+//           }
+
+//           try {
+//             redirectBot(contact, messageBody, contactId);
+//           } catch {
+//             console.log("Erro ao redirecionar o cliente");
+//           }
+//         }
+//       }
+//     }
+
+//     if (allEntriesProcessed) {
+//       response.sendStatus(200);
+//     } else {
+//       response.sendStatus(500);
+//     }
+//   } else {
+//     console.error(
+//       "Estrutura do webhook não corresponde ao esperado:",
+//       JSON.stringify(request.body)
+//     );
+//     response.sendStatus(400);
+//   }
+// };
+
 export const receiveMessage = async (request, response) => {
   console.log("Incoming webhook: " + JSON.stringify(request.body));
 
   const entries = request.body.entry;
 
-  if (entries && entries.length > 0) {
-    let allEntriesProcessed = true;
+  if (!entries || entries.length === 0) {
+    console.error("Webhook structure does not match expected format.");
+    return response.sendStatus(400);
+  }
 
+  try {
     for (const entry of entries) {
-      const changes = entry.changes;
-      for (const change of changes) {
+      for (const change of entry.changes) {
         const data = change.value;
+        if (!data || !data.messages || data.messages.length === 0) continue;
 
-        if (data && data.messages && data.messages.length > 0) {
-          const message = data.messages[0];
-          const contact =
-            data.contacts && data.contacts.length > 0 ? data.contacts[0] : null;
+        const message = data.messages[0];
+        const contact =
+          data.contacts && data.contacts.length > 0 ? data.contacts[0] : null;
 
-          console.log(`Processando mensagem com ID: ${message.id} de ${contact.wa_id}`);
+        if (!contact || !contact.profile || !contact.wa_id) {
+          console.error("Invalid contact or message data:", JSON.stringify(data));
+          continue;
+        }
 
-          // Verifique se a mensagem já foi processada
-          const [messageExists] = await pool.query(
-            "SELECT id FROM whatsapp_messages WHERE message_id = ?",
-            [message.id]
-          );
+        console.log(`Processing message with ID: ${message.id} from ${contact.wa_id}`);
 
-          if (messageExists.length > 0) {
-            console.log(`Mensagem já processada com ID: ${message.id}`);
-            continue; // Ignora esta mensagem
-          }
+        // Check if message already exists
+        const [existingMessage] = await pool.query(
+          "SELECT id FROM whatsapp_messages WHERE message_id = ?",
+          [message.id]
+        );
 
-          if (!contact || !contact.profile || !contact.wa_id || !message) {
-            console.error("Dados inválidos recebidos:", JSON.stringify(request.body));
-            allEntriesProcessed = false;
-            continue;
-          }
+        if (existingMessage.length > 0) {
+          console.log(`Message already processed with ID: ${message.id}`);
+          continue; // Skip if already processed
+        }
 
-          // Obter ou criar o contato e definir contactId
-          let contactId;
+        // Retrieve or create the contact
+        let contactId;
+        const [contactRows] = await pool.query(
+          "SELECT id FROM contacts WHERE phone = ?",
+          [contact.wa_id]
+        );
 
-          try {
-            const [contactRows] = await pool.query(
-              "SELECT id FROM contacts WHERE phone = ?",
-              [contact.wa_id]
-            );
-            if (contactRows.length > 0) {
-              contactId = contactRows[0].id;
-            } else {
-              const profilePictureUrl = contact?.profile?.profile_picture?.url || null;
-              let insertQuery;
-              let insertValues;
-              if (profilePictureUrl) {
-                const response = await axios.get(profilePictureUrl, { responseType: "arraybuffer" });
-                const imageBlob = response.data;
-                // Prepare query and values if profile picture is available
-                insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
-                insertValues = ["API", toPhone, imageBlob];
-              } else {
-                // Prepare query and values if profile picture is not available
-                insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
-                insertValues = ["API", toPhone];
-              }
-              const [result] = await pool.query(insertQuery, insertValues);
-              contactId = result.insertId;
-              isNewContact = true;
-            }
-          } catch (err) {
-            console.error("Erro ao buscar ou criar contato:", err);
-            allEntriesProcessed = false;
-            continue;
-          }
-
-          // Processamento de diferentes tipos de mensagem
-          let messageBody;
-          if (message.type === "text" && message.text) {
-            messageBody = message.text.body;
-            console.log("Mensagem de texto recebida:", messageBody);
-
-          } else if (message.type === "image" && message.image) {
-            const imageId = message.image.id;
-            const mimeType = message.image.mime_type;
-            messageBody = `[imagem: ${imageId}]`;
-            console.log(`Mensagem de imagem recebida: ID da imagem - ${imageId}, Tipo MIME - ${mimeType}`);
-
-            // Salva a imagem usando saveMediaFile
-            const fileUrl = `https://graph.facebook.com/v21.0/${imageId}`;
-            saveMediaFile(message.id, 'image', fileUrl, `${imageId}.jpg`);
-
-          } else if (message.type === "video" && message.video) {
-            const videoId = message.video.id;
-            const mimeType = message.video.mime_type;
-            messageBody = `[vídeo: ${videoId}]`;
-            console.log(`Mensagem de vídeo recebida: ID do vídeo - ${videoId}, Tipo MIME - ${mimeType}`);
-
-            // Salva o vídeo usando saveMediaFile
-            const fileUrl = `https://graph.facebook.com/v21.0/${videoId}`;
-            saveMediaFile(message.id, 'video', fileUrl, `${videoId}.mp4`);
-
-          } else if (message.type === "document" && message.document) {
-            const documentId = message.document.id;
-            const mimeType = message.document.mime_type;
-            const fileName = message.document.filename;
-            messageBody = `[documento: ${documentId}, nome: ${fileName}]`;
-            console.log(`Mensagem de documento recebida: ID do documento - ${documentId}, Nome do arquivo - ${fileName}, Tipo MIME - ${mimeType}`);
-
-            // Salva o documento usando saveMediaFile
-            const fileUrl = `https://graph.facebook.com/v21.0/${documentId}`;
-            saveMediaFile(message.id, 'document', fileUrl, fileName);
-
-          } else if (message.type === "audio" && message.audio) {
-            const audioId = message.audio.id;
-            const mimeType = message.audio.mime_type;
-            messageBody = `[áudio: ${audioId}]`;
-            console.log(`Mensagem de áudio recebida: ID do áudio - ${audioId}, Tipo MIME - ${mimeType}`);
-
-            // Salva o áudio usando saveMediaFile
-            const fileUrl = `https://graph.facebook.com/v21.0/${audioId}`;
-            saveMediaFile(message.id, 'audio', fileUrl, `${audioId}.mp3`);
-
-          } else {
-            console.error("Tipo de mensagem não suportado:", message.type);
-            allEntriesProcessed = false;
-            continue;
-          }
-
-          // Insere a mensagem recebida no banco de dados
-          const sql =
-            "INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-          const lastMessage = "UPDATE contacts SET last_message = ? WHERE id = ?";
-
-          const lastMessageValues = [
-            messageBody,
-            contactId
-          ];
-
-          const values = [
-            data.metadata.phone_number_id,
-            data.metadata.display_phone_number,
+        if (contactRows.length > 0) {
+          contactId = contactRows[0].id;
+        } else {
+          const insertContactQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
+          const [insertContactResult] = await pool.query(insertContactQuery, [
             contact.profile.name,
             contact.wa_id,
-            message.id,
-            message.from,
-            message.timestamp,
-            message.type,
-            messageBody,
-            contactId,
-          ];
+          ]);
+          contactId = insertContactResult.insertId;
+        }
+
+        // Insert the message into the database
+        const messageType = message.type || "unknown";
+        const messageBody =
+          message.text?.body ||
+          `[${messageType}: ${message[messageType]?.id || "No ID"}]`;
+        const insertMessageQuery = `
+          INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        const messageValues = [
+          data.metadata.phone_number_id,
+          data.metadata.display_phone_number,
+          contact.profile.name,
+          contact.wa_id,
+          message.id,
+          message.from,
+          message.timestamp,
+          messageType,
+          messageBody,
+          contactId,
+        ];
+
+        await pool.query(insertMessageQuery, messageValues);
+        console.log(`Message inserted with ID: ${message.id}`);
+               
+
+        // Process media if applicable
+        if (["image", "video", "document", "audio"].includes(messageType)) {
+          const mediaId = message[messageType]?.id;
+          const mimeType = message[messageType]?.mime_type;
+          const fileName =
+            message[messageType]?.filename || `${mediaId}.${mimeType.split("/")[1]}`;
+          const fileUrl = `https://graph.facebook.com/v21.0/${mediaId}`;
 
           try {
-            await pool.query(sql, values);
-            await pool.query(lastMessage, lastMessageValues);
-            console.log(`Mensagem inserida no banco de dados com ID: ${message.id}`);
-
-            // Emite um evento para os clientes conectados via Socket.IO
-            global.io.emit("new_message", {
-              phone_number_id: data.metadata.phone_number_id,
-              display_phone_number: data.metadata.display_phone_number,
-              contact_name: contact.profile.name,
-              wa_id: contact.wa_id,
-              message_id: message.id,
-              message_from: message.from,
-              message_timestamp: message.timestamp,
-              message_type: message.type,
-              message_body: messageBody,
-              contact_id: contactId,
-            });
-          } catch (err) {
-            console.error("Erro ao inserir dados no banco de dados:", err);
-            allEntriesProcessed = false;
-          }
-
-          try {
-            const [rows] = await pool.query(
-              "SELECT stage FROM contacts WHERE id = ?",
-              [contactId]
-            );
-            const welcome = rows[0].stage;
+            await saveMediaFile(message.id, messageType, fileUrl, fileName);
           } catch (error) {
-            console.log("Erro ao buscar stage:", error);
-          }
-
-          try {
-            if(welcome == "finished") {
-              await pool.query(
-                "UPDATE contacts SET stage = 'welcome' WHERE id = ?",
-                [contactId]
-              );
-            }
-          } catch (error) {
-            console.log("Erro ao reiniciar stage");
-          }
-
-          try {
-            redirectBot(contact, messageBody, contactId);
-          } catch {
-            console.log("Erro ao redirecionar o cliente");
+            console.error("Error saving media file:", error);
           }
         }
+
+        global.io.emit("new_message", {
+          phone_number_id: data.metadata.phone_number_id,
+          display_phone_number: data.metadata.display_phone_number,
+          contact_name: contact.profile.name,
+          wa_id: contact.wa_id,
+          message_id: message.id,
+          message_from: message.from,
+          message_timestamp: message.timestamp,
+          message_type: message.type,
+          message_body: messageBody,
+          contact_id: contactId,
+        }); 
       }
     }
-
-    if (allEntriesProcessed) {
-      response.sendStatus(200);
-    } else {
-      response.sendStatus(500);
-    }
-  } else {
-    console.error(
-      "Estrutura do webhook não corresponde ao esperado:",
-      JSON.stringify(request.body)
-    );
-    response.sendStatus(400);
+    response.sendStatus(200);
+  } catch (error) {
+    console.error("Error processing webhook:", error);
+    response.sendStatus(500);
   }
 };
-
-// Função sendFile corrigida
-// export async function sendFile(req, res) {
-//   try {
-//     // Verifica se o arquivo está presente no request
-//     if (!req.file) {
-//       return res.status(400).json({ error: "Arquivo não encontrado" });
-//     }
-
-//     // Cria uma nova instância de FormData
-//     const formData = new FormData();
-
-//     // Anexa o arquivo ao FormData usando o buffer ao invés de um caminho de arquivo
-//     formData.append("file", req.file.buffer, {
-//       filename: req.file.originalname,
-//       contentType: req.file.mimetype
-//     });
-
-//     // Inclui o campo necessário para especificar o produto de mensagens
-//     formData.append("messaging_product", "whatsapp");
-
-//     // Configura as opções de headers, incluindo o token de autenticação e o content-type para FormData
-//     const headers = {
-//       ...formData.getHeaders(),
-//       Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
-//     };
-
-//     // URL do endpoint da API do WhatsApp para envio de arquivos (verifique se a versão está correta)
-//     const url = 'https://graph.facebook.com/v21.0/408476129004761/media';
-
-//     // Envia o arquivo usando uma requisição POST
-//     const response = await axios.post(url, formData, { headers });
-    
-
-//     // Responde com sucesso se o arquivo for enviado corretamente
-//     res.status(200).json({ message: "Arquivo enviado com sucesso", data: response.data });
-
-//   } catch (error) {
-//     console.error("Erro ao enviar arquivo:", error);
-//     res.status(500).json({ error: "Falha ao enviar o arquivo" });
-//   }
-// }
 
 
 // Generalized sendMedia function
@@ -507,10 +603,9 @@ function determineFileType(mimeType) {
 
 // Controller to handle media file requests
 export async function sendFile(req, res) {
-  console.log('Full Request Body:', req.body);
-  console.log('Full Request File:', req.file);
+  
   try {
-      console.log('Incoming file:', req.file); // Log incoming file for debugging
+    console.log("Recebendo arquivo:", req.file);
 
       if (!req.file) {
           return res.status(400).json({ error: 'Arquivo não encontrado' });
@@ -533,15 +628,24 @@ export async function sendFile(req, res) {
         let insertQuery;
         let insertValues;
         if (profilePictureUrl) {
-          const response = await axios.get(profilePictureUrl, { responseType: "arraybuffer" });
-          const imageBlob = response.data;
-          // Prepare query and values if profile picture is available
-          insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
-          insertValues = ["API", toPhone, imageBlob];
+          try {
+            // Baixa a imagem como arraybuffer
+            const response = await axios.get(profilePictureUrl, { responseType: "arraybuffer" });
+            const imageBlob = Buffer.from(response.data); // Converte para Buffer
+    
+            // Prepara a query de inserção com profile_pic
+            insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
+            insertValues = [contact.profile.name, contact.wa_id, imageBlob];
+          } catch (imageError) {
+            console.error("Erro ao baixar a imagem de profile_pic:", imageError);
+            // Se a imagem falhar, insere sem a profile_pic
+            insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
+            insertValues = [contact.profile.name, contact.wa_id];
+          }
         } else {
           // Prepare query and values if profile picture is not available
           insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
-          insertValues = ["API", toPhone];
+          insertValues = [contact.profile.name, contact.wa_id];
         }
         const [result] = await pool.query(insertQuery, insertValues);
         contactId = result.insertId;
@@ -579,9 +683,9 @@ export async function sendFile(req, res) {
 
       console.log(`Media sent. ID: ${mediaId}, Type: ${fileType}`);
 
-      // Step 3: Call saveMediaFile to save the media in the database
+      // Step 3: Call await saveMediaFile to save the media in the database
       const fileUrl = `https://graph.facebook.com/v21.0/${mediaId}`; // Construct the file URL using mediaId
-      await saveMediaFile(mediaId, fileType, fileUrl, fileName);
+      await saveMediaFile(messageId, fileType, fileUrl, fileName);
 
       console.log(`Media file saved. ID: ${mediaId}`);
 
@@ -594,6 +698,16 @@ export async function sendFile(req, res) {
 
 export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
   try {
+
+    const [messageExists] = await pool.query(
+      "SELECT message_id FROM whatsapp_messages WHERE message_id = ?",
+      [messageId]
+    );
+
+    if (messageExists.length === 0) {
+      throw new Error(`O message_id ${messageId} não existe em whatsapp_messages.`);
+    }
+
     // Adiciona o token de acesso como parâmetro na URL
     const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
     const fileUrlWithToken = `${fileUrl}?access_token=${accessToken}`;
@@ -602,7 +716,7 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     const metadataResponse = await axios.get(fileUrlWithToken);
     const fileDownloadUrl = metadataResponse.data.url;
 
-    console.log("URL for actual file download:", fileDownloadUrl);
+    // console.log("URL for actual file download:", fileDownloadUrl);
 
     // Second request to download the actual file data
     const fileResponse = await axios.get(fileDownloadUrl, {
@@ -615,7 +729,7 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
 
     // Verifica o tamanho do arquivo baixado
     const fileSize = Buffer.byteLength(fileData);
-    console.log(`Tamanho do arquivo baixado: ${fileSize} bytes`);
+    // console.log(`Tamanho do arquivo baixado: ${fileSize} bytes`);
 
     // Insere o arquivo na tabela `media_files` do banco de dados
     await pool.query(
@@ -856,69 +970,72 @@ export async function redirectBot(contact, messageBody, contactId) {
   }
   
 
-  try {
-    // Send the initial bot message
-    await sendMessage(contact, bodyBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
-
-    console.log(
-      process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,'\n',
-
-      process.env.DISPLAY_PHONE_NUMBER,'\n',
-
-      "BOT",'\n',
-
-      contact,'\n',
-
-      `msg-${Date.now()}`,'\n',
-
-      "me",'\n',
-
-      Math.floor(Date.now() / 1000).toString(),'\n',
-
-      "text",'\n',
-
-      bodyBotMessage,'\n',
-
-      contactId,'\n'
-    )
-
-    const insertMessageQuery = `
-      INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-    const values = [
-      process.env.WHATSAPP_BUSINESS_ACCOUNT_ID, // phone_number_id
-      process.env.DISPLAY_PHONE_NUMBER,        // display_phone_number
-      "BOT",                                   // contact_name
-      contact.wa_id,                           // wa_id
-      `msg-${Date.now()}`,                     // message_id
-      "me",                                    // message_from
-      Math.floor(Date.now() / 1000).toString(), // message_timestamp
-      "text",                                  // message_type
-      bodyBotMessage,                          // message_body
-      contactId,                               // contact_id
-      null                                     // user_id is explicitly null
-    ];
-    await pool.query(insertMessageQuery, values);
-
-    console.log("Initial bot message sent to", contact.wa_id);
-
-    
-    const [rows] = await pool.query(
-      "SELECT stage FROM contacts WHERE id = ?",
-      [contactId]
-    );
-    const actualStage = rows[0].stage;
-
-    if(actualStage != "atending" && actualStage != nextStage) {
-      await pool.query(
-        "UPDATE contacts SET stage = ? WHERE id = ?",
-        [nextStage,
-          contactId]
-        );
+  if(bodyBotMessage != null) {
+    try {
+      // Send the initial bot message
+      await sendMessage(contact, bodyBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
+  
+      console.log(
+        process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,'\n',
+  
+        process.env.DISPLAY_PHONE_NUMBER,'\n',
+  
+        "BOT",'\n',
+  
+        contact,'\n',
+  
+        `msg-${Date.now()}`,'\n',
+  
+        "me",'\n',
+  
+        Math.floor(Date.now() / 1000).toString(),'\n',
+  
+        "text",'\n',
+  
+        bodyBotMessage,'\n',
+  
+        contactId,'\n'
+      )
+  
+      const insertMessageQuery = `
+        INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+      const values = [
+        process.env.WHATSAPP_BUSINESS_ACCOUNT_ID, // phone_number_id
+        process.env.DISPLAY_PHONE_NUMBER,        // display_phone_number
+        "BOT",                                   // contact_name
+        contact.wa_id,                           // wa_id
+        `msg-${Date.now()}`,                     // message_id
+        "me",                                    // message_from
+        Math.floor(Date.now() / 1000).toString(), // message_timestamp
+        "text",                                  // message_type
+        bodyBotMessage,                          // message_body
+        contactId,                               // contact_id
+        null                                     // user_id is explicitly null
+      ];
+      await pool.query(insertMessageQuery, values);
+  
+      console.log("Initial bot message sent to", contact.wa_id);
+  
+      
+      const [rows] = await pool.query(
+        "SELECT stage FROM contacts WHERE id = ?",
+        [contactId]
+      );
+      const actualStage = rows[0].stage;
+  
+      if(actualStage != "atending" && actualStage != nextStage) {
+        await pool.query(
+          "UPDATE contacts SET stage = ? WHERE id = ?",
+          [nextStage,
+            contactId]
+          );
+      }
+    } catch (error) {
+      console.error("Error sending initial bot message:", error);
+      return; // Exit if there's an error to avoid additional processing
     }
-  } catch (error) {
-    console.error("Error sending initial bot message:", error);
-    return; // Exit if there's an error to avoid additional processing
   }
+  
 }
