@@ -488,6 +488,18 @@ export const receiveMessage = async (request, response) => {
 
         await pool.query(insertMessageQuery, messageValues);
         console.log(`Message inserted with ID: ${message.id}`);
+        global.io.emit("new_message", {
+          phone_number_id: data.metadata.phone_number_id,
+          display_phone_number: data.metadata.display_phone_number,
+          contact_name: contact.profile.name,
+          wa_id: contact.wa_id,
+          message_id: message.id,
+          message_from: message.from,
+          message_timestamp: message.timestamp,
+          message_type: message.type,
+          message_body: messageBody,
+          contact_id: contactId,
+        });        
 
         // Process media if applicable
         if (["image", "video", "document", "audio"].includes(messageType)) {
@@ -702,7 +714,7 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     const metadataResponse = await axios.get(fileUrlWithToken);
     const fileDownloadUrl = metadataResponse.data.url;
 
-    console.log("URL for actual file download:", fileDownloadUrl);
+    // console.log("URL for actual file download:", fileDownloadUrl);
 
     // Second request to download the actual file data
     const fileResponse = await axios.get(fileDownloadUrl, {
@@ -715,7 +727,7 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
 
     // Verifica o tamanho do arquivo baixado
     const fileSize = Buffer.byteLength(fileData);
-    console.log(`Tamanho do arquivo baixado: ${fileSize} bytes`);
+    // console.log(`Tamanho do arquivo baixado: ${fileSize} bytes`);
 
     // Insere o arquivo na tabela `media_files` do banco de dados
     await pool.query(
@@ -724,6 +736,20 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     );
 
     console.log('Arquivo de mídia salvo com sucesso.');
+
+    global.io.emit("new_message", {
+      phone_number_id: data.metadata.phone_number_id,
+      display_phone_number: data.metadata.display_phone_number,
+      contact_name: contact.profile.name,
+      wa_id: contact.wa_id,
+      message_id: message.id,
+      message_from: message.from,
+      message_timestamp: message.timestamp,
+      message_type: message.type,
+      message_body: messageBody,
+      contact_id: contactId,
+    });   
+    
   } catch (error) {
     console.error('Erro ao salvar arquivo de mídia:', error);
   }
