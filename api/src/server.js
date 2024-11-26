@@ -12,6 +12,7 @@ import { Server } from "socket.io";
 import http from "http";
 import path from "path";
 import { fileURLToPath } from 'url';
+import { authRoutes } from "./routes/authRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -57,6 +58,7 @@ app.use(positionsRoutes);
 app.use(messagesRoutes);
 app.use(transferRoutes);
 app.use(quickResponsesRoutes);
+app.use(authRoutes);
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.get('/healthz', (req, res) => {
