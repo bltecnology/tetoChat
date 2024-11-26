@@ -488,18 +488,7 @@ export const receiveMessage = async (request, response) => {
 
         await pool.query(insertMessageQuery, messageValues);
         console.log(`Message inserted with ID: ${message.id}`);
-        global.io.emit("new_message", {
-          phone_number_id: data.metadata.phone_number_id,
-          display_phone_number: data.metadata.display_phone_number,
-          contact_name: contact.profile.name,
-          wa_id: contact.wa_id,
-          message_id: message.id,
-          message_from: message.from,
-          message_timestamp: message.timestamp,
-          message_type: message.type,
-          message_body: messageBody,
-          contact_id: contactId,
-        });        
+               
 
         // Process media if applicable
         if (["image", "video", "document", "audio"].includes(messageType)) {
@@ -515,6 +504,19 @@ export const receiveMessage = async (request, response) => {
             console.error("Error saving media file:", error);
           }
         }
+
+        global.io.emit("new_message", {
+          phone_number_id: data.metadata.phone_number_id,
+          display_phone_number: data.metadata.display_phone_number,
+          contact_name: contact.profile.name,
+          wa_id: contact.wa_id,
+          message_id: message.id,
+          message_from: message.from,
+          message_timestamp: message.timestamp,
+          message_type: message.type,
+          message_body: messageBody,
+          contact_id: contactId,
+        }); 
       }
     }
     response.sendStatus(200);
@@ -736,20 +738,6 @@ export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
     );
 
     console.log('Arquivo de mídia salvo com sucesso.');
-
-    global.io.emit("new_message", {
-      phone_number_id: data.metadata.phone_number_id,
-      display_phone_number: data.metadata.display_phone_number,
-      contact_name: contact.profile.name,
-      wa_id: contact.wa_id,
-      message_id: message.id,
-      message_from: message.from,
-      message_timestamp: message.timestamp,
-      message_type: message.type,
-      message_body: messageBody,
-      contact_id: contactId,
-    });   
-    
   } catch (error) {
     console.error('Erro ao salvar arquivo de mídia:', error);
   }
