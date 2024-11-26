@@ -91,7 +91,7 @@ export const send = async (req, res) => {
     if (contactRows.length > 0) {
       contactId = contactRows[0].id;
     } else {
-      console.log(contact.profile)
+      console.log("Informações do contato",contact)
       const profilePictureUrl = contact?.profile?.profile_picture?.url || null;
       let insertQuery;
       let insertValues;
@@ -605,7 +605,7 @@ export async function sendFile(req, res) {
 
       // Step 3: Call saveMediaFile to save the media in the database
       const fileUrl = `https://graph.facebook.com/v21.0/${mediaId}`; // Construct the file URL using mediaId
-      await saveMediaFile(mediaId, fileType, fileUrl, fileName);
+      await saveMediaFile(messageId, fileType, fileUrl, fileName);
 
       console.log(`Media file saved. ID: ${mediaId}`);
 
