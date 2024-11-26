@@ -276,7 +276,7 @@ export const receiveMessage = async (request, response) => {
 
             // Salva a imagem usando saveMediaFile
             const fileUrl = `https://graph.facebook.com/v21.0/${imageId}`;
-            saveMediaFile(message.id, 'image', fileUrl, `${imageId}.jpg`);
+            await saveMediaFile(message.id, 'image', fileUrl, `${imageId}.jpg`);
 
           } else if (message.type === "video" && message.video) {
             const videoId = message.video.id;
@@ -286,7 +286,7 @@ export const receiveMessage = async (request, response) => {
 
             // Salva o vídeo usando saveMediaFile
             const fileUrl = `https://graph.facebook.com/v21.0/${videoId}`;
-            saveMediaFile(message.id, 'video', fileUrl, `${videoId}.mp4`);
+            await saveMediaFile(message.id, 'video', fileUrl, `${videoId}.mp4`);
 
           } else if (message.type === "document" && message.document) {
             const documentId = message.document.id;
@@ -295,9 +295,9 @@ export const receiveMessage = async (request, response) => {
             messageBody = `[documento: ${documentId}, nome: ${fileName}]`;
             console.log(`Mensagem de documento recebida: ID do documento - ${documentId}, Nome do arquivo - ${fileName}, Tipo MIME - ${mimeType}`);
 
-            // Salva o documento usando saveMediaFile
+            // Salva o documento usando await saveMediaFile
             const fileUrl = `https://graph.facebook.com/v21.0/${documentId}`;
-            saveMediaFile(message.id, 'document', fileUrl, fileName);
+            await saveMediaFile(message.id, 'document', fileUrl, fileName);
 
           } else if (message.type === "audio" && message.audio) {
             const audioId = message.audio.id;
@@ -305,9 +305,9 @@ export const receiveMessage = async (request, response) => {
             messageBody = `[áudio: ${audioId}]`;
             console.log(`Mensagem de áudio recebida: ID do áudio - ${audioId}, Tipo MIME - ${mimeType}`);
 
-            // Salva o áudio usando saveMediaFile
+            // Salva o áudio usando await saveMediaFile
             const fileUrl = `https://graph.facebook.com/v21.0/${audioId}`;
-            saveMediaFile(message.id, 'audio', fileUrl, `${audioId}.mp3`);
+            await saveMediaFile(message.id, 'audio', fileUrl, `${audioId}.mp3`);
 
           } else {
             console.error("Tipo de mensagem não suportado:", message.type);
@@ -603,9 +603,9 @@ export async function sendFile(req, res) {
 
       console.log(`Media sent. ID: ${mediaId}, Type: ${fileType}`);
 
-      // Step 3: Call saveMediaFile to save the media in the database
+      // Step 3: Call await saveMediaFile to save the media in the database
       const fileUrl = `https://graph.facebook.com/v21.0/${mediaId}`; // Construct the file URL using mediaId
-      await saveMediaFile(messageId, fileType, fileUrl, fileName);
+      await await saveMediaFile(messageId, fileType, fileUrl, fileName);
 
       console.log(`Media file saved. ID: ${mediaId}`);
 
@@ -616,7 +616,7 @@ export async function sendFile(req, res) {
   }
 }
 
-export async function saveMediaFile(messageId, fileType, fileUrl, fileName) {
+export async function await saveMediaFile(messageId, fileType, fileUrl, fileName) {
   try {
 
     const [messageExists] = await pool.query(
