@@ -95,11 +95,20 @@ export const send = async (req, res) => {
       let insertQuery;
       let insertValues;
       if (profilePictureUrl) {
-        const response = await axios.get(profilePictureUrl, { responseType: "arraybuffer" });
-        const imageBlob = response.data;
-        // Prepare query and values if profile picture is available
-        insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
-        insertValues = [contact.profile.name, contact.wa_id, imageBlob];
+        try {
+          // Baixa a imagem como arraybuffer
+          const response = await axios.get(profilePictureUrl, { responseType: "arraybuffer" });
+          const imageBlob = Buffer.from(response.data); // Converte para Buffer
+  
+          // Prepara a query de inserção com profile_pic
+          insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
+          insertValues = [contact.profile.name, contact.wa_id, imageBlob];
+        } catch (imageError) {
+          console.error("Erro ao baixar a imagem de profile_pic:", imageError);
+          // Se a imagem falhar, insere sem a profile_pic
+          insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
+          insertValues = [contact.profile.name, contact.wa_id];
+        }
       } else {
         // Prepare query and values if profile picture is not available
         insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
@@ -224,11 +233,20 @@ export const receiveMessage = async (request, response) => {
               let insertQuery;
               let insertValues;
               if (profilePictureUrl) {
-                const response = await axios.get(profilePictureUrl, { responseType: "arraybuffer" });
-                const imageBlob = response.data;
-                // Prepare query and values if profile picture is available
-                insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
-                insertValues = [contact.profile.name, contact.wa_id, imageBlob];
+                try {
+                  // Baixa a imagem como arraybuffer
+                  const response = await axios.get(profilePictureUrl, { responseType: "arraybuffer" });
+                  const imageBlob = Buffer.from(response.data); // Converte para Buffer
+          
+                  // Prepara a query de inserção com profile_pic
+                  insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
+                  insertValues = [contact.profile.name, contact.wa_id, imageBlob];
+                } catch (imageError) {
+                  console.error("Erro ao baixar a imagem de profile_pic:", imageError);
+                  // Se a imagem falhar, insere sem a profile_pic
+                  insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
+                  insertValues = [contact.profile.name, contact.wa_id];
+                }
               } else {
                 // Prepare query and values if profile picture is not available
                 insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
@@ -236,7 +254,6 @@ export const receiveMessage = async (request, response) => {
               }
               const [result] = await pool.query(insertQuery, insertValues);
               contactId = result.insertId;
-              isNewContact = true;
             }
           } catch (err) {
             console.error("Erro ao buscar ou criar contato:", err);
@@ -533,11 +550,20 @@ export async function sendFile(req, res) {
         let insertQuery;
         let insertValues;
         if (profilePictureUrl) {
-          const response = await axios.get(profilePictureUrl, { responseType: "arraybuffer" });
-          const imageBlob = response.data;
-          // Prepare query and values if profile picture is available
-          insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
-          insertValues = [contact.profile.name, contact.wa_id, imageBlob];
+          try {
+            // Baixa a imagem como arraybuffer
+            const response = await axios.get(profilePictureUrl, { responseType: "arraybuffer" });
+            const imageBlob = Buffer.from(response.data); // Converte para Buffer
+    
+            // Prepara a query de inserção com profile_pic
+            insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
+            insertValues = [contact.profile.name, contact.wa_id, imageBlob];
+          } catch (imageError) {
+            console.error("Erro ao baixar a imagem de profile_pic:", imageError);
+            // Se a imagem falhar, insere sem a profile_pic
+            insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
+            insertValues = [contact.profile.name, contact.wa_id];
+          }
         } else {
           // Prepare query and values if profile picture is not available
           insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
@@ -856,69 +882,72 @@ export async function redirectBot(contact, messageBody, contactId) {
   }
   
 
-  try {
-    // Send the initial bot message
-    await sendMessage(contact, bodyBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
-
-    console.log(
-      process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,'\n',
-
-      process.env.DISPLAY_PHONE_NUMBER,'\n',
-
-      "BOT",'\n',
-
-      contact,'\n',
-
-      `msg-${Date.now()}`,'\n',
-
-      "me",'\n',
-
-      Math.floor(Date.now() / 1000).toString(),'\n',
-
-      "text",'\n',
-
-      bodyBotMessage,'\n',
-
-      contactId,'\n'
-    )
-
-    const insertMessageQuery = `
-      INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-    const values = [
-      process.env.WHATSAPP_BUSINESS_ACCOUNT_ID, // phone_number_id
-      process.env.DISPLAY_PHONE_NUMBER,        // display_phone_number
-      "BOT",                                   // contact_name
-      contact.wa_id,                           // wa_id
-      `msg-${Date.now()}`,                     // message_id
-      "me",                                    // message_from
-      Math.floor(Date.now() / 1000).toString(), // message_timestamp
-      "text",                                  // message_type
-      bodyBotMessage,                          // message_body
-      contactId,                               // contact_id
-      null                                     // user_id is explicitly null
-    ];
-    await pool.query(insertMessageQuery, values);
-
-    console.log("Initial bot message sent to", contact.wa_id);
-
-    
-    const [rows] = await pool.query(
-      "SELECT stage FROM contacts WHERE id = ?",
-      [contactId]
-    );
-    const actualStage = rows[0].stage;
-
-    if(actualStage != "atending" && actualStage != nextStage) {
-      await pool.query(
-        "UPDATE contacts SET stage = ? WHERE id = ?",
-        [nextStage,
-          contactId]
-        );
+  if(bodyBotMessage != null) {
+    try {
+      // Send the initial bot message
+      await sendMessage(contact, bodyBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
+  
+      console.log(
+        process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,'\n',
+  
+        process.env.DISPLAY_PHONE_NUMBER,'\n',
+  
+        "BOT",'\n',
+  
+        contact,'\n',
+  
+        `msg-${Date.now()}`,'\n',
+  
+        "me",'\n',
+  
+        Math.floor(Date.now() / 1000).toString(),'\n',
+  
+        "text",'\n',
+  
+        bodyBotMessage,'\n',
+  
+        contactId,'\n'
+      )
+  
+      const insertMessageQuery = `
+        INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+      const values = [
+        process.env.WHATSAPP_BUSINESS_ACCOUNT_ID, // phone_number_id
+        process.env.DISPLAY_PHONE_NUMBER,        // display_phone_number
+        "BOT",                                   // contact_name
+        contact.wa_id,                           // wa_id
+        `msg-${Date.now()}`,                     // message_id
+        "me",                                    // message_from
+        Math.floor(Date.now() / 1000).toString(), // message_timestamp
+        "text",                                  // message_type
+        bodyBotMessage,                          // message_body
+        contactId,                               // contact_id
+        null                                     // user_id is explicitly null
+      ];
+      await pool.query(insertMessageQuery, values);
+  
+      console.log("Initial bot message sent to", contact.wa_id);
+  
+      
+      const [rows] = await pool.query(
+        "SELECT stage FROM contacts WHERE id = ?",
+        [contactId]
+      );
+      const actualStage = rows[0].stage;
+  
+      if(actualStage != "atending" && actualStage != nextStage) {
+        await pool.query(
+          "UPDATE contacts SET stage = ? WHERE id = ?",
+          [nextStage,
+            contactId]
+          );
+      }
+    } catch (error) {
+      console.error("Error sending initial bot message:", error);
+      return; // Exit if there's an error to avoid additional processing
     }
-  } catch (error) {
-    console.error("Error sending initial bot message:", error);
-    return; // Exit if there's an error to avoid additional processing
   }
+  
 }
