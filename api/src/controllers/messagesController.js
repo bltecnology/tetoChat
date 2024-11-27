@@ -339,7 +339,6 @@ export const receiveMessage = async (request, response) => {
 
           // Obter ou criar o contato e definir contactId
           let contactId;
-          let messageBody;
 
           try {
             const [contactRows] = await pool.query(
@@ -369,6 +368,49 @@ export const receiveMessage = async (request, response) => {
             }
           } catch (err) {
             console.error("Erro ao buscar ou criar contato:", err);
+            allEntriesProcessed = false;
+            continue;
+          }
+
+          let messageBody;
+          let mediaId;
+          let mediaName;
+          // Processamento de diferentes tipos de mensagem
+          if (message.type === "text" && message.text) {
+            messageBody = message.text.body;
+            console.log("Mensagem de texto recebida:", messageBody);
+
+          } else if (message.type === "image" && message.image) {
+            mediaId = message.image.id;
+            const mimeType = message.image.mime_type;
+            messageBody = `[imagem: ${mediaId}]`;
+            mediaName = `${mediaId}.jpg`
+            console.log(`Mensagem de imagem recebida: ID da imagem - ${mediaId}, Tipo MIME - ${mimeType}`);
+
+          } else if (message.type === "video" && message.video) {
+            mediaId = message.video.id;
+            const mimeType = message.video.mime_type;
+            messageBody = `[vídeo: ${mediaId}]`;
+            mediaName = `${mediaId}.mp4`
+            console.log(`Mensagem de vídeo recebida: ID do vídeo - ${mediaId}, Tipo MIME - ${mimeType}`);
+
+          } else if (message.type === "document" && message.document) {
+            mediaId = message.document.id;
+            const mimeType = message.document.mime_type;
+            mediaName = message.document.filename;
+            const fileName = message.document.filename;
+            messageBody = `[documento: ${mediaId}, nome: ${fileName}]`;
+            console.log(`Mensagem de documento recebida: ID do documento - ${mediaId}, Nome do arquivo - ${fileName}, Tipo MIME - ${mimeType}`);
+
+          } else if (message.type === "audio" && message.audio) {
+            mediaId = message.audio.id;
+            const mimeType = message.audio.mime_type;
+            messageBody = `[áudio: ${mediaId}]`;
+            mediaName = `${mediaId}.mp3`
+            console.log(`Mensagem de áudio recebida: ID do áudio - ${mediaId}, Tipo MIME - ${mimeType}`);
+
+          } else {
+            console.error("Tipo de mensagem não suportado:", message.type);
             allEntriesProcessed = false;
             continue;
           }
@@ -420,57 +462,31 @@ export const receiveMessage = async (request, response) => {
             allEntriesProcessed = false;
           }
 
-          // Processamento de diferentes tipos de mensagem
-          if (message.type === "text" && message.text) {
-            messageBody = message.text.body;
-            console.log("Mensagem de texto recebida:", messageBody);
-
-          } else if (message.type === "image" && message.image) {
-            const imageId = message.image.id;
-            const mimeType = message.image.mime_type;
-            messageBody = `[imagem: ${imageId}]`;
-            console.log(`Mensagem de imagem recebida: ID da imagem - ${imageId}, Tipo MIME - ${mimeType}`);
-
-            // Salva a imagem usando saveMediaFile
-            const fileUrl = `https://graph.facebook.com/v21.0/${imageId}`;
-            await saveMediaFile(message.id, 'image', fileUrl, `${imageId}.jpg`);
-
-          } else if (message.type === "video" && message.video) {
-            const videoId = message.video.id;
-            const mimeType = message.video.mime_type;
-            messageBody = `[vídeo: ${videoId}]`;
-            console.log(`Mensagem de vídeo recebida: ID do vídeo - ${videoId}, Tipo MIME - ${mimeType}`);
-
-            // Salva o vídeo usando saveMediaFile
-            const fileUrl = `https://graph.facebook.com/v21.0/${videoId}`;
-            await saveMediaFile(message.id, 'video', fileUrl, `${videoId}.mp4`);
-
-          } else if (message.type === "document" && message.document) {
-            const documentId = message.document.id;
-            const mimeType = message.document.mime_type;
-            const fileName = message.document.filename;
-            messageBody = `[documento: ${documentId}, nome: ${fileName}]`;
-            console.log(`Mensagem de documento recebida: ID do documento - ${documentId}, Nome do arquivo - ${fileName}, Tipo MIME - ${mimeType}`);
-
-            // Salva o documento usando saveMediaFile
-            const fileUrl = `https://graph.facebook.com/v21.0/${documentId}`;
-            await saveMediaFile(message.id, 'document', fileUrl, fileName);
-
-          } else if (message.type === "audio" && message.audio) {
-            const audioId = message.audio.id;
-            const mimeType = message.audio.mime_type;
-            messageBody = `[áudio: ${audioId}]`;
-            console.log(`Mensagem de áudio recebida: ID do áudio - ${audioId}, Tipo MIME - ${mimeType}`);
-
-            // Salva o áudio usando saveMediaFile
-            const fileUrl = `https://graph.facebook.com/v21.0/${audioId}`;
-            await saveMediaFile(message.id, 'audio', fileUrl, `${audioId}.mp3`);
-
-          } else {
-            console.error("Tipo de mensagem não suportado:", message.type);
-            allEntriesProcessed = false;
-            continue;
+          const fileUrl = `https://graph.facebook.com/v21.0/${mediaId}`;
+          const fileType = message.type;
+          
+          if (["image", "video", "document", "audio"].includes(messageType)) {
+            try {
+              await saveMediaFile(mediaId, fileType, fileUrl, mediaName);
+              global.io.emit("new_message", {
+                phone_number_id: data.metadata.phone_number_id,
+                display_phone_number: data.metadata.display_phone_number,
+                contact_name: contact.profile.name,
+                wa_id: contact.wa_id,
+                message_id: message.id,
+                message_from: message.from,
+                message_timestamp: message.timestamp,
+                message_type: message.type,
+                message_body: messageBody,
+                contact_id: contactId,
+              });
+            } catch (error) {
+              console.error("Erro ao inserir media no banco de dados:", error);
+              allEntriesProcessed = false;
+              continue;
+            }
           }
+          
 
           try {
             const [rows] = await pool.query(
@@ -483,20 +499,9 @@ export const receiveMessage = async (request, response) => {
           }
 
           try {
-            if(welcome == "finished") {
-              await pool.query(
-                "UPDATE contacts SET stage = 'welcome' WHERE id = ?",
-                [contactId]
-              );
-            }
+            await redirectBot(contact, messageBody, contactId);
           } catch (error) {
-            console.log("Erro ao reiniciar stage");
-          }
-
-          try {
-            redirectBot(contact, messageBody, contactId);
-          } catch {
-            console.log("Erro ao redirecionar o cliente");
+            console.log("Erro ao redirecionar o cliente: ", error);
           }
         }
       }
