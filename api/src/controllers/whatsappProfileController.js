@@ -5,6 +5,7 @@ import 'dotenv/config';
 import FormData from 'form-data';
 
 
+
 // Multer configuration for file upload
 const storage = multer.memoryStorage();
 export const upload = multer({ storage });
@@ -33,12 +34,11 @@ export const updateProfilePicture = async (req, res) => {
     }
 
     const fileName = req.file.originalname;
-    const fileType = req.file.mimetype;
-    const fileType2 = "image/jpg";
+    const fileType = "image/jpeg";
     const fileSize = req.file.size;
 
     // Create upload session
-    const uploadSessionUrl = `https://graph.facebook.com/v21.0/app/uploads/?file_length=${fileSize}&file_type=${fileType2}&file_name=${fileName}`
+    const uploadSessionUrl = `https://graph.facebook.com/v21.0/app/uploads/?file_length=${fileSize}&file_type=${fileType}&file_name=${fileName}`
 
     const uploadSessionHeaders = {
         Authorization: `OAuth ${process.env.WHATSAPP_ACCESS_TOKEN}`
@@ -67,13 +67,12 @@ export const updateProfilePicture = async (req, res) => {
     const formData = new FormData();
     formData.append("file", req.file.buffer, {
         filename: req.file.originalname,
-        contentType: "image/jpeg",
+        contentType: fileType,
     });
 
     const uploadHeaders = {
         Authorization: `OAuth ${process.env.WHATSAPP_ACCESS_TOKEN}`,
         file_offset: 0,
-        contentType: "image/jpeg",
         ...formData.getHeaders()
     };
 
