@@ -280,7 +280,7 @@ export const receiveMessage = async (request, response) => {
             const mimeType = message.document.mime_type;
             mediaName = message.document.filename;
             const fileName = message.document.filename;
-            messageBody = `[documento: ${mediaId}, nome: ${fileName}]`;
+            messageBody = `[documento: ${mediaId}]`;
             console.log(`Mensagem de documento recebida: ID do documento - ${mediaId}, Nome do arquivo - ${fileName}, Tipo MIME - ${mimeType}`);
 
           } else if (message.type === "audio" && message.audio) {
