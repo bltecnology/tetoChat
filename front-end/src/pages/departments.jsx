@@ -16,7 +16,7 @@ const Departments = () => {
     const fetchDepartments = async () => {
       try {
         const response = await axios.get(
-          "https://tetochat-pgus.onrender.com/departments"
+          "https://tetochat-backend.onrender.com/departments"
         );
         setDepartments(response.data);
       } catch (error) {
@@ -30,7 +30,7 @@ const Departments = () => {
   const addDepartment = async (name) => {
     try {
       const response = await axios.post(
-        "https://tetochat-pgus.onrender.com/departments",
+        "https://tetochat-backend.onrender.com/departments",
         { name }
       );
       setDepartments([...departments, response.data]);
@@ -47,7 +47,7 @@ const Departments = () => {
     if (confirmDelete) {
       try {
         await axios.delete(
-          `https://tetochat-pgus.onrender.com/departments/${departmentId}`
+          `https://tetochat-backend.onrender.com/departments/${departmentId}`
         );
         setDepartments(departments.filter((department) => department.id !== departmentId));
       } catch (error) {

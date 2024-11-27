@@ -23,7 +23,7 @@ const io = new Server(server, {
     origin: [
       "https://teto-chat.vercel.app", // Corrected protocol
       "http://localhost:5173",
-      "https://tetochat-pgus.onrender.com",
+      "https://tetochat-backend.onrender.com",
       "https://teto-chat-7fsq1058t-bltecnologys-projects.vercel.app",
       "https://tetochat-svsn.onrender.com"
     ],
@@ -39,7 +39,7 @@ app.use(cors({
   origin: [
     "https://teto-chat.vercel.app", // Corrected protocol
     "http://localhost:5173",
-    "https://tetochat-pgus.onrender.com",
+    "https://tetochat-backend.onrender.com",
     "https://teto-chat-7fsq1058t-bltecnologys-projects.vercel.app",
     "https://tetochat-svsn.onrender.com"
   ],

@@ -32,7 +32,7 @@ const Users = () => {
     const confirmDelete = window.confirm("Você realmente deseja excluir este usuário?");
     if (confirmDelete) {
       try {
-        await axios.delete(`https://tetochat-pgus.onrender.com/users/${userId}`);
+        await axios.delete(`https://tetochat-backend.onrender.com/users/${userId}`);
         setUsers(users.filter(user => user.id !== userId));
       } catch (error) {
         console.error('Erro ao excluir usuário:', error.message);
@@ -44,7 +44,7 @@ const Users = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get('https://tetochat-pgus.onrender.com/users');
+        const response = await axios.get('https://tetochat-backend.onrender.com/users');
         console.log(response.data);  // Log the response
         setUsers(response.data);
       } catch (error) {

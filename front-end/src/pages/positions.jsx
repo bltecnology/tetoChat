@@ -21,7 +21,7 @@ const Positions = () => {
   const fetchPositions = async () => {
     try {
       const response = await axios.get(
-        "https://tetochat-pgus.onrender.com/positions"
+        "https://tetochat-backend.onrender.com/positions"
       );
       setPositions(response.data);
     } catch (error) {
@@ -38,7 +38,7 @@ const Positions = () => {
   const addPosition = async (name) => {
     try {
       const response = await axios.post(
-        "https://tetochat-pgus.onrender.com/positions",
+        "https://tetochat-backend.onrender.com/positions",
         { name }
       );
 
@@ -54,7 +54,7 @@ const Positions = () => {
   const editPosition = async (positionId, newName) => {
     try {
       const response = await axios.put(
-        `https://tetochat-pgus.onrender.com/positions/${positionId}`,
+        `https://tetochat-backend.onrender.com/positions/${positionId}`,
         { name: newName }
       );
 
@@ -83,7 +83,7 @@ const Positions = () => {
     if (confirmDelete) {
       try {
         await axios.delete(
-          `https://tetochat-pgus.onrender.com/positions/${positionId}`
+          `https://tetochat-backend.onrender.com/positions/${positionId}`
         );
 
         // Atualiza a lista de cargos após exclusão

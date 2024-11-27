@@ -613,7 +613,7 @@ export async function sendFile(req, res) {
 
       const { toPhone, whatsappBusinessAccountId } = req.body;
       const fileBuffer = req.file.buffer;
-      const fileName = req.file.originalname;
+      const fileName = req.file.originalname || req.file.name;
       const mimeType = req.file.mimetype; // Correctly retrieve MIME type
 
       console.log(`File details: Name - ${fileName}, Type - ${mimeType}`);

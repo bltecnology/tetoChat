@@ -14,7 +14,7 @@ const Header = () => {
   const navigate = useNavigate();
   useEffect( () => {
      axios.get(
-      `https://tetochat-pgus.onrender.com/confirm-token`,
+      `https://tetochat-backend.onrender.com/confirm-token`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -33,10 +33,10 @@ const Header = () => {
       </div>
       <div className="flex items-center">
        
-        <div className="relative mr-12">
+        <div className="relative mr-12  z-10">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className=" p-2 rounded">
+              <button className=" p-2 rounded ">
                 <FiMenu size={24} className="hover:rotate-y-360 " />
               </button>
             </DropdownMenuTrigger>
@@ -46,9 +46,6 @@ const Header = () => {
               </DropdownMenuItem>
               <DropdownMenuItem className="hover:bg-gray-200 text-center">
                 <Link to="/positions">Cargos</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="hover:bg-gray-200 text-center">
-                <Link to="/robots">Robôs</Link>
               </DropdownMenuItem>
               <DropdownMenuItem className="hover:bg-gray-200 text-center">
                 <Link to="/quickResponses">Respostas Rápidas</Link>

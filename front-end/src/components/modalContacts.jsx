@@ -24,7 +24,7 @@ const ModalContacts = ({ isOpen, onClose, onSave }) => {
     };
 
     try {
-      await axios.post('https://tetochat-pgus.onrender.com/contacts', newContact);
+      await axios.post('https://tetochat-backend.onrender.com/contacts', newContact);
       onSave(); // Atualizar a lista de contatos no componente pai
       onClose();
     } catch (error) {
