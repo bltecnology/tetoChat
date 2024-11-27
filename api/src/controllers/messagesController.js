@@ -386,7 +386,7 @@ export const receiveMessage = async (request, response) => {
 
             // Salva a imagem usando saveMediaFile
             const fileUrl = `https://graph.facebook.com/v21.0/${imageId}`;
-            saveMediaFile(message.id, 'image', fileUrl, `${imageId}.jpg`);
+            await saveMediaFile(message.id, 'image', fileUrl, `${imageId}.jpg`);
 
           } else if (message.type === "video" && message.video) {
             const videoId = message.video.id;
@@ -396,7 +396,7 @@ export const receiveMessage = async (request, response) => {
 
             // Salva o vídeo usando saveMediaFile
             const fileUrl = `https://graph.facebook.com/v21.0/${videoId}`;
-            saveMediaFile(message.id, 'video', fileUrl, `${videoId}.mp4`);
+            await saveMediaFile(message.id, 'video', fileUrl, `${videoId}.mp4`);
 
           } else if (message.type === "document" && message.document) {
             const documentId = message.document.id;
@@ -407,7 +407,7 @@ export const receiveMessage = async (request, response) => {
 
             // Salva o documento usando saveMediaFile
             const fileUrl = `https://graph.facebook.com/v21.0/${documentId}`;
-            saveMediaFile(message.id, 'document', fileUrl, fileName);
+            await saveMediaFile(message.id, 'document', fileUrl, fileName);
 
           } else if (message.type === "audio" && message.audio) {
             const audioId = message.audio.id;
@@ -417,7 +417,7 @@ export const receiveMessage = async (request, response) => {
 
             // Salva o áudio usando saveMediaFile
             const fileUrl = `https://graph.facebook.com/v21.0/${audioId}`;
-            saveMediaFile(message.id, 'audio', fileUrl, `${audioId}.mp3`);
+            await saveMediaFile(message.id, 'audio', fileUrl, `${audioId}.mp3`);
 
           } else {
             console.error("Tipo de mensagem não suportado:", message.type);
