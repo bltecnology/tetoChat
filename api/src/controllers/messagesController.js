@@ -325,11 +325,20 @@ export const receiveMessage = async (request, response) => {
             await pool.query(lastMessage, lastMessageValues);
             console.log(`Mensagem inserida no banco de dados com ID: ${message.id}`);
 
-            // Após a inserção da mensagem, tentar salvar a mídia, se houver
+             // After the message insertion is successful, then attempt to save the media
             if (["image", "video", "document", "audio"].includes(message.type)) {
-              const fileUrl = `https://graph.facebook.com/v21.0/${mediaId}`;
-              await saveMediaFile(mediaId, message.type, fileUrl, mediaName);
-              console.log(`Mídia salva com sucesso: ${mediaName}`);
+              // Ensure the message exists before proceeding with media saving
+              const [messageExists] = await pool.query(
+                "SELECT id FROM whatsapp_messages WHERE message_id = ?",
+                [message.id]
+              );
+              if (messageExists.length > 0) {
+                const fileUrl = `https://graph.facebook.com/v21.0/${mediaId}`;
+                await saveMediaFile(mediaId, message.type, fileUrl, mediaName);
+                console.log(`Mídia salva com sucesso: ${mediaName}`);
+              } else {
+                console.error(`Erro: O message_id ${message.id} não foi encontrado após inserção.`);
+              }
             }
 
             // Emite um evento para os clientes conectados via Socket.IO
