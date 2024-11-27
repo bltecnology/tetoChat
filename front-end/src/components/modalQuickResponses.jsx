@@ -47,7 +47,7 @@ const ModalQuickResponses = ({ isOpen, onClose, onSave }) => {
                 >
                     <option value="">Selecione o departamento</option>
                     {departments.map((department) => (
-                        <option key={department.id} value={department.name}>
+                        <option key={department.id} value={department.id}>
                             {department.name}
                         </option>
                     ))}

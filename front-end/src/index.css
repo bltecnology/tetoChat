@@ -4,9 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
-  font-family: font-sans; 
-}
 
 .background-gradient {
   background: linear-gradient(to bottom, rgba(238, 4, 48, 0.5), rgba(255, 92, 123, 0.5));

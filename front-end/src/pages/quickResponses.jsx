@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Header from '../components/header';
 import Background from '../components/background';
-import { GrAdd, GrMoreVertical } from 'react-icons/gr';
+import { GrAdd, GrMoreVertical, GrRefresh } from 'react-icons/gr';
 import MainContainer from '../components/mainContainer';
 import ModalQuickResponses from "../components/modalQuickResponses";
 
@@ -13,7 +13,11 @@ const QuickResponses = () => {
     useEffect(() => {
         const fetchQuickResponses = async () => {
             try {
-                const response = await axios.get('https://tetochat-pgus.onrender.com/quickResponses');
+                const response = await axios.get('https://tetochat-pgus.onrender.com/quickResponses', {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                });
                 setQuickResponses(response.data);
             } catch (error) {
                 console.error('Erro ao buscar respostas rápidas:', error);
@@ -25,7 +29,11 @@ const QuickResponses = () => {
 
     const addQuickResponse = async (text, department) => {
         try {
-            const response = await axios.post('https://tetochat-pgus.onrender.com/quickResponses', { text, department });
+            const response = await axios.post('https://tetochat-pgus.onrender.com/quickresponses', { text, department }, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            });
             setQuickResponses([...quickResponses, response.data]);
             setIsModalOpen(false);
         } catch (error) {
@@ -38,20 +46,27 @@ const QuickResponses = () => {
             <Header />
             <Background
                 text="Respostas Rápidas"
-                btn1={<GrAdd className="rounded-full hover:bg-gray-400 hover:scale-110 transition-transform transition-colors duration-300" onClick={() => setIsModalOpen(true)} />}
+                btn1={<GrAdd onClick={() => setIsModalOpen(true)} />}
+                btn3={<GrRefresh />} 
             >
                 <MainContainer
                     p1="Mensagem"
-                    p6="Ações"
+                    p2="Departamento"
+                    p3="Ações"
                     content={
-                        <div>
-                            {quickResponses.map((response) => (
-                                <div key={response.id} className="flex justify-between items-center border-b py-2">
-                                    <div>{response.text} ({response.department})</div>
-                                    <div><GrMoreVertical /></div>
-                                </div>
-                            ))}
-                        </div>
+                        <>
+                            {quickResponses.map((response) => {
+                                console.log(response);
+
+                                return (
+                                    <tr key={response.id} className="odd:bg-white 0 even:bg-gray-50 0 border-b ">
+                                        <td className="px-6 py-4">{response.text}</td>
+                                        <td className="px-6 py-4">{response.name}</td>
+                                        <td className="px-6 py-4"><GrMoreVertical /></td>
+                                    </tr>
+                                )
+                            })}
+                        </>
                     }
                 />
             </Background>

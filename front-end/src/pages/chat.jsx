@@ -34,8 +34,7 @@ const Chat = () => {
   const [audioUrls, setAudioUrls] = useState({});
   const [documentUrls, setDocumentUrls] = useState({});
   const [documentNames, setDocumentNames] = useState({});
-
-
+  const [videoUrls, setVideoUrls] = useState({});
 
   const handleImageClick = (imageUrl) => {
     setSelectedImageUrl(imageUrl);
@@ -206,6 +205,8 @@ const Chat = () => {
           }
         );
         const fileNameString = String(fileName);
+        console.log(fileNameString);
+        
         const newFileName = fileNameString
           .replace(/[\[\]]/g, "") // Remove todos os colchetes
           .split("nome: ")[1]      // Separa a string e pega a parte após "nome: "
@@ -282,6 +283,7 @@ const Chat = () => {
       }
     }
   };
+
   const handleAudioUpload = async (event) => {
     const file = event.target.files[0]; // Captura o arquivo selecionado
     if (!file || !selectedContact) return; // Certifica-se de que há um arquivo e um contato selecionado
@@ -439,6 +441,7 @@ const Chat = () => {
   const handleFileUpload = async (event) => {
     const file = event.target.files[0]; // Pega o primeiro arquivo selecionado
     if (!file || !selectedContact) return; // Verifica se existe um arquivo e um contato selecionado
+console.log(file);
 
     const formData = new FormData();
     formData.append("file", file);
@@ -468,6 +471,35 @@ const Chat = () => {
     }
   };
 
+  const fetchVideo = async (messageId) => {
+    if (!videoUrls[messageId]) {
+      try {
+        const response = await axios.get(
+          `https://tetochat-pgus.onrender.com/file/${messageId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            responseType: "blob", // Garante que o arquivo seja baixado como blob
+          }
+        );
+
+        const videoUrl = URL.createObjectURL(response.data);
+        setVideoUrls((prevUrls) => ({ ...prevUrls, [messageId]: videoUrl }));
+
+        // Atualiza o estado da mensagem com a URL do vídeo
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            msg.message_id === messageId
+              ? { ...msg, videoUrl }
+              : msg
+          )
+        );
+      } catch (error) {
+        console.error("Erro ao buscar vídeo:", error);
+      }
+    }
+  };
 
   return (
     <div className="flex flex-col h-screen">
@@ -643,6 +675,9 @@ const Chat = () => {
                     } if (message.message_type === "document") {
                       fetchDocument(message.message_id, message.message_body); // file_name contém o nome do arquivo
                     }
+                    if (message.message_type === "video" && !videoUrls[message.message_id]) {
+                      fetchVideo(message.message_id);
+                    }
 
                     return (
                       <div
@@ -661,6 +696,7 @@ const Chat = () => {
                           />
                         )}
 
+
                         {/* Renderiza áudio se existir */}
                         {message.message_type === "audio" && audioUrls[message.message_id] && (
                           <audio controls>
@@ -677,8 +713,17 @@ const Chat = () => {
                             </button>
                           </div>
                         )}
+                        {message.message_type === "video" && videoUrls[message.message_id] && (
+                          <video
+                            controls
+                            className="max-w-full max-h-80"
+                            src={videoUrls[message.message_id]}
+                          >
+                            Seu navegador não suporta a reprodução de vídeos.
+                          </video>
+                        )}
                         {/* Exibe o corpo da mensagem de texto, se não for imagem ou áudio */}
-                        {message.message_type !== "image" && message.message_type !== "audio" && message.message_type !== "document" && (
+                        {message.message_type !== "image" && message.message_type !== "audio" && message.message_type !== "document" && message.message_type !== "video" && (
                           <span className="text-sm">{message.message_body}</span>
                         )}
                         {/* Exibe o timestamp da mensagem */}
@@ -738,6 +783,7 @@ const Chat = () => {
                   className="hidden"
                   onChange={handleFileUpload}
                 />
+
               </div>
             </>
           ) : (

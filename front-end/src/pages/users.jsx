@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Header from "../components/header";
 import Background from "../components/background";
-import { GrAdd, GrMoreVertical } from "react-icons/gr";
+import { GrAdd, GrMoreVertical, GrRefresh } from "react-icons/gr";
+
 import MainContainer from "../components/mainContainer";
-import ModalUsers from "../components/modalUsers"; 
+import ModalUsers from "../components/modalUsers";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@radix-ui/react-dropdown-menu';
 
 const Users = () => {
@@ -39,7 +40,7 @@ const Users = () => {
       }
     }
   };
-  
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -59,8 +60,11 @@ const Users = () => {
       <Header />
       <Background
         text="Usuários"
-        btn1={<GrAdd className="rounded-full hover:bg-gray-400 hover:scale-110 transition-transform transition-colors duration-300"
-           onClick={() => setIsModalOpen(true)} />}
+        btn1={<GrAdd 
+          onClick={() => setIsModalOpen(true)} />
+        }
+        btn3={<GrRefresh />}
+
       >
         <MainContainer
           p1="Nome"
@@ -69,34 +73,29 @@ const Users = () => {
           p4="Departamento"
           p6="Ações"
           content={
-            <div className="w-full">
+            <>
               {users.map((user) => (
-                <div key={user.id} className="flex items-center py-2 border-b">
-                  <div className="w-1/5 px-2">{user.name}</div>
-                  <div className="w-1/5 px-0">{user.email}</div>
-                  {/* Ensure these fields match API response keys */}
-                  <div className="w-1/5 px-2">{user.position || user.cargo}</div> 
-                  <div className="w-1/5 px-2">{user.department || user.departamento}</div>
-                  <div className="w-1/5 flex justify-end px-4">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button className="p-2 rounded">
+                <tr key={user.id} className="odd:bg-white 0 even:bg-gray-50 0 border-b ">
+                  <td className="px-6 py-4">{user.name}</td>
+                  <td className="px-6 py-4">{user.email}</td>
+                  <td className="px-6 py-4">{user.position || user.cargo}</td>
+                  <td className="px-6 py-4">{user.department || user.departamento}</td>
+
+                  <td className="px-6 py-4"> <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-2 rounded">
                         <GrMoreVertical className="cursor-pointer" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="bg-white text-black mt-2 w-48">
-                        <DropdownMenuItem className="hover:bg-gray-200 text-center">
-                          <button onClick={() => handleEditUser(user)}>Editar</button>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="hover:bg-gray-200 text-center">
-                          <button onClick={() => handleDeleteUser(user.id)}>Excluir</button>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="bg-white text-black mt-2 w-48">
+                      <DropdownMenuItem className="hover:bg-gray-200 text-center">
+                        <button onClick={() => handleEditUser(user)}>Editar</button>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu></td>
+                </tr>
               ))}
-            </div>
+            </>
           }
         />
       </Background>
