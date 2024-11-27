@@ -339,7 +339,7 @@ export const receiveMessage = async (request, response) => {
 
           // Obter ou criar o contato e definir contactId
           let contactId;
-          // let messageBody;
+          let messageBody;
 
           try {
             const [contactRows] = await pool.query(
