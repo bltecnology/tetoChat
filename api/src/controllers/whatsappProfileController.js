@@ -76,6 +76,8 @@ export const updateProfilePicture = async (req, res) => {
         ...formData.getHeaders()
     };
 
+    console.log()
+
     let uploadResponse;
 
     try {

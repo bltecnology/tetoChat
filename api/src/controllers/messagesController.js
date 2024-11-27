@@ -339,7 +339,7 @@ export const receiveMessage = async (request, response) => {
 
           // Obter ou criar o contato e definir contactId
           let contactId;
-          let messageBody;
+          // let messageBody;
 
           try {
             const [contactRows] = await pool.query(
@@ -449,7 +449,7 @@ export const receiveMessage = async (request, response) => {
             const documentId = message.document.id;
             const mimeType = message.document.mime_type;
             const fileName = message.document.filename;
-            messageBody = `${fileName}`;
+            messageBody = `[documento: ${documentId}, nome: ${fileName}]`;
             console.log(`Mensagem de documento recebida: ID do documento - ${documentId}, Nome do arquivo - ${fileName}, Tipo MIME - ${mimeType}`);
 
             // Salva o documento usando saveMediaFile
