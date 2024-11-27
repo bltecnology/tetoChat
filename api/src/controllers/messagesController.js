@@ -339,6 +339,7 @@ export const receiveMessage = async (request, response) => {
 
           // Obter ou criar o contato e definir contactId
           let contactId;
+          let messageBody;
 
           try {
             const [contactRows] = await pool.query(
@@ -371,8 +372,6 @@ export const receiveMessage = async (request, response) => {
             allEntriesProcessed = false;
             continue;
           }
-
-          
 
           // Insere a mensagem recebida no banco de dados
           const sql =
@@ -422,7 +421,6 @@ export const receiveMessage = async (request, response) => {
           }
 
           // Processamento de diferentes tipos de mensagem
-          let messageBody;
           if (message.type === "text" && message.text) {
             messageBody = message.text.body;
             console.log("Mensagem de texto recebida:", messageBody);
