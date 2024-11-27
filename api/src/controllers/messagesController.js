@@ -372,6 +372,55 @@ export const receiveMessage = async (request, response) => {
             continue;
           }
 
+          
+
+          // Insere a mensagem recebida no banco de dados
+          const sql =
+            "INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+          const lastMessage = "UPDATE contacts SET last_message = ? WHERE id = ?";
+
+          const lastMessageValues = [
+            messageBody,
+            contactId
+          ];
+
+          const values = [
+            data.metadata.phone_number_id,
+            data.metadata.display_phone_number,
+            contact.profile.name,
+            contact.wa_id,
+            message.id,
+            message.from,
+            message.timestamp,
+            message.type,
+            messageBody,
+            contactId,
+          ];
+
+          try {
+            await pool.query(sql, values);
+            await pool.query(lastMessage, lastMessageValues);
+            console.log(`Mensagem inserida no banco de dados com ID: ${message.id}`);
+
+            // Emite um evento para os clientes conectados via Socket.IO
+            global.io.emit("new_message", {
+              phone_number_id: data.metadata.phone_number_id,
+              display_phone_number: data.metadata.display_phone_number,
+              contact_name: contact.profile.name,
+              wa_id: contact.wa_id,
+              message_id: message.id,
+              message_from: message.from,
+              message_timestamp: message.timestamp,
+              message_type: message.type,
+              message_body: messageBody,
+              contact_id: contactId,
+            });
+          } catch (err) {
+            console.error("Erro ao inserir dados no banco de dados:", err);
+            allEntriesProcessed = false;
+          }
+
           // Processamento de diferentes tipos de mensagem
           let messageBody;
           if (message.type === "text" && message.text) {
@@ -423,53 +472,6 @@ export const receiveMessage = async (request, response) => {
             console.error("Tipo de mensagem não suportado:", message.type);
             allEntriesProcessed = false;
             continue;
-          }
-
-          // Insere a mensagem recebida no banco de dados
-          const sql =
-            "INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-          const lastMessage = "UPDATE contacts SET last_message = ? WHERE id = ?";
-
-          const lastMessageValues = [
-            messageBody,
-            contactId
-          ];
-
-          const values = [
-            data.metadata.phone_number_id,
-            data.metadata.display_phone_number,
-            contact.profile.name,
-            contact.wa_id,
-            message.id,
-            message.from,
-            message.timestamp,
-            message.type,
-            messageBody,
-            contactId,
-          ];
-
-          try {
-            await pool.query(sql, values);
-            await pool.query(lastMessage, lastMessageValues);
-            console.log(`Mensagem inserida no banco de dados com ID: ${message.id}`);
-
-            // Emite um evento para os clientes conectados via Socket.IO
-            global.io.emit("new_message", {
-              phone_number_id: data.metadata.phone_number_id,
-              display_phone_number: data.metadata.display_phone_number,
-              contact_name: contact.profile.name,
-              wa_id: contact.wa_id,
-              message_id: message.id,
-              message_from: message.from,
-              message_timestamp: message.timestamp,
-              message_type: message.type,
-              message_body: messageBody,
-              contact_id: contactId,
-            });
-          } catch (err) {
-            console.error("Erro ao inserir dados no banco de dados:", err);
-            allEntriesProcessed = false;
           }
 
           try {
