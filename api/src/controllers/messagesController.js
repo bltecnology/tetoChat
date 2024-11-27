@@ -334,7 +334,7 @@ export const receiveMessage = async (request, response) => {
               );
               if (messageExists.length > 0) {
                 const fileUrl = `https://graph.facebook.com/v21.0/${mediaId}`;
-                await saveMediaFile(mediaId, message.type, fileUrl, mediaName);
+                await saveMediaFile(message.id, message.type, fileUrl, mediaName);
                 console.log(`Mídia salva com sucesso: ${mediaName}`);
               } else {
                 console.error(`Erro: O message_id ${message.id} não foi encontrado após inserção.`);
