@@ -14,7 +14,7 @@ const Header = () => {
   const navigate = useNavigate();
   useEffect( () => {
      axios.get(
-      `https://tetochat-pgus.onrender.com/confirm-token`,
+      `https://tetochat-backend.onrender.com/confirm-token`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,

@@ -13,7 +13,7 @@ const QuickResponses = () => {
     useEffect(() => {
         const fetchQuickResponses = async () => {
             try {
-                const response = await axios.get('https://tetochat-pgus.onrender.com/quickResponses', {
+                const response = await axios.get('https://tetochat-backend.onrender.com/quickResponses', {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("token")}`,
                     },
@@ -29,7 +29,7 @@ const QuickResponses = () => {
 
     const addQuickResponse = async (text, department) => {
         try {
-            const response = await axios.post('https://tetochat-pgus.onrender.com/quickresponses', { text, department }, {
+            const response = await axios.post('https://tetochat-backend.onrender.com/quickresponses', { text, department }, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },

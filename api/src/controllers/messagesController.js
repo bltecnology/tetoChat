@@ -402,7 +402,7 @@ export const receiveMessage = async (request, response) => {
             const documentId = message.document.id;
             const mimeType = message.document.mime_type;
             const fileName = message.document.filename;
-            messageBody = `[documento: ${documentId}, nome: ${fileName}]`;
+            messageBody = `${fileName}`;
             console.log(`Mensagem de documento recebida: ID do documento - ${documentId}, Nome do arquivo - ${fileName}, Tipo MIME - ${mimeType}`);
 
             // Salva o documento usando saveMediaFile

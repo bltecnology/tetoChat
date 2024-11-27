@@ -14,7 +14,7 @@ const LoginPage = () => {
   useEffect(() => {
     const checkToken = async () => {
       try {
-        await axios.get('https://tetochat-pgus.onrender.com/confirm-token', {
+        await axios.get('https://tetochat-backend.onrender.com/confirm-token', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
@@ -32,7 +32,7 @@ const LoginPage = () => {
   const handleLogin = async (event) => {
     event.preventDefault();
     try {
-      const response = await axios.post('https://tetochat-pgus.onrender.com/login', { email, password: senha });
+      const response = await axios.post('https://tetochat-backend.onrender.com/login', { email, password: senha });
 
       const { token, department } = response.data;
 

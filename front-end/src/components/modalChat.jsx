@@ -8,7 +8,7 @@
     useEffect(() => {
         const fetchDepartments = async () => {
         try {
-            const response = await axios.get('https://tetochat-pgus.onrender.com/departments');
+            const response = await axios.get('https://tetochat-backend.onrender.com/departments');
             setDepartments(response.data);
         } catch (error) {
             console.error('Erro ao buscar departamentos:', error);
@@ -21,7 +21,7 @@
     const handleTransfer = async () => {
         if (selectedDepartment && contactId) {
         try {
-            await axios.post('https://tetochat-pgus.onrender.com/transfer', {
+            await axios.post('https://tetochat-backend.onrender.com/transfer', {
             contactId: contactId,
             departmentId: selectedDepartment,
             });
