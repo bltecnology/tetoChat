@@ -34,6 +34,7 @@ const Chat = () => {
   const [audioUrls, setAudioUrls] = useState({});
   const [documentUrls, setDocumentUrls] = useState({});
   const [documentNames, setDocumentNames] = useState({});
+  const [quickResponses, setQuickResponses] = useState({});
   const [videoUrls, setVideoUrls] = useState({});
 
   const handleImageClick = (imageUrl) => {
@@ -64,6 +65,7 @@ const Chat = () => {
         }
       );
       // Filtrar mensagens pelo contato selecionado
+
       setMessages(response.data.filter(message => message.contact_id === contactId));
       scrollToBottom(); // Rola automaticamente após carregar mensagens
     } catch (error) {
@@ -96,7 +98,6 @@ const Chat = () => {
   const fetchQueue = async () => {
     try {
       const departmentTable = `${localStorage.getItem("department")}`;
-      console.log(departmentTable);
 
 
       const response = await axios.get(
@@ -130,6 +131,7 @@ const Chat = () => {
       setContacts([]);
     }
   };
+
 
   useEffect(() => {
     if (activeTab === "chat") {
@@ -192,6 +194,26 @@ const Chat = () => {
       }
     }
   };
+
+  const fetchQuickResponses = async () => {
+    try {
+      const response = await axios.get(
+        `https://tetochat-backend.onrender.com/quickResponses`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          responseType: "blob",
+        }
+      );
+      const departament = response.data
+      const filterDepartamentFull = departament.filter((departament) => departament.name === localStorage.department)
+      const filterDepartament = filterDepartamentFull.filter((departament) => departament.text)
+      setQuickResponses(filterDepartament);
+    } catch (error) {
+      console.error('Erro ao buscar respostas rápidas:', error);
+    }
+  }
   const fetchDocument = async (messageId, fileName) => {
     if (!documentUrls[messageId]) {
       try {
@@ -205,17 +227,17 @@ const Chat = () => {
           }
         );
         const fileNameString = String(fileName);
+
+        // const newFileName = fileNameString
+        //   .replace(/[\[\]]/g, "") // Remove todos os colchetes
+        //   .split("nome: ")[1]      // Separa a string e pega a parte após "nome: "
+        //   .trim();
+
+
         console.log(fileNameString);
-        
-        const newFileName = fileNameString
-          .replace(/[\[\]]/g, "") // Remove todos os colchetes
-          .split("nome: ")[1]      // Separa a string e pega a parte após "nome: "
-          .trim();
-
-
 
         // Obtém a extensão do arquivo a partir do nome do arquivo original
-        const fileExtension = newFileName.split('.').pop().toLowerCase();
+        const fileExtension = fileNameString.split('.').pop().toLowerCase();
 
         // Define o tipo MIME com base na extensão do arquivo
         let mimeType;
@@ -241,7 +263,7 @@ const Chat = () => {
         const documentUrl = URL.createObjectURL(blob);
 
         setDocumentUrls((prevUrls) => ({ ...prevUrls, [messageId]: documentUrl }));
-        setDocumentNames((prevNames) => ({ ...prevNames, [messageId]: newFileName }));
+        setDocumentNames((prevNames) => ({ ...prevNames, [messageId]: fileNameString }));
       } catch (error) {
         console.error("Erro ao buscar documento:", error);
       }
@@ -284,19 +306,19 @@ const Chat = () => {
     }
   };
 
-  const handleAudioUpload = async (event) => {
-    const file = event.target.files[0]; // Captura o arquivo selecionado
-    if (!file || !selectedContact) return; // Certifica-se de que há um arquivo e um contato selecionado
+  // const handleAudioUpload = async (event) => {
+  //   const file = event.target.files[0]; // Captura o arquivo selecionado
+  //   if (!file || !selectedContact) return; // Certifica-se de que há um arquivo e um contato selecionado
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("toPhone", selectedContact.phone);
-    formData.append("whatsappBusinessAccountId", "408476129004761"); // Atualize com o ID correto
-    formData.append("fileType", "audio");
+  //   const formData = new FormData();
+  //   formData.append("file", file);
+  //   formData.append("toPhone", selectedContact.phone);
+  //   formData.append("whatsappBusinessAccountId", "408476129004761"); // Atualize com o ID correto
+  //   formData.append("fileType", "audio");
 
     try {
       const response = await axios.post(
-        "https://tetochat-backend.onrender.com/send-file", // Endpoint para envio de arquivos
+        "https://tetochat-pgus.onrender.com/send-file", // Endpoint para envio de arquivos
         formData,
         {
           headers: {
@@ -306,29 +328,29 @@ const Chat = () => {
         }
       );
 
-      if (response.status === 200) {
-        const newMessage = {
-          id: `msg-${Date.now()}`, // Gera um ID temporário
-          message_body: file.name, // O nome do arquivo
-          message_from: "me",
-          message_type: "audio", // Tipo de mensagem
-          message_timestamp: Math.floor(Date.now() / 1000).toString(),
-          contact_id: selectedContact.id,
-          message_id: response.data.message_id, // ID do backend
-        };
+  //     if (response.status === 200) {
+  //       const newMessage = {
+  //         id: `msg-${Date.now()}`, // Gera um ID temporário
+  //         message_body: file.name, // O nome do arquivo
+  //         message_from: "me",
+  //         message_type: "audio", // Tipo de mensagem
+  //         message_timestamp: Math.floor(Date.now() / 1000).toString(),
+  //         contact_id: selectedContact.id,
+  //         message_id: response.data.message_id, // ID do backend
+  //       };
 
-        // Atualiza o estado com a nova mensagem
-        setMessages((prevMessages) => [...prevMessages, newMessage]);
+  //       // Atualiza o estado com a nova mensagem
+  //       setMessages((prevMessages) => [...prevMessages, newMessage]);
 
-        // Carrega o áudio para exibição imediata
-        fetchAudio(newMessage.message_id);
+  //       // Carrega o áudio para exibição imediata
+  //       fetchAudio(newMessage.message_id);
 
-        scrollToBottom(); // Rola para o final do chat
-      }
-    } catch (error) {
-      console.error("Erro ao enviar áudio:", error);
-    }
-  };
+  //       scrollToBottom(); // Rola para o final do chat
+  //     }
+  //   } catch (error) {
+  //     console.error("Erro ao enviar áudio:", error);
+  //   }
+  // };
 
 
   const handleSendMessage = async () => {
@@ -362,7 +384,6 @@ const Chat = () => {
 
         if (response.status === 200) {
           setNewMessage(""); // Limpa o campo de nova mensagem
-          console.log("Aba Chat")
 
           fetchChats(); // Atualiza as conversas após enviar a mensagem
 
@@ -439,9 +460,14 @@ const Chat = () => {
     }
   };
   const handleFileUpload = async (event) => {
-    const file = event.target.files[0]; // Pega o primeiro arquivo selecionado
+    const file = event.target.files[0]; 
+    const originalname = file.name
+    const fileName = file.push(originalname)
+    console.log(fileName);
+    
+    // Pega o primeiro arquivo selecionado
     if (!file || !selectedContact) return; // Verifica se existe um arquivo e um contato selecionado
-console.log(file);
+    console.log(file);
 
     const formData = new FormData();
     formData.append("file", file);
@@ -462,7 +488,6 @@ console.log(file);
       );
 
       if (response.status === 200) {
-        console.log("Arquivo enviado com sucesso");
         // Opcional: Atualize as mensagens após enviar o arquivo
         loadMessages(selectedContact.id);
       }

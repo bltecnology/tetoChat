@@ -18,7 +18,9 @@ const QuickResponses = () => {
                         Authorization: `Bearer ${localStorage.getItem("token")}`,
                     },
                 });
-                setQuickResponses(response.data);
+                const departament = response.data
+                const filterDepartament = departament.filter((departament) => departament.name === localStorage.department)
+                setQuickResponses(filterDepartament);
             } catch (error) {
                 console.error('Erro ao buscar respostas rápidas:', error);
             }
@@ -47,7 +49,7 @@ const QuickResponses = () => {
             <Background
                 text="Respostas Rápidas"
                 btn1={<GrAdd onClick={() => setIsModalOpen(true)} />}
-                btn3={<GrRefresh />} 
+                btn3={<GrRefresh />}
             >
                 <MainContainer
                     p1="Mensagem"

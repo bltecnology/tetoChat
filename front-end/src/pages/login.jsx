@@ -8,24 +8,32 @@ const LoginPage = () => {
   const [senha, setSenha] = useState('');
   const [showPassword, setShowPassword] = useState(false); // Estado para controlar a visibilidade da senha
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true); // Estado para controlar a renderização
+  const [loading, setLoading] = useState(); // Estado para controlar a renderização
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const checkToken = async () => {
+  const checkToken = async () => {
+    if (localStorage.token) {
       try {
+
         await axios.get('https://tetochat-backend.onrender.com/confirm-token', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         });
         navigate('/home');
+        
       } catch (error) {
         console.error('Token inválido ou não encontrado:', error);
       } finally {
         setLoading(false); // Finaliza o carregamento após a verificação
       }
-    };
+    }else{
+      console.log("teste");
+      
+      setLoading(false);
+      
+    }
+    }
+  useEffect(() => {
     checkToken();
   }, [navigate]);
 
@@ -59,12 +67,10 @@ const LoginPage = () => {
 
   return (
     <div className="flex h-screen bg-white">
-      <h1 className="absolute top-4 left-14 text-2xl font-bold text-red-800">
-        TetoChat
-      </h1>
+    
       <div className="flex justify-center items-center flex-1">
         <div className="bg-white rounded-lg p-8 w-96" style={{ boxShadow: '10px 10px 20px rgba(0, 0, 0, 0.25), 0 10px 20px rgba(0, 0, 0, 0.25)' }}>
-          <h2 className="text-center text-2xl font-semibold text-red-700 mb-6">Olá novamente!</h2>
+          <h2 className="text-center text-2xl font-semibold text-red-700 mb-6">TetoChat</h2>
           <form onSubmit={handleLogin}>
             {error && <p className="text-red-500 text-center mb-4">{error}</p>}
             <div className="mb-4">

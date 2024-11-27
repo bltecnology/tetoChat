@@ -8,6 +8,9 @@ module.exports = {
       colors: {
         FEF2F2: "#FEF2F2",
       },
+      zIndex: {
+        '-1': '-1', // Adiciona um valor de z-index negativo
+      },
     },
   },
   plugins: [],
