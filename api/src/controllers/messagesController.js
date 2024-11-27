@@ -181,125 +181,6 @@ export const getWebhook = function (req, res) {
   }
 };
 
-// export const receiveMessage = async (request, response) => {
-//   console.log("Incoming webhook: " + JSON.stringify(request.body));
-
-//   const entries = request.body.entry;
-
-//   if (!entries || entries.length === 0) {
-//     console.error("Webhook structure does not match expected format.");
-//     return response.sendStatus(400);
-//   }
-
-//   try {
-//     for (const entry of entries) {
-//       for (const change of entry.changes) {
-//         const data = change.value;
-//         if (!data || !data.messages || data.messages.length === 0) continue;
-
-//         const message = data.messages[0];
-//         const contact =
-//           data.contacts && data.contacts.length > 0 ? data.contacts[0] : null;
-
-//         if (!contact || !contact.profile || !contact.wa_id) {
-//           console.error("Invalid contact or message data:", JSON.stringify(data));
-//           continue;
-//         }
-
-//         console.log(`Processing message with ID: ${message.id} from ${contact.wa_id}`);
-
-//         // Check if message already exists
-//         const [existingMessage] = await pool.query(
-//           "SELECT id FROM whatsapp_messages WHERE message_id = ?",
-//           [message.id]
-//         );
-
-//         if (existingMessage.length > 0) {
-//           console.log(`Message already processed with ID: ${message.id}`);
-//           continue; // Skip if already processed
-//         }
-
-//         // Retrieve or create the contact
-//         let contactId;
-//         const [contactRows] = await pool.query(
-//           "SELECT id FROM contacts WHERE phone = ?",
-//           [contact.wa_id]
-//         );
-
-//         if (contactRows.length > 0) {
-//           contactId = contactRows[0].id;
-//         } else {
-//           const insertContactQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
-//           const [insertContactResult] = await pool.query(insertContactQuery, [
-//             contact.profile.name,
-//             contact.wa_id,
-//           ]);
-//           contactId = insertContactResult.insertId;
-//         }
-
-//         // Insert the message into the database
-//         const messageType = message.type || "unknown";
-//         const messageBody =
-//           message.text?.body ||
-//           `[${messageType}: ${message[messageType]?.id || "No ID"}]`;
-//         const insertMessageQuery = `
-//           INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id)
-//           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-//         `;
-//         const messageValues = [
-//           data.metadata.phone_number_id,
-//           data.metadata.display_phone_number,
-//           contact.profile.name,
-//           contact.wa_id,
-//           message.id,
-//           message.from,
-//           message.timestamp,
-//           messageType,
-//           messageBody,
-//           contactId,
-//         ];
-
-//         await pool.query(insertMessageQuery, messageValues);
-//         console.log(`Message inserted with ID: ${message.id}`);
-               
-
-//         // Process media if applicable
-//         if (["image", "video", "document", "audio"].includes(messageType)) {
-//           const mediaId = message[messageType]?.id;
-//           const mimeType = message[messageType]?.mime_type;
-//           const fileName = message[messageType]?.filename
-//             //  || `${mediaId}.${mimeType.split("/")[1]}`;
-//           const fileUrl = `https://graph.facebook.com/v21.0/${mediaId}`;
-
-//           try {
-//             await saveMediaFile(message.id, messageType, fileUrl, fileName);
-//           } catch (error) {
-//             console.error("Error saving media file:", error);
-//           }
-//         }
-
-//         global.io.emit("new_message", {
-//           phone_number_id: data.metadata.phone_number_id,
-//           display_phone_number: data.metadata.display_phone_number,
-//           contact_name: contact.profile.name,
-//           wa_id: contact.wa_id,
-//           message_id: message.id,
-//           message_from: message.from,
-//           message_timestamp: message.timestamp,
-//           message_type: message.type,
-//           message_body: messageBody,
-//           contact_id: contactId,
-//         }); 
-//       }
-//     }
-//     response.sendStatus(200);
-//   } catch (error) {
-//     console.error("Error processing webhook:", error);
-//     response.sendStatus(500);
-//   }
-// };
-
-
 export const receiveMessage = async (request, response) => {
   console.log("Incoming webhook: " + JSON.stringify(request.body));
 
@@ -384,14 +265,14 @@ export const receiveMessage = async (request, response) => {
             mediaId = message.image.id;
             const mimeType = message.image.mime_type;
             messageBody = `[imagem: ${mediaId}]`;
-            mediaName = `${mediaId}.jpg`
+            mediaName = `${mediaId}.jpg`;
             console.log(`Mensagem de imagem recebida: ID da imagem - ${mediaId}, Tipo MIME - ${mimeType}`);
 
           } else if (message.type === "video" && message.video) {
             mediaId = message.video.id;
             const mimeType = message.video.mime_type;
             messageBody = `[vídeo: ${mediaId}]`;
-            mediaName = `${mediaId}.mp4`
+            mediaName = `${mediaId}.mp4`;
             console.log(`Mensagem de vídeo recebida: ID do vídeo - ${mediaId}, Tipo MIME - ${mimeType}`);
 
           } else if (message.type === "document" && message.document) {
@@ -406,7 +287,7 @@ export const receiveMessage = async (request, response) => {
             mediaId = message.audio.id;
             const mimeType = message.audio.mime_type;
             messageBody = `[áudio: ${mediaId}]`;
-            mediaName = `${mediaId}.mp3`
+            mediaName = `${mediaId}.mp3`;
             console.log(`Mensagem de áudio recebida: ID do áudio - ${mediaId}, Tipo MIME - ${mimeType}`);
 
           } else {
@@ -444,6 +325,13 @@ export const receiveMessage = async (request, response) => {
             await pool.query(lastMessage, lastMessageValues);
             console.log(`Mensagem inserida no banco de dados com ID: ${message.id}`);
 
+            // Após a inserção da mensagem, tentar salvar a mídia, se houver
+            if (["image", "video", "document", "audio"].includes(message.type)) {
+              const fileUrl = `https://graph.facebook.com/v21.0/${mediaId}`;
+              await saveMediaFile(mediaId, message.type, fileUrl, mediaName);
+              console.log(`Mídia salva com sucesso: ${mediaName}`);
+            }
+
             // Emite um evento para os clientes conectados via Socket.IO
             global.io.emit("new_message", {
               phone_number_id: data.metadata.phone_number_id,
@@ -461,32 +349,6 @@ export const receiveMessage = async (request, response) => {
             console.error("Erro ao inserir dados no banco de dados:", err);
             allEntriesProcessed = false;
           }
-
-          const fileUrl = `https://graph.facebook.com/v21.0/${mediaId}`;
-          const fileType = message.type || "unknown";
-
-          if (["image", "video", "document", "audio"].includes(fileType)) {
-            try {
-              await saveMediaFile(mediaId, fileType, fileUrl, mediaName);
-              global.io.emit("new_message", {
-                phone_number_id: data.metadata.phone_number_id,
-                display_phone_number: data.metadata.display_phone_number,
-                contact_name: contact.profile.name,
-                wa_id: contact.wa_id,
-                message_id: message.id,
-                message_from: message.from,
-                message_timestamp: message.timestamp,
-                message_type: message.type,
-                message_body: messageBody,
-                contact_id: contactId,
-              });
-            } catch (error) {
-              console.error("Erro ao inserir media no banco de dados:", error);
-              allEntriesProcessed = false;
-              continue;
-            }
-          }
-          
 
           try {
             const [rows] = await pool.query(
