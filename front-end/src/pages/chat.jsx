@@ -316,17 +316,17 @@ const Chat = () => {
   //   formData.append("whatsappBusinessAccountId", "408476129004761"); // Atualize com o ID correto
   //   formData.append("fileType", "audio");
 
-  //   try {
-  //     const response = await axios.post(
-  //       "https://tetochat-backend.onrender.com/send-file", // Endpoint para envio de arquivos
-  //       formData,
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${localStorage.getItem("token")}`, // Token JWT
-  //           "Content-Type": "multipart/form-data",
-  //         },
-  //       }
-  //     );
+    try {
+      const response = await axios.post(
+        "https://tetochat-pgus.onrender.com/send-file", // Endpoint para envio de arquivos
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // Token JWT
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
   //     if (response.status === 200) {
   //       const newMessage = {

@@ -13,7 +13,7 @@ const LoginPage = () => {
   const checkToken = async () => {
     if (localStorage.token) {
       try {
-    
+
         await axios.get('https://tetochat-backend.onrender.com/confirm-token', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
