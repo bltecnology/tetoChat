@@ -463,9 +463,9 @@ export const receiveMessage = async (request, response) => {
           }
 
           const fileUrl = `https://graph.facebook.com/v21.0/${mediaId}`;
-          const fileType = message.type;
-          
-          if (["image", "video", "document", "audio"].includes(messageType)) {
+          const fileType = message.type || "unknown";
+
+          if (["image", "video", "document", "audio"].includes(fileType)) {
             try {
               await saveMediaFile(mediaId, fileType, fileUrl, mediaName);
               global.io.emit("new_message", {
