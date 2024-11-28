@@ -278,6 +278,7 @@ const Chat = () => {
           }
         );
         const fileNameString = String(fileName);
+        console.log(response.data, "aaa");
 
         // const newFileName = fileNameString
         //   .replace(/[\[\]]/g, "") // Remove todos os colchetes
@@ -743,6 +744,8 @@ const Chat = () => {
               >
                 <div className="flex flex-col space-y-4 ">
                   {messages.map((message) => {
+                    console.log(message);
+
                     // Fetch image only if the message type is "image"
                     if (message.message_type === "image") {
                       fetchImage(message.message_id); // Carrega a imagem uma vez
@@ -761,6 +764,17 @@ const Chat = () => {
                         className={`${message.message_from === "me" ? "self-end bg-blue-100" : "self-start bg-gray-200"
                           } p-2 rounded-md max-w-xs`}
                       >
+                        {message.message_from === "me" &&
+                          <h2 className="mb-1">{
+                            message.user_name === null || undefined ?
+                              <b>TetoBot :</b>
+                              :
+                              <b>
+                                {message.user_name} :
+                              </b>
+                          }</h2>
+
+                        }
                         {/* Renderiza imagem se existir */}
                         {message.message_type === "image" && imageUrls[message.message_id] && (
 
@@ -803,7 +817,7 @@ const Chat = () => {
                           <span className="text-sm">{message.message_body}</span>
                         )}
                         {/* Exibe o timestamp da mensagem */}
-                        <span className="text-xs text-gray-500 block memt-1">
+                        <span className="text-xs text-gray-500 block memt-1 mt-1">
                           {format(new Date(parseInt(message.message_timestamp) * 1000), "HH:mm")}
                         </span>
                       </div>
