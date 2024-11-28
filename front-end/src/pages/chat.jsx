@@ -15,6 +15,7 @@ import backgroundImage from "../assets/image.png";
 import EmojiPicker from "emoji-picker-react";
 import { format } from "date-fns";
 import defaultProfilePic from "../assets/defaultProfile.png";
+import { HiOutlineLightningBolt } from "react-icons/hi";
 
 const socket = io("https://tetochat-backend.onrender.com");
 
@@ -34,12 +35,53 @@ const Chat = () => {
   const [audioUrls, setAudioUrls] = useState({});
   const [documentUrls, setDocumentUrls] = useState({});
   const [documentNames, setDocumentNames] = useState({});
-  const [quickResponses, setQuickResponses] = useState({});
+  const [quickResponses, setQuickResponses] = useState([]);
   const [videoUrls, setVideoUrls] = useState({});
+  const [isQuickResponseModalOpen, setIsQuickResponseModalOpen] = useState(false);
+  const [selectedQuickResponse, setSelectedQuickResponse] = useState(null);
 
   const handleImageClick = (imageUrl) => {
     setSelectedImageUrl(imageUrl);
     setIsImageModalOpen(true);
+  };
+  const handleOpenQuickResponseModal = () => {
+    fetchQuickResponses(); // Garante que as mensagens rápidas sejam carregadas
+    setIsQuickResponseModalOpen(true);
+  };
+  const handleSendQuickResponse = async () => {
+    if (!selectedQuickResponse || !selectedContact) return;
+
+    try {
+      const sentMessage = {
+        id: `msg-${Date.now()}`,
+        message_body: selectedQuickResponse.text,
+        message_from: "me",
+        message_timestamp: Math.floor(Date.now() / 1000).toString(),
+        contact_id: selectedContact.id,
+      };
+
+      setMessages((prevMessages) => [...prevMessages, sentMessage]);
+      scrollToBottom();
+
+      // Envia a mensagem rápida ao backend
+      await axios.post(
+        "https://tetochat-backend.onrender.com/send",
+        {
+          toPhone: selectedContact.phone,
+          text: selectedQuickResponse.text,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      setIsQuickResponseModalOpen(false);
+      setSelectedQuickResponse(null);
+    } catch (error) {
+      console.error("Erro ao enviar mensagem rápida:", error);
+    }
   };
 
   // 1. Criar uma referência para o final do container de mensagens
@@ -198,22 +240,31 @@ const Chat = () => {
   const fetchQuickResponses = async () => {
     try {
       const response = await axios.get(
-        `https://tetochat-backend.onrender.com/quickResponses`,
+        "https://tetochat-backend.onrender.com/quickResponses",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          responseType: "blob",
         }
       );
-      const departament = response.data
-      const filterDepartamentFull = departament.filter((departament) => departament.name === localStorage.department)
-      const filterDepartament = filterDepartamentFull.filter((departament) => departament.text)
-      setQuickResponses(filterDepartament);
+  
+      const departament = response.data;
+  
+      const filterDepartamentFull = departament.filter(
+        (departament) => departament.name === localStorage.department
+      );
+  
+      const filterDepartament = filterDepartamentFull.filter(
+        (departament) => departament.text
+      );
+  
+      setQuickResponses(Array.isArray(filterDepartament) ? filterDepartament : []);
     } catch (error) {
-      console.error('Erro ao buscar respostas rápidas:', error);
+      console.error("Erro ao buscar respostas rápidas:", error);
+      setQuickResponses([]); // Garante que quickResponses continue sendo um array
     }
-  }
+  };
+  
   const fetchDocument = async (messageId, fileName) => {
     if (!documentUrls[messageId]) {
       try {
@@ -316,17 +367,17 @@ const Chat = () => {
   //   formData.append("whatsappBusinessAccountId", "408476129004761"); // Atualize com o ID correto
   //   formData.append("fileType", "audio");
 
-    // try {
-    //   const response = await axios.post(
-    //     "https://tetochat-pgus.onrender.com/send-file", // Endpoint para envio de arquivos
-    //     formData,
-    //     {
-    //       headers: {
-    //         Authorization: `Bearer ${localStorage.getItem("token")}`, // Token JWT
-    //         "Content-Type": "multipart/form-data",
-    //       },
-    //     }
-    //   );
+  // try {
+  //   const response = await axios.post(
+  //     "https://tetochat-pgus.onrender.com/send-file", // Endpoint para envio de arquivos
+  //     formData,
+  //     {
+  //       headers: {
+  //         Authorization: `Bearer ${localStorage.getItem("token")}`, // Token JWT
+  //         "Content-Type": "multipart/form-data",
+  //       },
+  //     }
+  //   );
 
   //     if (response.status === 200) {
   //       const newMessage = {
@@ -460,11 +511,11 @@ const Chat = () => {
     }
   };
   const handleFileUpload = async (event) => {
-    const file = event.target.files[0]; 
-    const originalname = file.name
-    const fileName = file.push(originalname)
-    console.log(fileName);
-    
+    const file = event.target.files[0];
+    // const originalname = file.name
+    // const fileName = file.push(originalname)
+    // console.log(fileName);
+
     // Pega o primeiro arquivo selecionado
     if (!file || !selectedContact) return; // Verifica se existe um arquivo e um contato selecionado
     console.log(file);
@@ -780,6 +831,12 @@ const Chat = () => {
                     />
                   </div>
                 )}
+                <button
+                  className="text-gray-500 hover:text-gray-700 mr-2"
+                  onClick={handleOpenQuickResponseModal}
+                >
+                 <HiOutlineLightningBolt size={24} />
+                </button>
 
                 <input
                   type="text"
@@ -866,6 +923,48 @@ const Chat = () => {
         </div>
       )}
 
+      {isQuickResponseModalOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={() => setIsQuickResponseModalOpen(false)} // Fecha o modal ao clicar fora
+        >
+          <div
+            className="relative bg-white p-6 rounded-lg max-w-lg w-full"
+            onClick={(e) => e.stopPropagation()} // Impede o fechamento ao clicar dentro do modal
+          >
+            <h3 className="text-lg font-semibold mb-4">Selecione uma Mensagem Rápida</h3>
+            <div className="flex flex-col space-y-2">
+              {quickResponses.map((response) => (
+                <button
+                  key={response.id}
+                  onClick={() => setSelectedQuickResponse(response)}
+                  className={`p-2 text-left rounded-md ${selectedQuickResponse?.id === response.id
+                    ? "bg-blue-100"
+                    : "bg-gray-100 hover:bg-gray-200"
+                    }`}
+                >
+                  {response.text}
+                </button>
+              ))}
+            </div>
+            <div className="mt-4 flex justify-end space-x-2">
+              <button
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md"
+                onClick={() => setIsQuickResponseModalOpen(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                onClick={handleSendQuickResponse}
+                disabled={!selectedQuickResponse}
+              >
+                Enviar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
 
