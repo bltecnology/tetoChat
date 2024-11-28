@@ -461,9 +461,9 @@ const Chat = () => {
   };
   const handleFileUpload = async (event) => {
     const file = event.target.files[0]; 
-    const originalname = file.name
-    const fileName = file.push(originalname)
-    console.log(fileName);
+    // const originalname = file.name
+    // const fileName = file.push(originalname)
+    // console.log(fileName);
     
     // Pega o primeiro arquivo selecionado
     if (!file || !selectedContact) return; // Verifica se existe um arquivo e um contato selecionado
