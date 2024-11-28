@@ -227,6 +227,7 @@ const Chat = () => {
           }
         );
         const fileNameString = String(fileName);
+        console.log(response.data, "aaa");
 
         // const newFileName = fileNameString
         //   .replace(/[\[\]]/g, "") // Remove todos os colchetes
@@ -316,17 +317,17 @@ const Chat = () => {
   //   formData.append("whatsappBusinessAccountId", "408476129004761"); // Atualize com o ID correto
   //   formData.append("fileType", "audio");
 
-    // try {
-    //   const response = await axios.post(
-    //     "https://tetochat-pgus.onrender.com/send-file", // Endpoint para envio de arquivos
-    //     formData,
-    //     {
-    //       headers: {
-    //         Authorization: `Bearer ${localStorage.getItem("token")}`, // Token JWT
-    //         "Content-Type": "multipart/form-data",
-    //       },
-    //     }
-    //   );
+  // try {
+  //   const response = await axios.post(
+  //     "https://tetochat-pgus.onrender.com/send-file", // Endpoint para envio de arquivos
+  //     formData,
+  //     {
+  //       headers: {
+  //         Authorization: `Bearer ${localStorage.getItem("token")}`, // Token JWT
+  //         "Content-Type": "multipart/form-data",
+  //       },
+  //     }
+  //   );
 
   //     if (response.status === 200) {
   //       const newMessage = {
@@ -460,11 +461,11 @@ const Chat = () => {
     }
   };
   const handleFileUpload = async (event) => {
-    const file = event.target.files[0]; 
+    const file = event.target.files[0];
     // const originalname = file.name
     // const fileName = file.push(originalname)
     // console.log(fileName);
-    
+
     // Pega o primeiro arquivo selecionado
     if (!file || !selectedContact) return; // Verifica se existe um arquivo e um contato selecionado
     console.log(file);
@@ -692,6 +693,8 @@ const Chat = () => {
               >
                 <div className="flex flex-col space-y-4 ">
                   {messages.map((message) => {
+                    console.log(message);
+
                     // Fetch image only if the message type is "image"
                     if (message.message_type === "image") {
                       fetchImage(message.message_id); // Carrega a imagem uma vez
@@ -710,6 +713,17 @@ const Chat = () => {
                         className={`${message.message_from === "me" ? "self-end bg-blue-100" : "self-start bg-gray-200"
                           } p-2 rounded-md max-w-xs`}
                       >
+                        {message.message_from === "me" &&
+                          <h2 className="mb-1">{
+                            message.user_name === null || undefined ?
+                              <b>TetoBot :</b>
+                              :
+                              <b>
+                                {message.user_name} :
+                              </b>
+                          }</h2>
+
+                        }
                         {/* Renderiza imagem se existir */}
                         {message.message_type === "image" && imageUrls[message.message_id] && (
 
@@ -752,7 +766,7 @@ const Chat = () => {
                           <span className="text-sm">{message.message_body}</span>
                         )}
                         {/* Exibe o timestamp da mensagem */}
-                        <span className="text-xs text-gray-500 block memt-1">
+                        <span className="text-xs text-gray-500 block memt-1 mt-1">
                           {format(new Date(parseInt(message.message_timestamp) * 1000), "HH:mm")}
                         </span>
                       </div>
