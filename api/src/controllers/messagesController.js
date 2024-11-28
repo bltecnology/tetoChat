@@ -47,7 +47,7 @@ async function sendMessage(toPhone, text, whatsappBusinessAccountId, socket) {
 // Buscar mensagens existentes
 export const getMessages = async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM whatsapp_messages");
+    const [rows] = await pool.query("SELECT wm.*, mf.file_name, u.name AS user_name FROM whatsapp_messages wm LEFT JOIN media_files mf ON wm.message_id = mf.message_id LEFT JOIN users u ON wm.user_id = u.id");
     res.json(rows);
   } catch (error) {
     console.error("Erro ao buscar mensagens:", error);
