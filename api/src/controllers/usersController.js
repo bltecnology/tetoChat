@@ -33,21 +33,21 @@ export const getUsers = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   const userId = req.params.id;
-  const { name, email, password, position, department } = req.body;
+  const { name, email, password, position_id, department_id } = req.body;
 
-  if (!name || !email || !password || !position || !department) {
+  if (!name || !email || !password || !position_id || !department_id) {
     return res.status(400).send('Todos os campos são obrigatórios');
   }
 
   try {
 
-    const [departmentRow] = await pool.query("SELECT id FROM departments WHERE id = ?", [department]);
+    const [departmentRow] = await pool.query("SELECT id FROM departments WHERE id = ?", [department_id]);
     if (departmentRow.length === 0) {
       return res.status(404).send('Departamento não encontrado');
     }
 
     // Verifique se a posição existe
-    const [positionRow] = await pool.query("SELECT id FROM positions WHERE id = ?", [position]);
+    const [positionRow] = await pool.query("SELECT id FROM positions WHERE id = ?", [position_id]);
     if (positionRow.length === 0) {
       return res.status(404).send('Posição não encontrada');
     }
@@ -63,8 +63,8 @@ export const updateUser = async (req, res) => {
     const updatedUser = {
       name: name || user[0].name,
       email: email || user[0].email,
-      position_id: position || user[0].position,
-      department_id: department || user[0].department,
+      position_id: position_id || user[0].position_id,
+      department_id: department_id || user[0].department_id,
     };
 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
