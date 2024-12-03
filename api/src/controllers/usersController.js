@@ -35,7 +35,23 @@ export const updateUser = async (req, res) => {
   const userId = req.params.id;
   const { name, email, password, position, department } = req.body;
 
+  if (!name || !email || !password || !position || !department) {
+    return res.status(400).send('Todos os campos são obrigatórios');
+  }
+
   try {
+
+    const [departmentRow] = await pool.query("SELECT id FROM departments WHERE id = ?", [department]);
+    if (departmentRow.length === 0) {
+      return res.status(404).send('Departamento não encontrado');
+    }
+
+    // Verifique se a posição existe
+    const [positionRow] = await pool.query("SELECT id FROM positions WHERE id = ?", [position]);
+    if (positionRow.length === 0) {
+      return res.status(404).send('Posição não encontrada');
+    }
+
     const [user] = await pool.query("SELECT * FROM users WHERE id = ?", [
       userId,
     ]);
@@ -51,8 +67,10 @@ export const updateUser = async (req, res) => {
       department_id: department || user[0].department,
     };
 
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
     if (password) {
-      updatedUser.password = password;
+      updatedUser.password = hashedPassword;
     }
 
     await pool.query("UPDATE users SET ? WHERE id = ?", [updatedUser, userId]);
@@ -100,44 +118,5 @@ export const addUser = async (req, res) => {
   } catch (error) {
     console.error('Erro ao salvar usuário:', error);
     res.status(500).send('Erro ao salvar usuário');
-  }
-};
-
-export const updateProfilePicture = async (req, res) => {
-  const { whatsappBusinessAccountId } = req.body;
-
-  if (!whatsappBusinessAccountId || !req.file) {
-    return res.status(400).send("Missing required fields: `whatsappBusinessAccountId` or `photo` file");
-  }
-
-  const url = `https://graph.facebook.com/v21.0/${whatsappBusinessAccountId}/settings/profile/photo`;
-
-  const formData = new FormData();
-  formData.append("file", req.file.buffer, {
-    filename: req.file.originalname,
-    contentType: req.file.mimetype,
-  });
-
-  const headers = {
-    Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-    ...formData.getHeaders(),
-  };
-
-  console.log("Uploading profile picture:");
-  console.log("Headers:", headers);
-  console.log("URL:", url);
-
-  try {
-    const response = await axios.post(url, formData, { headers });
-    res.status(200).send({
-      message: "Profile picture updated successfully",
-      response: response.data,
-    });
-  } catch (error) {
-    console.error("Error updating profile picture:", error.response?.data || error.message);
-    res.status(500).send({
-      message: "Failed to update profile picture",
-      error: error.response?.data || error.message,
-    });
   }
 };

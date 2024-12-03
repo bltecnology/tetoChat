@@ -1,5 +1,5 @@
 import express from "express";
-import { addUser, getUsers, updateUser, updateProfilePicture, upload } from "../controllers/usersController.js";
+import { addUser, getUsers, updateUser } from "../controllers/usersController.js";
 import { authenticateJWT } from "../models/auth.js";
 
 const usersRoutes = express.Router();
