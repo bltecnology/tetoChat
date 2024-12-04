@@ -230,7 +230,7 @@ export const receiveMessage = async (request, response) => {
               contactId = contactRows[0].id;
             } else {
               const insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
-              const insertValues = ["API", contact.wa_id];
+              const insertValues = [contact.profile.name, contact.wa_id];
               const [result] = await pool.query(insertQuery, insertValues);
               contactId = result.insertId;
             }
