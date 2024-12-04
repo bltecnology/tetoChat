@@ -229,12 +229,10 @@ export const receiveMessage = async (request, response) => {
             if (contactRows.length > 0) {
               contactId = contactRows[0].id;
             } else {
-              const profilePictureUrl = contact?.profile?.profile_picture?.url || null;
               const insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
               const insertValues = ["API", contact.wa_id];
               const [result] = await pool.query(insertQuery, insertValues);
               contactId = result.insertId;
-              isNewContact = true;
             }
           } catch (err) {
             console.error("Erro ao buscar ou criar contato:", err);
