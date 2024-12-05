@@ -45,7 +45,10 @@ const Header = () => {
                 <Link to="/users">Usuários</Link>
               </DropdownMenuItem>
               <DropdownMenuItem className="hover:bg-gray-200 text-center">
-                <Link to="/positions">Cargos</Link>
+                <Link to="/contacts">Contatos</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="hover:bg-gray-200 text-center">
+                <Link to="/departments">Departamentos</Link>
               </DropdownMenuItem>
               <DropdownMenuItem className="hover:bg-gray-200 text-center">
                 <Link to="/quickResponses">Respostas Rápidas</Link>

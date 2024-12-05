@@ -247,24 +247,24 @@ const Chat = () => {
           },
         }
       );
-  
+
       const departament = response.data;
-  
+
       const filterDepartamentFull = departament.filter(
         (departament) => departament.name === localStorage.department
       );
-  
+
       const filterDepartament = filterDepartamentFull.filter(
         (departament) => departament.text
       );
-  
+
       setQuickResponses(Array.isArray(filterDepartament) ? filterDepartament : []);
     } catch (error) {
       console.error("Erro ao buscar respostas rápidas:", error);
       setQuickResponses([]); // Garante que quickResponses continue sendo um array
     }
   };
-  
+
   const fetchDocument = async (messageId, fileName) => {
     if (!documentUrls[messageId]) {
       try {
@@ -407,6 +407,8 @@ const Chat = () => {
 
   const handleSendMessage = async () => {
     if (selectedContact && newMessage.trim() !== "") {
+
+      const message = `*${localStorage.name}:* \n${newMessage}`
       const sentMessage = {
         id: `msg-${Date.now()}`,
         message_body: newMessage,
@@ -425,7 +427,7 @@ const Chat = () => {
           "https://tetochat-backend.onrender.com/send",
           {
             toPhone: selectedContact.phone,
-            text: newMessage,
+            text: message,
           },
           {
             headers: {
@@ -745,7 +747,9 @@ const Chat = () => {
                 <div className="flex flex-col space-y-4 ">
                   {messages.map((message) => {
                     console.log(message);
-
+                    // const teste = message.message_body.replace(/\*.*?\*/g, '')
+                    // console.log(teste);
+                    
                     // Fetch image only if the message type is "image"
                     if (message.message_type === "image") {
                       fetchImage(message.message_id); // Carrega a imagem uma vez
@@ -814,7 +818,7 @@ const Chat = () => {
                         )}
                         {/* Exibe o corpo da mensagem de texto, se não for imagem ou áudio */}
                         {message.message_type !== "image" && message.message_type !== "audio" && message.message_type !== "document" && message.message_type !== "video" && (
-                          <span className="text-sm">{message.message_body}</span>
+                          <span className="text-sm">{message.message_body && message.message_body.replace(/\*.*?\*/g, '')}</span>
                         )}
                         {/* Exibe o timestamp da mensagem */}
                         <span className="text-xs text-gray-500 block memt-1 mt-1">
@@ -849,7 +853,7 @@ const Chat = () => {
                   className="text-gray-500 hover:text-gray-700 mr-2"
                   onClick={handleOpenQuickResponseModal}
                 >
-                 <HiOutlineLightningBolt size={24} />
+                  <HiOutlineLightningBolt size={24} />
                 </button>
 
                 <input
@@ -857,7 +861,9 @@ const Chat = () => {
                   placeholder="Digite uma mensagem..."
                   className="flex-grow p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
+                  onChange={(e) => setNewMessage(
+                    e.target.value
+                  )}
                   onKeyPress={handleKeyPress}
                 />
 

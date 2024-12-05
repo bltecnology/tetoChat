@@ -20,19 +20,19 @@ const LoginPage = () => {
           },
         });
         navigate('/home');
-        
+
       } catch (error) {
         console.error('Token inválido ou não encontrado:', error);
       } finally {
         setLoading(false); // Finaliza o carregamento após a verificação
       }
-    }else{
+    } else {
       console.log("teste");
-      
+
       setLoading(false);
-      
+
     }
-    }
+  }
   useEffect(() => {
     checkToken();
   }, [navigate]);
@@ -42,10 +42,14 @@ const LoginPage = () => {
     try {
       const response = await axios.post('https://tetochat-backend.onrender.com/login', { email, password: senha });
 
-      const { token, department } = response.data;
+      const { token, department, position, name } = response.data;
+
+      console.log(response);
 
       // Armazena o token no localStorage
       localStorage.setItem('token', token);
+      localStorage.setItem('name', name);
+      localStorage.setItem('position', position);
       localStorage.setItem('department', department);
       localStorage.setItem('email', email);
 
@@ -67,7 +71,7 @@ const LoginPage = () => {
 
   return (
     <div className="flex h-screen bg-white">
-    
+
       <div className="flex justify-center items-center flex-1">
         <div className="bg-white rounded-lg p-8 w-96" style={{ boxShadow: '10px 10px 20px rgba(0, 0, 0, 0.25), 0 10px 20px rgba(0, 0, 0, 0.25)' }}>
           <h2 className="text-center text-2xl font-semibold text-red-700 mb-6">TetoChat</h2>
@@ -104,11 +108,7 @@ const LoginPage = () => {
                 </button>
               </div>
             </div>
-            <div className="flex items-center justify-between">
-              <a href="#" className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800">
-                Esqueceu a senha?
-              </a>
-            </div>
+
             <div className="mt-6 flex justify-center">
               <button type='submit'
                 className='bg-red-700 text-white rounded-full w-60 h-12 hover:bg-red-900'>

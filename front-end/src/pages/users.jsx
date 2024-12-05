@@ -7,6 +7,7 @@ import { GrAdd, GrMoreVertical, GrRefresh } from "react-icons/gr";
 import MainContainer from "../components/mainContainer";
 import ModalUsers from "../components/modalUsers";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@radix-ui/react-dropdown-menu';
+import { Navigate } from "react-router-dom";
 
 const Users = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,10 +43,10 @@ const Users = () => {
   };
 
   useEffect(() => {
+   
     const fetchUsers = async () => {
       try {
         const response = await axios.get('https://tetochat-backend.onrender.com/users');
-        console.log(response.data);  // Log the response
         setUsers(response.data);
       } catch (error) {
         console.error('Erro ao buscar usuários:', error);
@@ -56,6 +57,8 @@ const Users = () => {
   }, []);
 
   return (
+    <>
+    {localStorage.position === "Gestor"?
     <div>
       <Header />
       <Background
@@ -109,6 +112,17 @@ const Users = () => {
         user={editingUser}
       />
     </div>
+    :
+    <div>
+      <Header />
+      <h1>
+        usuario sem permissão 
+      </h1>
+    </div>
+  
+  }
+    
+    </>
   );
 }
 
