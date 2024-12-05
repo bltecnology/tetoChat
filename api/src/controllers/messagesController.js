@@ -229,23 +229,10 @@ export const receiveMessage = async (request, response) => {
             if (contactRows.length > 0) {
               contactId = contactRows[0].id;
             } else {
-              const profilePictureUrl = contact?.profile?.profile_picture?.url || null;
-              let insertQuery;
-              let insertValues;
-              if (profilePictureUrl) {
-                const response = await axios.get(profilePictureUrl, { responseType: "arraybuffer" });
-                const imageBlob = response.data;
-                // Prepare query and values if profile picture is available
-                insertQuery = "INSERT INTO contacts (name, phone, profile_pic) VALUES (?, ?, ?)";
-                insertValues = ["API", toPhone, imageBlob];
-              } else {
-                // Prepare query and values if profile picture is not available
-                insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
-                insertValues = ["API", toPhone];
-              }
+              const insertQuery = "INSERT INTO contacts (name, phone) VALUES (?, ?)";
+              const insertValues = [contact.profile.name, contact.wa_id];
               const [result] = await pool.query(insertQuery, insertValues);
               contactId = result.insertId;
-              isNewContact = true;
             }
           } catch (err) {
             console.error("Erro ao buscar ou criar contato:", err);
