@@ -5,7 +5,8 @@ import { getMessages,
          send, 
          sendFile,
          getFile, 
-         upload } from "../controllers/messagesController.js";
+         upload,
+         reconnect } from "../controllers/messagesController.js";
 import { authenticateJWT } from "../models/auth.js";
 
 const messagesRoutes = express.Router();
@@ -16,5 +17,7 @@ messagesRoutes.post("/webhook", receiveMessage);
 messagesRoutes.get("/webhook", getWebhook);
 messagesRoutes.post('/send-file', upload.single('file'), authenticateJWT, sendFile);
 messagesRoutes.get('/file/:messageId', authenticateJWT, getFile);
+messagesRoutes.post("/reconnect", authenticateJWT, reconnect);
+
 
 export { messagesRoutes };

@@ -4,6 +4,7 @@ import multer from 'multer';
 import FormData from "form-data";
 import 'dotenv/config';
 import { transfer } from "../controllers/transferController.js";
+import { application } from "express";
 
 // Configuração do multer para armazenar arquivo na memória
 const storage = multer.memoryStorage();
@@ -827,28 +828,6 @@ export async function redirectBot(contact, messageBody, contactId) {
       // Send the initial bot message
       await sendMessage(contact, bodyBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
   
-      console.log(
-        process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,'\n',
-  
-        process.env.DISPLAY_PHONE_NUMBER,'\n',
-  
-        "BOT",'\n',
-  
-        contact,'\n',
-  
-        `msg-${Date.now()}`,'\n',
-  
-        "me",'\n',
-  
-        Math.floor(Date.now() / 1000).toString(),'\n',
-  
-        "text",'\n',
-  
-        bodyBotMessage,'\n',
-  
-        contactId,'\n'
-      )
-  
       const insertMessageQuery = `
         INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -891,3 +870,98 @@ export async function redirectBot(contact, messageBody, contactId) {
   }
   
 }
+
+export const reconnect = async (req, res) => {
+  // dentro do body mandar objeto contato com nome e id do contato do banco de dados
+  const { toPhone, contactName, contactId } = req.body;
+
+  // mandar para o whatsapp
+  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_BUSINESS_ACCOUNT_ID}/messages`;
+  const data = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: toPhone,
+    type: 'template',
+    template: {
+      name: 'recontact_with_client',
+      language: {
+        code: 'pt_BR',
+      },
+      components: [
+        {
+          type: 'body',
+          parameters: [
+            { type: 'text', parameter_name: 'customer_name', text: contactName },
+          ],
+        },
+      ],
+    },
+  };
+  const headers = {
+    Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+    'Content-Type': 'application/json',
+  };
+
+  // mandar para o banco de dados
+  const insertMessageQuery = `
+    INSERT INTO whatsapp_messages (phone_number_id, display_phone_number, contact_name, wa_id, message_id, message_from, message_timestamp, message_type, message_body, contact_id, user_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  const bodyBotMessage = `
+    Olá ${contactName}, tudo bem?
+    \n
+    Queremos entrar em contato para conversar a respeito da sua obra.
+    \n
+    Por favor responda nesta conversa para que possamos dar mais detalhes a respeito
+    \n
+    Obrigado(a) pela atenção.`;
+  const values = [
+    process.env.WHATSAPP_BUSINESS_ACCOUNT_ID, 
+    process.env.DISPLAY_PHONE_NUMBER,
+    "BOT",                           
+    toPhone,                   
+    `msg-${Date.now()}`,             
+    "me",                            
+    Math.floor(Date.now() / 1000).toString(), 
+    "text",                          
+    bodyBotMessage,                  
+    contactId,                       
+    null                             
+  ];
+
+  //salvar mensagem no banco de dados
+  try {
+    await pool.query(insertMessageQuery, values);
+    console.log(`Mensagem template salva no banco de dados`);
+  } catch (error) {
+    console.error("Erro ao salvar mensagem template no banco de dados: ", error);
+  }
+
+  try {
+    await pool.query(
+      "UPDATE contacts SET stage = 'atending' WHERE id = ?",
+      [contactId]
+      );
+  } catch (error) {
+    console.error("Erro ao atualizar stage no banco de dados: ", error);
+  }
+
+  try {
+    const response = await axios.post(url, data, { headers });
+
+    console.log(`Mensagem template enviada para o WhatsApp: ${toPhone}`);
+
+    global.io.emit("new_message", {
+      phone_number_id: contactId,
+      to: toPhone,
+      message_body: bodyBotMessage,
+      timestamp: new Date().getTime(),
+    });
+
+    return res.status(200).json({
+      message: "Mensagem enviada com sucesso",
+      whatsappResponse: response.data,
+    });
+  } catch (error) {
+    console.error("Erro ao enviar mensagem template para o WhatsApp:", error);
+  }
+};
