@@ -28,26 +28,15 @@ const Users = () => {
     setEditingUser(user);
     setIsModalOpen(true);
   };
-
-  const handleDeleteUser = async (userId) => {
-    const confirmDelete = window.confirm("Você realmente deseja excluir este usuário?");
-    if (confirmDelete) {
-      try {
-        await axios.delete(`https://tetochat-backend.onrender.com/users/${userId}`);
-        setUsers(users.filter(user => user.id !== userId));
-      } catch (error) {
-        console.error('Erro ao excluir usuário:', error.message);
-        alert('Erro ao excluir o usuário. Verifique o console para mais detalhes.');
-      }
-    }
-  };
-
+ 
   useEffect(() => {
    
     const fetchUsers = async () => {
       try {
         const response = await axios.get('https://tetochat-backend.onrender.com/users');
         setUsers(response.data);
+        console.log(response.data);
+        
       } catch (error) {
         console.error('Erro ao buscar usuários:', error);
       }

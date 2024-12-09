@@ -40,25 +40,6 @@ const Departments = () => {
     }
   };
 
-  const handleDeleteDepartment = async (departmentId) => {
-    const confirmDelete = window.confirm(
-      "Você realmente deseja excluir este Contato?"
-    );
-    if (confirmDelete) {
-      try {
-        await axios.delete(
-          `https://tetochat-backend.onrender.com/departments/${departmentId}`
-        );
-        setDepartments(departments.filter((department) => department.id !== departmentId));
-      } catch (error) {
-        console.error("Erro ao excluir departamento:", error.message);
-        alert(
-          "Erro ao excluir o departamento. Verifique o console para mais detalhes."
-        );
-      }
-    }
-  };
-
   return (
     <div>
       <Header />

@@ -37,11 +37,13 @@ const ModalUsers = ({ isOpen, onClose, onSave, user }) => {
   }, [isOpen]);
 
   useEffect(() => {
+    console.log(user);
+    
     if (user) {
-      setName(user.name);
-      setEmail(user.email);
-      setPositionId(user.position_id); // Atualizado para position_id
-      setDepartmentId(user.department_id); // Atualizado para department_id
+      setName(user.name || '');
+      setEmail(user.email || '');
+      setPositionId(user.position_id || ''); // Atualiza corretamente o select de posição
+      setDepartmentId(user.department_id || '');
     }
   }, [user]);
 
@@ -64,7 +66,10 @@ const ModalUsers = ({ isOpen, onClose, onSave, user }) => {
       if (user) {
         // Atualizar usuário existente
         await axios.put(`https://tetochat-backend.onrender.com/users/${user.id}`, updatedUser);
+
       } else {
+        console.log("bbb");
+
         // Criar novo usuário
         const response = await axios.post('https://tetochat-backend.onrender.com/users', updatedUser);
         updatedUser.id = response.data.id;
