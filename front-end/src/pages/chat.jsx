@@ -39,6 +39,12 @@ const Chat = () => {
   const [videoUrls, setVideoUrls] = useState({});
   const [isQuickResponseModalOpen, setIsQuickResponseModalOpen] = useState(false);
   const [selectedQuickResponse, setSelectedQuickResponse] = useState(null);
+  const [canSendMessage, setCanSendMessage] = useState(true);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+
+  const handleStartConversationClick = () => {
+    setIsConfirmModalOpen(true);
+  };
 
   const handleImageClick = (imageUrl) => {
     setSelectedImageUrl(imageUrl);
@@ -200,6 +206,18 @@ const Chat = () => {
 
   useEffect(() => {
     scrollToBottom(); // Rola para o final sempre que as mensagens são atualizadas
+  }, [messages]);
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessageTimestamp = Math.max(
+        ...messages
+          .filter((msg) => msg.message_from !== "me")
+          .map((msg) => parseInt(msg.message_timestamp, 10))
+      );
+
+      const hoursSinceLastMessage = (Date.now() / 1000 - lastMessageTimestamp) / 3600;
+      setCanSendMessage(hoursSinceLastMessage < 24);
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -404,6 +422,32 @@ const Chat = () => {
   //   }
   // };
 
+  const confirmStartConversation = async () => {
+    setIsConfirmModalOpen(false); // Fecha o modal
+
+    if (!selectedContact) return;
+
+    try {
+      await axios.post(
+        "https://tetochat-backend.onrender.com/reconnect",
+        {
+          toPhone: selectedContact.phone,
+          contactName: selectedContact.name,
+          contactId: selectedContact.id,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      setCanSendMessage(false);
+      await loadMessages(selectedContact.id);
+    } catch (error) {
+      console.error("Erro ao iniciar conversa:", error);
+    }
+  };
 
   const handleSendMessage = async () => {
     if (selectedContact && newMessage.trim() !== "") {
@@ -456,6 +500,9 @@ const Chat = () => {
           setQueueContacts((prevQueue) =>
             prevQueue.filter((contact) => contact.id !== selectedContact.id)
           );
+        }
+        if (response.status === 200) {
+          loadMessages(selectedContact.id); // Recarrega mensagens do backend
         }
       } catch (error) {
         console.error("Erro ao enviar mensagem:", error);
@@ -749,7 +796,7 @@ const Chat = () => {
                     console.log(message);
                     // const teste = message.message_body.replace(/\*.*?\*/g, '')
                     // console.log(teste);
-                    
+
                     // Fetch image only if the message type is "image"
                     if (message.message_type === "image") {
                       fetchImage(message.message_id); // Carrega a imagem uma vez
@@ -833,60 +880,61 @@ const Chat = () => {
               </div>
 
               <div className="flex items-center p-4 bg-white border-t border-gray-200">
-                <button
-                  className="text-gray-500 hover:text-gray-700 mr-3"
-                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                >
-
-                  <FiSmile size={24} />
-                </button>
-                {showEmojiPicker && (
-                  <div className="absolute bottom-20 left-10 z-50">
-                    <EmojiPicker
-                      onEmojiClick={(emojiObject) =>
-                        setNewMessage(newMessage + emojiObject.emoji) // Access emoji directly
-                      }
+                {canSendMessage ? (
+                  <>
+                    <button
+                      className="text-gray-500 hover:text-gray-700 mr-3"
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    >
+                      <FiSmile size={24} />
+                    </button>
+                    {showEmojiPicker && (
+                      <div className="absolute bottom-20 left-10 z-50">
+                        <EmojiPicker
+                          onEmojiClick={(emojiObject) =>
+                            setNewMessage(newMessage + emojiObject.emoji)
+                          }
+                        />
+                      </div>
+                    )}
+                    <input
+                      type="text"
+                      placeholder="Digite uma mensagem..."
+                      className="flex-grow p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
                     />
-                  </div>
+                    <button
+                      className="text-gray-500 hover:text-gray-700 ml-3"
+                      onClick={handleSendMessage}
+                    >
+                      <FiSend size={24} />
+                    </button>
+                    <button
+                      className="text-gray-500 hover:text-gray-700 ml-3"
+                      onClick={() => document.getElementById('fileInput').click()}
+                    >
+                      <FiPaperclip size={24} />
+                    </button>
+                    <input
+                      id="fileInput"
+                      type="file"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                    />
+                  </>
+                ) : (
+                  <button
+                    className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                    onClick={handleStartConversationClick}
+                  >
+                    Iniciar Conversa
+                  </button>
                 )}
-                <button
-                  className="text-gray-500 hover:text-gray-700 mr-2"
-                  onClick={handleOpenQuickResponseModal}
-                >
-                  <HiOutlineLightningBolt size={24} />
-                </button>
-
-                <input
-                  type="text"
-                  placeholder="Digite uma mensagem..."
-                  className="flex-grow p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(
-                    e.target.value
-                  )}
-                  onKeyPress={handleKeyPress}
-                />
-
-                <button
-                  className="text-gray-500 hover:text-gray-700 ml-3"
-                  onClick={handleSendMessage}
-                >
-                  <FiSend size={24} />
-                </button>
-                <button
-                  className="text-gray-500 hover:text-gray-700 ml-3"
-                  onClick={() => document.getElementById('fileInput').click()}
-                >
-                  <FiPaperclip size={24} />
-                </button>
-                <input
-                  id="fileInput"
-                  type="file"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                />
-
               </div>
+
+
             </>
           ) : (
             <div className="flex items-center justify-center h-full">
@@ -980,6 +1028,28 @@ const Chat = () => {
                 disabled={!selectedQuickResponse}
               >
                 Enviar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isConfirmModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h3 className="text-lg font-semibold mb-4">Confirmação</h3>
+            <p>Tem certeza de que deseja iniciar a conversa com este cliente?</p>
+            <div className="mt-4 flex justify-end space-x-2">
+              <button
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md"
+                onClick={() => setIsConfirmModalOpen(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                onClick={confirmStartConversation}
+              >
+                Confirmar
               </button>
             </div>
           </div>
