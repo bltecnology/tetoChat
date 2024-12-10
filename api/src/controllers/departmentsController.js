@@ -20,7 +20,7 @@ export const addDepartment = async (req, res) => {
 
   try {
     const [result] = await pool.query(
-      "INSERT INTO departments (name) VALUES ?",
+      "INSERT INTO departments (name) VALUES (?)",
       [name]
     );
     const insertId = result.insertId;
@@ -51,7 +51,7 @@ export const deleteDepartment = async (req, res) => {
   const departmentId = req.params.id;
 
   try {
-    const [result] = await pool.query("DELETE FROM departments WHERE id = ?", [departmentId]);
+    const [result] = await pool.query("DELETE FROM departments WHERE id = (?)", [departmentId]);
     if (result.affectedRows > 0) {
       res.status(200).send("Departamento deletado com sucesso");
     } else {
