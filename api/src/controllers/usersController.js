@@ -17,7 +17,7 @@ export const getUsers = async (req, res) => {
   try {
     // Updated query with JOINs to fetch position and department names
     const query = `
-      SELECT u.id, u.name, u.email, p.name AS position, d.name AS department, d.id as department_id 
+      SELECT u.id, u.name, u.email, p.id as position_id,p.name AS position, d.name AS department, d.id as department_id 
       FROM users u
       JOIN positions p ON u.position_id = p.id
       JOIN departments d ON u.department_id = d.id
