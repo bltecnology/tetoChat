@@ -41,6 +41,8 @@ const Chat = () => {
   const [selectedQuickResponse, setSelectedQuickResponse] = useState(null);
   const [canSendMessage, setCanSendMessage] = useState(true);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isEndCallModalOpen, setIsEndCallModalOpen] = useState(false);
+
 
   const handleStartConversationClick = () => {
     setIsConfirmModalOpen(true);
@@ -54,6 +56,26 @@ const Chat = () => {
     fetchQuickResponses(); // Garante que as mensagens rápidas sejam carregadas
     setIsQuickResponseModalOpen(true);
   };
+  const handleEndCall = async () => {
+    try {
+      await axios.put(
+        `https://tetochat-backend.onrender.com/contacts/stage/${selectedContact.id}`,
+        {
+          stage: "closed",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setIsEndCallModalOpen(false); // Fecha o modal após o sucesso
+      setSelectedContact(null); // Remove o contato selecionado
+    } catch (error) {
+      console.error("Erro ao encerrar chamada:", error);
+    }
+  };
+
   const handleSendQuickResponse = async () => {
     if (!selectedQuickResponse || !selectedContact) return;
 
@@ -1054,6 +1076,28 @@ const Chat = () => {
               <button
                 className="px-4 py-2 bg-blue-500 text-white rounded-md"
                 onClick={confirmStartConversation}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isEndCallModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h3 className="text-lg font-semibold mb-4">Encerrar Chamada</h3>
+            <p>Tem certeza de que deseja encerrar a chamada com este cliente?</p>
+            <div className="mt-4 flex justify-end space-x-2">
+              <button
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md"
+                onClick={() => setIsEndCallModalOpen(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                onClick={handleEndCall}
               >
                 Confirmar
               </button>
