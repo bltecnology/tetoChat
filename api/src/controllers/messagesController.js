@@ -753,6 +753,24 @@ export async function redirectBot(contact, messageBody, contactId) {
             \n4 - Projetos
             \n5 - Compras
             \n6 - Trabalhe Conosco`;
+
+          const mockReq = { body: { contactId, departmentId: 15 } };
+
+          // Simulação de `res` com métodos para capturar o resultado
+          const mockRes = {
+            status: function(code) {
+              this.statusCode = code;
+              return this;
+            },
+            send: function(message) {
+              this.message = message;
+              console.log("Response sent from transfer with status:", this.statusCode, "and message:", message);
+              return this;
+            },
+          };
+
+          await transfer(mockReq, mockRes);
+
           await sendMessage(contact, bodyBotMessage, process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
         }
   
