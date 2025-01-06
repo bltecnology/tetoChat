@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import {
-  FiPhoneForwarded,
   FiSmile,
   FiPaperclip,
   FiSend,
   FiMoreVertical,
   FiDownload,
 } from "react-icons/fi";
+import { BsTelephoneOutbound, BsTelephoneX } from "react-icons/bs";
+
 import Header from "../components/header";
 import TransferModal from "../components/modalChat";
 import { io } from "socket.io-client";
@@ -59,16 +60,15 @@ const Chat = () => {
   const handleEndCall = async () => {
     try {
       await axios.put(
-        `https://tetochat-backend.onrender.com/contacts/stage/${selectedContact.id}`,
-        {
-          stage: "closed",
-        },
+        `https://tetochat-backend.onrender.com/contacts/stage/${selectedContact.id}?stage=welcome`,
+
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
+
       setIsEndCallModalOpen(false); // Fecha o modal após o sucesso
       setSelectedContact(null); // Remove o contato selecionado
     } catch (error) {
@@ -158,7 +158,11 @@ const Chat = () => {
       );
 
       const fetchedChats = Array.isArray(response.data) ? response.data : [];
-      setChatContacts(fetchedChats);  // Atualiza os contatos do chat
+
+      // Filtra os contatos que não tenham o stage "welcome"
+      const filteredChats = fetchedChats.filter((chat) => chat.stage !== "welcome");
+
+      setChatContacts(filteredChats); // Atualiza os contatos do chat
     } catch (error) {
       console.error("Erro ao buscar chats:", error);
     }
@@ -795,13 +799,18 @@ const Chat = () => {
                 <div className="flex space-x-3">
                   <button
                     className="text-gray-500 hover:text-gray-700"
+                    onClick={() => setIsEndCallModalOpen(true)}
+                  >
+                    <BsTelephoneX size={24} />
+                  </button>
+
+                  <button
+                    className="text-gray-500 hover:text-gray-700"
                     onClick={() => handleTransferClick(selectedContact)}
                   >
-                    <FiPhoneForwarded size={24} />
+                    <BsTelephoneOutbound size={24} />
                   </button>
-                  <button className="text-gray-500 hover:text-gray-700">
-                    <FiMoreVertical size={24} />
-                  </button>
+
                 </div>
               </div>
 
