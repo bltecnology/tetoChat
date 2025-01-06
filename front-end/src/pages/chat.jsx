@@ -897,6 +897,12 @@ const Chat = () => {
                         />
                       </div>
                     )}
+                    <button
+                      className="text-gray-500 hover:text-gray-700 mr-2"
+                      onClick={handleOpenQuickResponseModal}
+                    >
+                      <HiOutlineLightningBolt size={24} />
+                    </button>
                     <input
                       type="text"
                       placeholder="Digite uma mensagem..."

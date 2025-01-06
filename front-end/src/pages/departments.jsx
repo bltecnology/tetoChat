@@ -5,12 +5,13 @@ import Background from "../components/background";
 import { GrAdd, GrMoreVertical, GrRefresh } from "react-icons/gr";
 import MainContainer from "../components/mainContainer";
 import ModalDepartments from "../components/modalDepartments";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@radix-ui/react-dropdown-menu';
-
+import ModalEditDepartment from "../components/modalEditDepartments";
 
 const Departments = () => {
   const [departments, setDepartments] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState(null);
 
   useEffect(() => {
     const fetchDepartments = async () => {
@@ -34,10 +35,32 @@ const Departments = () => {
         { name }
       );
       setDepartments([...departments, response.data]);
-      setIsModalOpen(false); // Fecha o modal após salvar
+      setIsAddModalOpen(false);
     } catch (error) {
       console.error("Erro ao salvar departamento:", error);
     }
+  };
+
+  const updateDepartment = async (updatedDepartment) => {
+    try {
+      const response = await axios.put(
+        `https://tetochat-backend.onrender.com/departments/${updatedDepartment.id}`,
+        { name: updatedDepartment.name }
+      );
+      setDepartments(
+        departments.map((dept) =>
+          dept.id === updatedDepartment.id ? response.data : dept
+        )
+      );
+      setIsEditModalOpen(false);
+    } catch (error) {
+      console.error("Erro ao atualizar departamento:", error);
+    }
+  };
+
+  const openEditModal = (department) => {
+    setSelectedDepartment(department);
+    setIsEditModalOpen(true);
   };
 
   return (
@@ -46,13 +69,9 @@ const Departments = () => {
       <Background
         text="Departamentos"
         btn1={
-          <GrAdd
-           
-            onClick={() => setIsModalOpen(true)}
-          />
+          <GrAdd onClick={() => setIsAddModalOpen(true)} />
         }
-        btn3={<GrRefresh />} 
-
+        btn3={<GrRefresh />}
       >
         <MainContainer
           p1="Nome"
@@ -60,21 +79,33 @@ const Departments = () => {
           content={
             <>
               {departments.map((department) => (
-
-                <tr key={department.id} className="odd:bg-white 0 even:bg-gray-50 0 border-b ">
+                <tr key={department.id} className="odd:bg-white 0 even:bg-gray-50 0 border-b">
                   <td className="px-6 py-4">{department.name}</td>
-                  <td className="px-6 py-4"><a href=""> Editar</a></td>
+                  <td className="px-6 py-4">
+                    <a
+                      href="#"
+                      className="text-blue-500 hover:underline"
+                      onClick={() => openEditModal(department)}
+                    >
+                      Editar
+                    </a>
+                  </td>
                 </tr>
-
               ))}
             </>
           }
         />
       </Background>
       <ModalDepartments
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
         onSave={addDepartment}
+      />
+      <ModalEditDepartment
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={updateDepartment}
+        department={selectedDepartment}
       />
     </div>
   );
